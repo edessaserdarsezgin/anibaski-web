@@ -1,7 +1,12 @@
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 import CartCount from "./CartCount";
+import UserMenu from "./UserMenu";
 
-export default function Header() {
+export default async function Header() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <header className="sticky top-0 z-50 bg-[var(--color-bg)] border-b border-[var(--color-border)]">
       <div className="max-w-6xl mx-auto px-8 h-16 flex items-center justify-between">
@@ -10,11 +15,8 @@ export default function Header() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-[var(--color-text-light)]">
-          <Link href="/kategoriler" className="hover:text-[var(--color-text)] transition-colors">
-            Ürünler
-          </Link>
           <Link href="/urunler" className="hover:text-[var(--color-text)] transition-colors">
-            Tüm Ürünler
+            Ürünler
           </Link>
         </nav>
 
@@ -28,12 +30,17 @@ export default function Header() {
             </svg>
             <CartCount />
           </Link>
-          <Link
-            href="/giris"
-            className="ml-2 px-4 py-2 text-sm font-semibold rounded-full border border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors"
-          >
-            Giriş Yap
-          </Link>
+
+          {user ? (
+            <UserMenu email={user.email!} />
+          ) : (
+            <Link
+              href="/giris"
+              className="ml-2 px-4 py-2 text-sm font-semibold rounded-full border border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors"
+            >
+              Giriş Yap
+            </Link>
+          )}
         </div>
       </div>
     </header>
