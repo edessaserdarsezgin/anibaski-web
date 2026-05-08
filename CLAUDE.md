@@ -179,6 +179,12 @@ src/
 - Ana sayfa statik olarak oluşturuldu (Header, Footer, Hero, Kategori kartları, Özellikler)
 - `(shop)` layout group oluşturuldu
 
+### ✅ 2026-05-08 — Auth Sayfaları
+- `src/app/(auth)/layout.tsx` — logo + ortalanmış içerik layout'u
+- `src/app/(auth)/giris/page.tsx` — e-posta/şifre girişi, hata mesajı, redirect desteği
+- `src/app/(auth)/kayit/page.tsx` — kayıt formu, e-posta doğrulama ekranı
+- Supabase Auth client-side entegrasyonu (`signInWithPassword`, `signUp`)
+
 ### ✅ 2026-05-08 — Supabase Proje Kurulumu
 - Eski `ai-tools-saas` projesi yerine `anibaski-web` adında yeni proje açıldı
 - Bölge: `eu-central-1` (Frankfurt — Türkiye'ye en yakın mevcut bölge)
@@ -192,7 +198,7 @@ src/
 
 ## Sıradaki Adımlar (Öncelik Sırası)
 
-- [ ] `/giris` + `/kayit` — Supabase Auth ile e-posta/şifre girişi
+- [x] `/giris` + `/kayit` — Supabase Auth ile e-posta/şifre girişi
 - [ ] `/kategoriler/[slug]` — DB'den kategoriye göre ürün listeleme
 - [ ] `/urunler` — tüm ürünleri listele
 - [ ] `/urunler/[slug]` — ürün detay sayfası (galeri, varyantlar, fotoğraf yükleme)
