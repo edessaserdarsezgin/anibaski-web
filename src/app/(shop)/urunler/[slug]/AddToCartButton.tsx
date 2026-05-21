@@ -23,7 +23,7 @@ export default function AddToCartButton({ isLoggedIn, product, variantGroups }: 
   const router = useRouter();
   const [selected, setSelected] = useState<Record<string, VariantItem>>({});
   const [quantity, setQuantity] = useState(1);
-  const [added, setAdded] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const totalAddon = Object.values(selected).reduce((sum, v) => sum + v.priceAddon, 0);
   const unitPrice = product.basePrice + totalAddon;
@@ -52,8 +52,7 @@ export default function AddToCartButton({ isLoggedIn, product, variantGroups }: 
     }
     localStorage.setItem("cart", JSON.stringify(existing));
     window.dispatchEvent(new Event("cart-updated"));
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+    setShowModal(true);
   }
 
   function handleGoUpload() {
@@ -138,10 +137,44 @@ export default function AddToCartButton({ isLoggedIn, product, variantGroups }: 
         ) : (
           <button onClick={handleAddToCart}
             className="w-full py-3.5 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full transition-colors">
-            {added ? "✓ Sepete Eklendi" : "Sepete Ekle"}
+            Sepete Ekle
           </button>
         )}
       </div>
+
+      {/* Sepete eklendi modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowModal(false)} />
+          <div className="relative bg-white rounded-2xl border border-border shadow-xl p-6 w-full max-w-sm">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-semibold text-text text-sm">Sepete Eklendi</p>
+                <p className="text-xs text-text-light mt-0.5">{product.name} · {totalPrice.toLocaleString("tr-TR")} ₺</p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => router.push("/sepet")}
+                className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full transition-colors text-sm"
+              >
+                Sepete Git
+              </button>
+              <button
+                onClick={() => { setShowModal(false); router.back(); }}
+                className="w-full py-3 border border-border hover:border-primary text-text font-semibold rounded-full transition-colors text-sm"
+              >
+                Alışverişe Devam Et
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

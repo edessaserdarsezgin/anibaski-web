@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isRateLimited } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -8,6 +9,13 @@ export async function POST(req: NextRequest) {
 
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   if (!profile || profile.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  if (isRateLimited(`admin-upload:${user.id}`, 30, 60_000)) {
+    return NextResponse.json(
+      { error: "Çok fazla istek. Lütfen 1 dakika bekleyin." },
+      { status: 429 }
+    );
+  }
 
   const formData = await req.formData();
   const file = formData.get("file") as File;

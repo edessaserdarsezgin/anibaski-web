@@ -101,6 +101,7 @@ model Order {
   subtotal      Decimal     @db.Decimal(10, 2)
   shippingFee   Decimal     @db.Decimal(10, 2)
   total         Decimal     @db.Decimal(10, 2)
+  trackingCode  String?
   createdAt     DateTime    @default(now()) @db.Timestamptz(6)
   items         OrderItem[]
   address       Address     @relation(fields: [addressId], references: [id], onDelete: NoAction, onUpdate: NoAction)

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import OrderStatusSelect from "./OrderStatusSelect";
+import OrderTrackingInput from "./OrderTrackingInput";
 
 export const metadata = { title: "Siparişler | Admin" };
 
@@ -20,7 +21,7 @@ export default async function AdminSiparislerPage() {
   const supabase = await createClient();
   const { data: orders } = await supabase
     .from("orders")
-    .select("id, status, total, createdAt, items:order_items(id, quantity, variantSelections, product:products(name)), address:addresses!orders_addressId_fkey(fullName, city)")
+    .select(`id, status, total, createdAt, "trackingCode", items:order_items(id, quantity, variantSelections, product:products(name)), address:addresses!orders_addressId_fkey(fullName, city)`)
     .order("createdAt", { ascending: false });
 
   return (
@@ -38,6 +39,7 @@ export default async function AdminSiparislerPage() {
                 <th className="text-left px-4 py-3 font-semibold">Müşteri</th>
                 <th className="text-left px-4 py-3 font-semibold">Ürünler</th>
                 <th className="text-left px-4 py-3 font-semibold">Durum</th>
+                <th className="text-left px-4 py-3 font-semibold">Kargo Kodu</th>
                 <th className="text-right px-6 py-3 font-semibold">Toplam</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -72,6 +74,9 @@ export default async function AdminSiparislerPage() {
                   </td>
                   <td className="px-4 py-4">
                     <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
+                  </td>
+                  <td className="px-4 py-4">
+                    <OrderTrackingInput orderId={order.id} currentCode={(order as unknown as { trackingCode: string | null }).trackingCode} />
                   </td>
                   <td className="px-6 py-4 text-right font-semibold text-primary">
                     {Number(order.total).toLocaleString("tr-TR")} ₺

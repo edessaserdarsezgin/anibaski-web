@@ -13,6 +13,7 @@ function GirisForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const urlError = searchParams.get("error");
+  const urlBilgi = searchParams.get("bilgi");
   const [error, setError] = useState(
     urlError ? "Giriş başarısız: " + decodeURIComponent(urlError) : ""
   );
@@ -74,6 +75,12 @@ function GirisForm() {
           <span className="text-xs text-text-light">veya e-posta ile</span>
           <div className="flex-1 h-px bg-border" />
         </div>
+
+        {urlBilgi && (
+          <p className="text-sm text-green-700 bg-green-50 border border-green-100 rounded-lg px-4 py-2.5 mb-4">
+            {decodeURIComponent(urlBilgi)}
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
