@@ -2,18 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function UserMenu({ email }: { email: string }) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   async function handleSignOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
+    window.location.href = "/";
   }
 
   return (
@@ -48,8 +45,11 @@ export default function UserMenu({ email }: { email: string }) {
             </Link>
             <hr className="border-border" />
             <button
-              onClick={handleSignOut}
-              className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSignOut();
+              }}
+              className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
             >
               Çıkış Yap
             </button>

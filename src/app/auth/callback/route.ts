@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
+  const type = searchParams.get("type");
   const errorParam = searchParams.get("error");
   const errorDesc = searchParams.get("error_description");
   const redirect = searchParams.get("redirect") ?? "/";
@@ -15,7 +16,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/giris?error=${msg}`);
   }
 
-  if (!code) {
+  const tokenHash = searchParams.get("token_hash");
+  if (!code && !tokenHash) {
     return NextResponse.redirect(`${origin}/giris?error=Kod+bulunamadi`);
   }
 
@@ -35,12 +37,35 @@ export async function GET(request: NextRequest) {
     }
   );
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  // token_hash akışı (cross-device şifre sıfırlama için)
+  if (tokenHash) {
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: (type as "recovery" | "email" | "signup" | "magiclink" | "email_change") ?? "recovery",
+    });
+
+    if (error) {
+      const msg = encodeURIComponent(error.message);
+      return NextResponse.redirect(`${origin}/giris?error=${msg}`);
+    }
+
+    if (type === "recovery") {
+      return NextResponse.redirect(`${origin}/sifremi-sifirla`);
+    }
+
+    return NextResponse.redirect(`${origin}${redirect}`);
+  }
+
+  const { error } = await supabase.auth.exchangeCodeForSession(code!);
 
   if (error) {
     console.error("[auth/callback] exchangeCodeForSession error:", error.message);
     const msg = encodeURIComponent(error.message);
     return NextResponse.redirect(`${origin}/giris?error=${msg}`);
+  }
+
+  if (type === "recovery") {
+    return NextResponse.redirect(`${origin}/sifremi-sifirla`);
   }
 
   return NextResponse.redirect(`${origin}${redirect}`);

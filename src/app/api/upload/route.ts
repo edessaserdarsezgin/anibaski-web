@@ -10,7 +10,24 @@ export async function POST(req: NextRequest) {
   const file = formData.get("file") as File | null;
   if (!file) return NextResponse.json({ error: "Dosya bulunamadı" }, { status: 400 });
 
-  const ext = file.name.split(".").pop() ?? "jpg";
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return NextResponse.json({ error: "Geçersiz dosya tipi. Yalnızca JPG, PNG, WEBP veya HEIC kabul edilir." }, { status: 400 });
+  }
+
+  const MAX_SIZE_BYTES = 20 * 1024 * 1024;
+  if (file.size > MAX_SIZE_BYTES) {
+    return NextResponse.json({ error: "Dosya boyutu 20 MB sınırını aşıyor." }, { status: 400 });
+  }
+
+  const ALLOWED_EXTENSIONS: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/heic": "heic",
+    "image/heif": "heif",
+  };
+  const ext = ALLOWED_EXTENSIONS[file.type];
   const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
   const { error } = await supabase.storage

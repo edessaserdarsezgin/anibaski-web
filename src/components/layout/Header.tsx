@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import CartCount from "./CartCount";
 import UserMenu from "./UserMenu";
+import MobileMenu from "./MobileMenu";
 
 export default async function Header() {
   const supabase = await createClient();
@@ -42,16 +43,20 @@ export default async function Header() {
             <CartCount />
           </Link>
 
-          {user ? (
-            <UserMenu email={user.email!} />
-          ) : (
-            <Link
-              href="/giris"
-              className="ml-2 px-4 py-2 text-sm font-semibold rounded-full border border-border text-text hover:border-primary hover:text-primary transition-colors"
-            >
-              Giriş Yap
-            </Link>
-          )}
+          <div className="hidden md:block">
+            {user ? (
+              <UserMenu email={user.email!} />
+            ) : (
+              <Link
+                href="/giris"
+                className="ml-2 px-4 py-2 text-sm font-semibold rounded-full border border-border text-text hover:border-primary hover:text-primary transition-colors"
+              >
+                Giriş Yap
+              </Link>
+            )}
+          </div>
+
+          <MobileMenu email={user?.email ?? undefined} isAdmin={isAdmin} />
         </div>
       </div>
     </header>

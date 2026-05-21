@@ -90,7 +90,12 @@ function GirisForm() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-text">Şifre</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-text">Şifre</label>
+              <Link href="/sifremi-unuttum" className="text-xs text-primary hover:underline">
+                Şifremi unuttum
+              </Link>
+            </div>
             <input
               type="password"
               required

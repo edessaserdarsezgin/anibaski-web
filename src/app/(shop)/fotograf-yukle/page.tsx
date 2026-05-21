@@ -40,22 +40,55 @@ export default function FotografYuklePage() {
     if (!files?.length) return;
     const canAdd = required - photos.length;
     if (canAdd <= 0) return;
-    const toUpload = Array.from(files).slice(0, canAdd);
+
+    const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
+    const MAX_SIZE_MB = 20;
+    const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+
+    const validFiles: File[] = [];
+    const validationErrors: string[] = [];
+
+    for (const file of Array.from(files).slice(0, canAdd)) {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        validationErrors.push(`"${file.name}" desteklenmiyor. Yalnızca JPG, PNG, WEBP veya HEIC yükleyebilirsiniz.`);
+        continue;
+      }
+      if (file.size > MAX_SIZE_BYTES) {
+        validationErrors.push(`"${file.name}" çok büyük (${(file.size / 1024 / 1024).toFixed(1)} MB). Maksimum boyut ${MAX_SIZE_MB} MB.`);
+        continue;
+      }
+      validFiles.push(file);
+    }
+
+    if (validationErrors.length > 0) {
+      setError(validationErrors[0]);
+      if (validFiles.length === 0) return;
+    } else {
+      setError("");
+    }
+
     setUploading(true);
-    setError("");
 
     const results: Photo[] = [];
-    for (const file of toUpload) {
+    for (const file of validFiles) {
       const preview = URL.createObjectURL(file);
       const fd = new FormData();
       fd.append("file", file);
       try {
         const res = await fetch("/api/upload", { method: "POST", body: fd });
-        const data = await res.json();
-        if (res.ok) results.push({ url: data.url, preview, name: file.name });
-        else setError("Bir fotoğraf yüklenemedi, lütfen tekrar deneyin.");
+        if (res.status === 413) {
+          setError(`"${file.name}" çok büyük, sunucu reddetti. Maksimum boyut 20 MB.`);
+          continue;
+        }
+        let data: { url?: string; path?: string; error?: string } = {};
+        try { data = await res.json(); } catch { /* HTML hata sayfası geldi */ }
+        if (res.ok && data.url) {
+          results.push({ url: data.url, preview, name: file.name });
+        } else {
+          setError(data.error ?? "Bir fotoğraf yüklenemedi, lütfen tekrar deneyin.");
+        }
       } catch {
-        setError("Bağlantı hatası oluştu.");
+        setError("Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edin.");
       }
     }
     setPhotos(prev => [...prev, ...results]);
