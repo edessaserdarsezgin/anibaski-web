@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Lora, Nunito } from "next/font/google";
+import { ToastProvider } from "@/components/ui/ToastProvider";
 import "./globals.css";
 
 const lora = Lora({
@@ -16,9 +17,18 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "AnıBaskı | Anılarınızı Dokunulur Kılın",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  title: {
+    default: "AnıBaskı | Anılarınızı Dokunulur Kılın",
+    template: "%s | AnıBaskı",
+  },
   description:
-    "Dijital anılarınızı fotoğraf baskısı, fotokitap, tablo ve kişisel hediyelere dönüştürün.",
+    "Dijital anılarınızı fotoğraf baskısı, fotokitap, tablo ve kişisel hediyelere dönüştürün. Türkiye'nin en hızlı fotoğraf baskı platformu.",
+  openGraph: {
+    siteName: "AnıBaskı",
+    locale: "tr_TR",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -28,7 +38,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr" className={`${lora.variable} ${nunito.variable}`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ToastProvider>{children}</ToastProvider>
+      </body>
     </html>
   );
 }

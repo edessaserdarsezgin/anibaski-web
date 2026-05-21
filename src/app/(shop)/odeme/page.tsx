@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CheckoutClient from "./CheckoutClient";
 
-export const metadata = { title: "Ödeme | AnıBaskı" };
+export const metadata = { title: "Ödeme", robots: { index: false, follow: false } };
 
 export default async function OdemePage() {
   const supabase = await createClient();

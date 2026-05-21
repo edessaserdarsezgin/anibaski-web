@@ -1,7 +1,11 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "Tüm Ürünler | AnıBaskı" };
+export const metadata = {
+  title: "Tüm Ürünler",
+  description: "Fotoğraf baskısı, fotokitap, tablo, polaroid ve daha fazlası. Tüm ürünleri keşfedin, anılarınızı kalıcı hediyelere dönüştürün.",
+};
 
 export default async function UrunlerPage() {
   const supabase = await createClient();
@@ -47,9 +51,9 @@ export default async function UrunlerPage() {
               href={`/urunler/${product.slug}`}
               className="group bg-white rounded-xl border border-border overflow-hidden hover:shadow-hover hover:border-primary transition-all"
             >
-              <div className="aspect-square bg-bg flex items-center justify-center text-text-light text-sm">
+              <div className="relative aspect-square bg-bg flex items-center justify-center text-text-light text-sm">
                 {product.images?.[0] ? (
-                  <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                  <Image src={product.images[0]} alt={product.name} fill className="object-cover" sizes="(max-width: 768px) 50vw, 25vw" />
                 ) : (
                   <span>Görsel yok</span>
                 )}

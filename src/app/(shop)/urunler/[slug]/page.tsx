@@ -9,9 +9,24 @@ type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const supabase = await createClient();
-  const { data: product } = await supabase.from("products").select("name").eq("slug", slug).single();
+  const { data: product } = await supabase
+    .from("products")
+    .select("name, description, images")
+    .eq("slug", slug)
+    .single();
   if (!product) return {};
-  return { title: `${product.name} | AnıBaskı` };
+  const description = product.description
+    ? String(product.description).slice(0, 155)
+    : `${product.name} — AnıBaskı'da fotoğraf baskısı ve kişiye özel hediye seçenekleri.`;
+  return {
+    title: product.name,
+    description,
+    openGraph: {
+      title: product.name,
+      description,
+      images: product.images?.[0] ? [{ url: product.images[0] }] : [],
+    },
+  };
 }
 
 export default async function UrunDetayPage({ params }: Props) {

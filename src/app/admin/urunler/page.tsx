@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Ürünler | Admin" };
 
 export default async function AdminUrunlerPage() {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data: products } = await supabase
     .from("products")
     .select("id, name, slug, basePrice, category:categories(name)")

@@ -1,16 +1,56 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useCart } from "@/hooks/useCart";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const SHIPPING_FEE = 49;
 const FREE_SHIPPING_THRESHOLD = 500;
 
+type AppliedCoupon = { code: string; discountAmount: number; discountType: string; discountValue: number };
+
 export default function SepetPage() {
   const { items, total, updateQuantity, removeItem } = useCart();
+  const { toast } = useToast();
 
+  const [couponInput, setCouponInput] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(() => {
+    if (typeof window === "undefined") return null;
+    const saved = sessionStorage.getItem("appliedCoupon");
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const discountAmount = appliedCoupon?.discountAmount ?? 0;
   const shippingFee = total >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
-  const grandTotal = total + shippingFee;
+  const grandTotal = total + shippingFee - discountAmount;
+
+  async function handleApplyCoupon() {
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    const res = await fetch("/api/coupons/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: couponInput, subtotal: total }),
+    });
+    const data = await res.json();
+    setCouponLoading(false);
+    if (!res.ok) {
+      toast(data.error, "error");
+      return;
+    }
+    setAppliedCoupon(data);
+    sessionStorage.setItem("appliedCoupon", JSON.stringify(data));
+    toast(`"${data.code}" kuponu uygulandı! ${data.discountAmount.toLocaleString("tr-TR")} ₺ indirim kazandınız.`);
+    setCouponInput("");
+  }
+
+  function handleRemoveCoupon() {
+    setAppliedCoupon(null);
+    sessionStorage.removeItem("appliedCoupon");
+  }
 
   if (items.length === 0) {
     return (
@@ -40,9 +80,9 @@ export default function SepetPage() {
               key={index}
               className="bg-white rounded-2xl border border-border p-5 flex gap-4"
             >
-              <div className="w-20 h-20 rounded-xl bg-bg border border-border shrink-0 overflow-hidden">
+              <div className="relative w-20 h-20 rounded-xl bg-bg border border-border shrink-0 overflow-hidden">
                 {item.productImage ? (
-                  <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover" />
+                  <Image src={item.productImage} alt={item.productName} fill className="object-cover" sizes="80px" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-xs text-text-light">Görsel yok</div>
                 )}
@@ -96,11 +136,52 @@ export default function SepetPage() {
           <div className="bg-white rounded-2xl border border-border p-6 sticky top-24">
             <h2 className="font-serif text-xl text-text mb-5">Sipariş Özeti</h2>
 
+            {/* Kupon kodu */}
+            {appliedCoupon ? (
+              <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4">
+                <div>
+                  <p className="text-xs font-semibold text-green-700">{appliedCoupon.code}</p>
+                  <p className="text-xs text-green-600">
+                    {appliedCoupon.discountType === "percentage"
+                      ? `%${appliedCoupon.discountValue} indirim`
+                      : `${appliedCoupon.discountValue} ₺ indirim`}
+                  </p>
+                </div>
+                <button onClick={handleRemoveCoupon} className="text-xs text-red-500 hover:text-red-700 font-semibold">
+                  Kaldır
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2 mb-4">
+                <input
+                  type="text"
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
+                  placeholder="Kupon kodu"
+                  className="flex-1 px-3 py-2 text-sm rounded-lg border border-border bg-bg text-text outline-none focus:border-primary transition-colors"
+                />
+                <button
+                  onClick={handleApplyCoupon}
+                  disabled={couponLoading || !couponInput.trim()}
+                  className="px-4 py-2 text-sm font-semibold bg-text text-white rounded-lg hover:bg-text/80 disabled:opacity-50 transition-colors"
+                >
+                  {couponLoading ? "..." : "Uygula"}
+                </button>
+              </div>
+            )}
+
             <div className="flex flex-col gap-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-text-light">Ara toplam</span>
                 <span className="font-semibold">{total.toLocaleString("tr-TR")} ₺</span>
               </div>
+              {appliedCoupon && (
+                <div className="flex justify-between text-green-700">
+                  <span>İndirim ({appliedCoupon.code})</span>
+                  <span className="font-semibold">−{discountAmount.toLocaleString("tr-TR")} ₺</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-text-light">Kargo</span>
                 <span className="font-semibold">

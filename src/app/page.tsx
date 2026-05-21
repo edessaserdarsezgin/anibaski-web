@@ -1,6 +1,19 @@
+import type { Metadata } from "next";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "AnıBaskı | Anılarınızı Dokunulur Kılın",
+  description:
+    "Fotoğraf baskısı, fotokitap, tablo ve polaroid ile dijital anılarınızı kalıcı hediyelere dönüştürün. 2-5 iş günü teslimat, Türkiye geneli kargo.",
+  openGraph: {
+    title: "AnıBaskı | Anılarınızı Dokunulur Kılın",
+    description:
+      "Fotoğraf baskısı, fotokitap, tablo ve polaroid ile dijital anılarınızı kalıcı hediyelere dönüştürün.",
+    url: "/",
+  },
+};
 
 const categories = [
   { title: "Fotoğraf Baskıları", desc: "Anılarınızı en net ve canlı haliyle kağıda dökün.", slug: "fotograf-baskilari" },

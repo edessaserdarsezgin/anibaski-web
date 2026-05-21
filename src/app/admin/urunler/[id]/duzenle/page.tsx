@@ -2,7 +2,7 @@
 
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
-import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 
 type Category = { id: string; name: string; slug: string };
 type SavedVariant = { id: string; type: string; label: string; value: string; priceAddon: number };
@@ -36,13 +36,14 @@ export default function UrunDuzenle() {
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient();
-      const [{ data: product }, { data: cats }] = await Promise.all([
-        supabase.from("products").select("*, category:categories(id)").eq("id", id).single(),
-        supabase.from("categories").select("id, name, slug").order("name"),
+      const [productRes, catsRes, variantsRes] = await Promise.all([
+        fetch(`/api/admin/products/${id}`),
+        fetch("/api/admin/categories"),
+        fetch(`/api/admin/variants?productId=${id}`),
       ]);
-      const res = await fetch(`/api/admin/variants?productId=${id}`);
-      const savedVariants: SavedVariant[] = res.ok ? await res.json() : [];
+      const product = productRes.ok ? await productRes.json() : null;
+      const cats = catsRes.ok ? await catsRes.json() : [];
+      const savedVariants: SavedVariant[] = variantsRes.ok ? await variantsRes.json() : [];
 
       if (product) {
         setForm({ name: product.name, slug: product.slug, basePrice: Number(product.basePrice), categoryId: product.categoryId, description: product.description ?? "" });
@@ -51,7 +52,7 @@ export default function UrunDuzenle() {
       setVariants(savedVariants);
       const types = [...new Set(savedVariants.map(v => v.type))];
       setPending(Object.fromEntries(types.map(t => [t, { label: "", priceAddon: 0 }])));
-      setCategories(cats ?? []);
+      setCategories(Array.isArray(cats) ? cats : []);
       setLoading(false);
     }
     load();
@@ -121,16 +122,17 @@ export default function UrunDuzenle() {
     e.preventDefault();
     setError("");
     setSaving(true);
-    const supabase = createClient();
-    const { error: updateError } = await supabase.from("products").update({
-      name: form.name,
-      slug: form.slug,
-      basePrice: form.basePrice,
-      categoryId: form.categoryId,
-      description: form.description || null,
-      images,
-    }).eq("id", id);
-    if (updateError) { setError(updateError.message); setSaving(false); return; }
+    const res = await fetch(`/api/admin/products/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: form.name, slug: form.slug, basePrice: form.basePrice, categoryId: form.categoryId, description: form.description, images }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      setError(data.error ?? "Güncellenemedi.");
+      setSaving(false);
+      return;
+    }
     router.push("/admin/urunler");
     router.refresh();
   }
@@ -161,7 +163,7 @@ export default function UrunDuzenle() {
           <div className="flex flex-wrap gap-3">
             {images.map((url) => (
               <div key={url} className="relative w-24 h-24 rounded-xl overflow-hidden border border-border">
-                <img src={url} alt="" className="w-full h-full object-cover" />
+                <Image src={url} alt="" fill className="object-cover" sizes="96px" />
                 <button type="button" onClick={() => removeImage(url)}
                   className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600">
                   ×

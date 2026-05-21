@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { sendShippingNotification } from "@/lib/email/shippingNotification";
 
 async function requireAdmin() {
@@ -8,7 +8,7 @@ async function requireAdmin() {
   if (!user) return null;
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   if (!profile || profile.role !== "ADMIN") return null;
-  return { user, supabase };
+  return { user, supabase: createAdminClient() };
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

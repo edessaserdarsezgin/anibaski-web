@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import OrderStatusSelect from "./OrderStatusSelect";
 
@@ -131,9 +132,9 @@ export default async function SiparisDetayPage({ params }: Props) {
                   : [];
                 return (
                   <div key={item.id} className="flex gap-4 pb-5 border-b border-border last:border-0 last:pb-0">
-                    <div className="w-20 h-20 rounded-xl bg-bg border border-border flex-shrink-0 overflow-hidden">
+                    <div className="relative w-20 h-20 rounded-xl bg-bg border border-border flex-shrink-0 overflow-hidden">
                       {item.product?.images?.[0]
-                        ? <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover" />
+                        ? <Image src={item.product.images[0]} alt={item.product.name} fill className="object-cover" sizes="80px" />
                         : <div className="w-full h-full" />}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -176,7 +177,7 @@ export default async function SiparisDetayPage({ params }: Props) {
                             {item.uploadedImages.map((url, i) => (
                               <a key={i} href={url} target="_blank" rel="noopener noreferrer"
                                 className="relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary transition-colors group">
-                                <img src={url} alt={`Fotoğraf ${i + 1}`} className="w-full h-full object-cover" />
+                                <Image src={url} alt={`Fotoğraf ${i + 1}`} fill className="object-cover" sizes="20vw" />
                                 {isAdmin && (
                                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">

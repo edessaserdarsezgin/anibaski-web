@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import ProfileForm from "./ProfileForm";
 import AddressBook from "./AddressBook";
 
-export const metadata = { title: "Profilim | AnıBaskı" };
+export const metadata = { title: "Profilim", robots: { index: false, follow: false } };
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "Beklemede", PREPARING: "Hazırlanıyor",

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import OrderStatusSelect from "./OrderStatusSelect";
 import OrderTrackingInput from "./OrderTrackingInput";
 
@@ -18,7 +18,7 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default async function AdminSiparislerPage() {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data: orders } = await supabase
     .from("orders")
     .select(`id, status, total, createdAt, "trackingCode", items:order_items(id, quantity, variantSelections, product:products(name)), address:addresses!orders_addressId_fkey(fullName, city)`)

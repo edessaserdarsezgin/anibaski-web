@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Admin | AnıBaskı" };
 
@@ -15,7 +15,7 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default async function AdminPage() {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const [
     { count: orderCount },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const STATUSES = ["PENDING", "PREPARING", "SHIPPED", "DELIVERED", "CANCELLED"];
 const STATUS_LABEL: Record<string, string> = {
@@ -16,16 +17,22 @@ export default function OrderStatusSelect({
 }) {
   const [status, setStatus] = useState(currentStatus);
   const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
 
   async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const next = e.target.value;
     setSaving(true);
-    await fetch(`/api/admin/orders/${orderId}`, {
+    const res = await fetch(`/api/admin/orders/${orderId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: next }),
     });
-    setStatus(next);
+    if (res.ok) {
+      setStatus(next);
+      toast(`Durum güncellendi: ${STATUS_LABEL[next]}`);
+    } else {
+      toast("Durum güncellenemedi.", "error");
+    }
     setSaving(false);
   }
 

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -7,9 +8,20 @@ type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const supabase = await createClient();
-  const { data: category } = await supabase.from("categories").select("name").eq("slug", slug).single();
+  const { data: category } = await supabase
+    .from("categories")
+    .select("name, description")
+    .eq("slug", slug)
+    .single();
   if (!category) return {};
-  return { title: `${category.name} | AnıBaskı` };
+  const description = category.description
+    ? String(category.description).slice(0, 155)
+    : `${category.name} ürünlerini keşfedin. AnıBaskı ile anılarınızı kalıcı hediyelere dönüştürün.`;
+  return {
+    title: category.name,
+    description,
+    openGraph: { title: category.name, description },
+  };
 }
 
 export default async function KategoriPage({ params }: Props) {
@@ -59,9 +71,9 @@ export default async function KategoriPage({ params }: Props) {
               href={`/urunler/${product.slug}`}
               className="group bg-white rounded-xl border border-border overflow-hidden hover:shadow-hover hover:border-primary transition-all"
             >
-              <div className="aspect-square bg-bg flex items-center justify-center text-text-light text-sm">
+              <div className="relative aspect-square bg-bg flex items-center justify-center text-text-light text-sm">
                 {product.images?.[0] ? (
-                  <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                  <Image src={product.images[0]} alt={product.name} fill className="object-cover" sizes="(max-width: 768px) 50vw, 25vw" />
                 ) : (
                   <span>Görsel yok</span>
                 )}
