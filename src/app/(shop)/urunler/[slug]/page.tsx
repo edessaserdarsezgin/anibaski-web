@@ -1,34 +1,39 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { prisma } from "@/lib/db/prisma";
+import { createClient } from "@/lib/supabase/server";
 import AddToCartButton from "./AddToCartButton";
+import ProductGallery from "./ProductGallery";
 
 type Props = { params: Promise<{ slug: string }> };
 
-export async function generateStaticParams() {
-  const products = await prisma.product.findMany({ select: { slug: true } });
-  return products.map((p) => ({ slug: p.slug }));
-}
-
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
-  const product = await prisma.product.findUnique({ where: { slug } });
+  const supabase = await createClient();
+  const { data: product } = await supabase.from("products").select("name").eq("slug", slug).single();
   if (!product) return {};
   return { title: `${product.name} | AnıBaskı` };
 }
 
 export default async function UrunDetayPage({ params }: Props) {
   const { slug } = await params;
+  const supabase = await createClient();
 
-  const product = await prisma.product.findUnique({
-    where: { slug },
-    include: { category: true, variants: true },
-  });
+  const [{ data: product }, { data: { user } }] = await Promise.all([
+    supabase.from("products").select("*, category:categories(id, name, slug)").eq("slug", slug).single(),
+    supabase.auth.getUser(),
+  ]);
 
   if (!product) notFound();
 
-  // Varyantları tip bazında grupla
-  const variantGroups = product.variants.reduce<Record<string, typeof product.variants>>((acc, v) => {
+  const { data: variants } = await supabase
+    .from("product_variants")
+    .select("id, type, label, value, priceAddon")
+    .eq("productId", product.id)
+    .order("type");
+
+  type RawVariant = { id: string; type: string; label: string; value: string; priceAddon?: unknown };
+
+  const variantGroups = (variants ?? []).reduce<Record<string, RawVariant[]>>((acc, v) => {
     if (!acc[v.type]) acc[v.type] = [];
     acc[v.type].push(v);
     return acc;
@@ -36,10 +41,10 @@ export default async function UrunDetayPage({ params }: Props) {
 
   return (
     <div className="max-w-6xl mx-auto px-8 py-12">
-      <p className="text-sm text-[var(--color-text-light)] mb-8">
-        <Link href="/" className="hover:text-[var(--color-primary)]">Ana Sayfa</Link>
+      <p className="text-sm text-text-light mb-8">
+        <Link href="/" className="hover:text-primary">Ana Sayfa</Link>
         {" / "}
-        <Link href={`/kategoriler/${product.category.slug}`} className="hover:text-[var(--color-primary)]">
+        <Link href={`/kategoriler/${product.category.slug}`} className="hover:text-primary">
           {product.category.name}
         </Link>
         {" / "}
@@ -47,29 +52,25 @@ export default async function UrunDetayPage({ params }: Props) {
       </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Görsel */}
-        <div className="aspect-square bg-[var(--color-bg)] rounded-2xl border border-[var(--color-border)] flex items-center justify-center overflow-hidden">
-          {product.images[0] ? (
-            <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-[var(--color-text-light)] text-sm">Görsel yok</span>
-          )}
-        </div>
+        <ProductGallery images={product.images ?? []} name={product.name} />
 
-        {/* Bilgiler */}
         <div className="flex flex-col">
-          <p className="text-sm text-[var(--color-text-light)] mb-1">{product.category.name}</p>
-          <h1 className="font-serif text-3xl text-[var(--color-text)] mb-3">{product.name}</h1>
+          <p className="text-sm text-text-light mb-1">{product.category.name}</p>
+          <h1 className="font-serif text-3xl text-text mb-3">{product.name}</h1>
 
           {product.description && (
-            <p className="text-[var(--color-text-light)] mb-6">{product.description}</p>
+            <p className="text-text-light mb-6">{product.description}</p>
           )}
 
           <AddToCartButton
+            isLoggedIn={!!user}
             product={{
               id: product.id,
               name: product.name,
               basePrice: Number(product.basePrice),
+              image: product.images?.[0] ?? "",
+              requiresPhotoUpload: product.requiresPhotoUpload ?? false,
+              photoCount: product.photoCount ?? 1,
             }}
             variantGroups={Object.entries(variantGroups).map(([type, items]) => ({
               type,
@@ -77,7 +78,7 @@ export default async function UrunDetayPage({ params }: Props) {
                 id: v.id,
                 label: v.label,
                 value: v.value,
-                priceAddon: Number(v.priceAddon),
+                priceAddon: Number(v.priceAddon ?? 0),
               })),
             }))}
           />

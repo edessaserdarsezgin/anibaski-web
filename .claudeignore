@@ -1,0 +1,49 @@
+# Bağımlılıklar
+node_modules/
+.pnp/
+.pnp.js
+
+# Build çıktıları
+.next/
+out/
+dist/
+build/
+
+# Lock dosyaları (büyük, okunması gerekmez)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Prisma migration geçmişi
+prisma/migrations/
+
+# Log dosyaları
+*.log
+npm-debug.log*
+logs/
+
+# Ortam değişkenleri (güvenlik + gereksiz)
+.env
+.env.local
+.env.*.local
+
+# Cache dizinleri
+.cache/
+.turbo/
+.vercel/
+.swc/
+
+# IDE
+.vscode/
+.idea/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Araştırma / tasarım referansları
+.lazyweb/
+_prototype/
+
+# Tip üretimi (prisma generate çıktısı)
+node_modules/.prisma/

@@ -41,15 +41,15 @@ export default function KayitPage() {
   if (success) {
     return (
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl border border-[var(--color-border)] shadow-[var(--shadow-soft)] p-8 text-center">
+        <div className="bg-white rounded-2xl border border-border shadow-soft p-8 text-center">
           <div className="text-4xl mb-4">📬</div>
-          <h2 className="font-serif text-xl text-[var(--color-text)] mb-2">E-postanı doğrula</h2>
-          <p className="text-sm text-[var(--color-text-light)] mb-6">
+          <h2 className="font-serif text-xl text-text mb-2">E-postanı doğrula</h2>
+          <p className="text-sm text-text-light mb-6">
             <strong>{email}</strong> adresine bir doğrulama bağlantısı gönderdik. Bağlantıya tıkladıktan sonra giriş yapabilirsin.
           </p>
           <Link
             href="/giris"
-            className="inline-block px-6 py-2.5 bg-[var(--color-primary)] text-white text-sm font-semibold rounded-full hover:bg-[var(--color-primary-hover)] transition-colors"
+            className="inline-block px-6 py-2.5 bg-primary text-white text-sm font-semibold rounded-full hover:bg-primary-hover transition-colors"
           >
             Giriş sayfasına git
           </Link>
@@ -68,11 +68,11 @@ export default function KayitPage() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="bg-white rounded-2xl border border-[var(--color-border)] shadow-[var(--shadow-soft)] p-8">
-        <h1 className="font-serif text-2xl text-[var(--color-text)] mb-1">Hesap Oluştur</h1>
-        <p className="text-sm text-[var(--color-text-light)] mb-8">
+      <div className="bg-white rounded-2xl border border-border shadow-soft p-8">
+        <h1 className="font-serif text-2xl text-text mb-1">Hesap Oluştur</h1>
+        <p className="text-sm text-text-light mb-8">
           Zaten hesabın var mı?{" "}
-          <Link href="/giris" className="text-[var(--color-primary)] hover:underline font-semibold">
+          <Link href="/giris" className="text-primary hover:underline font-semibold">
             Giriş yap
           </Link>
         </p>
@@ -80,7 +80,7 @@ export default function KayitPage() {
         <button
           type="button"
           onClick={handleGoogle}
-          className="w-full flex items-center justify-center gap-3 py-2.5 border border-[var(--color-border)] rounded-full text-sm font-semibold text-[var(--color-text)] hover:bg-gray-50 transition-colors mb-6"
+          className="w-full flex items-center justify-center gap-3 py-2.5 border border-border rounded-full text-sm font-semibold text-text hover:bg-gray-50 transition-colors mb-6"
         >
           <svg width="18" height="18" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -92,40 +92,40 @@ export default function KayitPage() {
         </button>
 
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex-1 h-px bg-[var(--color-border)]" />
-          <span className="text-xs text-[var(--color-text-light)]">veya e-posta ile</span>
-          <div className="flex-1 h-px bg-[var(--color-border)]" />
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-xs text-text-light">veya e-posta ile</span>
+          <div className="flex-1 h-px bg-border" />
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-[var(--color-text)]">Ad Soyad</label>
+            <label className="text-sm font-semibold text-text">Ad Soyad</label>
             <input
               type="text"
               required
               autoComplete="name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="px-4 py-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)] text-sm outline-none focus:border-[var(--color-primary)] transition-colors"
+              className="px-4 py-2.5 rounded-lg border border-border bg-bg text-text text-sm outline-none focus:border-primary transition-colors"
               placeholder="Adınız Soyadınız"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-[var(--color-text)]">E-posta</label>
+            <label className="text-sm font-semibold text-text">E-posta</label>
             <input
               type="email"
               required
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="px-4 py-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)] text-sm outline-none focus:border-[var(--color-primary)] transition-colors"
+              className="px-4 py-2.5 rounded-lg border border-border bg-bg text-text text-sm outline-none focus:border-primary transition-colors"
               placeholder="ornek@mail.com"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-[var(--color-text)]">Şifre</label>
+            <label className="text-sm font-semibold text-text">Şifre</label>
             <input
               type="password"
               required
@@ -133,7 +133,7 @@ export default function KayitPage() {
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="px-4 py-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)] text-sm outline-none focus:border-[var(--color-primary)] transition-colors"
+              className="px-4 py-2.5 rounded-lg border border-border bg-bg text-text text-sm outline-none focus:border-primary transition-colors"
               placeholder="En az 6 karakter"
             />
           </div>
@@ -147,7 +147,7 @@ export default function KayitPage() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] disabled:opacity-60 text-white font-semibold rounded-full transition-colors"
+            className="mt-2 py-3 bg-primary hover:bg-primary-hover disabled:opacity-60 text-white font-semibold rounded-full transition-colors"
           >
             {loading ? "Kayıt oluşturuluyor..." : "Kayıt Ol"}
           </button>

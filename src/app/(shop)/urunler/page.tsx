@@ -1,72 +1,65 @@
 import Link from "next/link";
-import { prisma } from "@/lib/db/prisma";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Tüm Ürünler | AnıBaskı" };
 
 export default async function UrunlerPage() {
-  const [products, categories] = await Promise.all([
-    prisma.product.findMany({
-      include: { category: true },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.category.findMany({ orderBy: { name: "asc" } }),
+  const supabase = await createClient();
+
+  const [{ data: products }, { data: categories }] = await Promise.all([
+    supabase.from("products").select("id, name, slug, description, basePrice, images, category:categories(name)").order("createdAt", { ascending: false }),
+    supabase.from("categories").select("id, name, slug").order("name"),
   ]);
 
   return (
     <div className="max-w-6xl mx-auto px-8 py-12">
       <div className="mb-10">
-        <h1 className="font-serif text-3xl text-[var(--color-text)]">Tüm Ürünler</h1>
-        <p className="mt-2 text-[var(--color-text-light)]">
-          {products.length} ürün listeleniyor
+        <h1 className="font-serif text-3xl text-text">Tüm Ürünler</h1>
+        <p className="mt-2 text-text-light">
+          {products?.length ?? 0} ürün listeleniyor
         </p>
       </div>
 
       <div className="flex gap-2 flex-wrap mb-8">
-        <Link
-          href="/urunler"
-          className="px-4 py-1.5 rounded-full text-sm font-semibold border border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
-        >
+        <Link href="/urunler" className="px-4 py-1.5 rounded-full text-sm font-semibold border border-primary bg-primary text-white">
           Tümü
         </Link>
-        {categories.map((cat) => (
+        {categories?.map((cat) => (
           <Link
             key={cat.id}
             href={`/kategoriler/${cat.slug}`}
-            className="px-4 py-1.5 rounded-full text-sm font-semibold border border-[var(--color-border)] text-[var(--color-text-light)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors"
+            className="px-4 py-1.5 rounded-full text-sm font-semibold border border-border text-text-light hover:border-primary hover:text-primary transition-colors"
           >
             {cat.name}
           </Link>
         ))}
       </div>
 
-      {products.length === 0 ? (
-        <div className="text-center py-24 text-[var(--color-text-light)]">
+      {!products?.length ? (
+        <div className="text-center py-24 text-text-light">
           <p className="text-lg">Henüz ürün bulunmuyor.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {products.map((product) => (
             <Link
               key={product.id}
               href={`/urunler/${product.slug}`}
-              className="group bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden hover:shadow-[var(--shadow-hover)] hover:border-[var(--color-primary)] transition-all"
+              className="group bg-white rounded-xl border border-border overflow-hidden hover:shadow-hover hover:border-primary transition-all"
             >
-              <div className="aspect-square bg-[var(--color-bg)] flex items-center justify-center text-[var(--color-text-light)] text-sm">
-                {product.images[0] ? (
+              <div className="aspect-square bg-bg flex items-center justify-center text-text-light text-sm">
+                {product.images?.[0] ? (
                   <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
                 ) : (
                   <span>Görsel yok</span>
                 )}
               </div>
-              <div className="p-5">
-                <p className="text-xs text-[var(--color-text-light)] mb-1">{product.category.name}</p>
-                <h2 className="font-serif text-lg text-[var(--color-text)] group-hover:text-[var(--color-primary)] transition-colors">
+              <div className="p-3">
+                <p className="text-xs text-text-light mb-0.5">{(product.category as unknown as { name: string } | null)?.name}</p>
+                <h2 className="font-serif text-sm text-text group-hover:text-primary transition-colors line-clamp-1">
                   {product.name}
                 </h2>
-                {product.description && (
-                  <p className="mt-1 text-sm text-[var(--color-text-light)] line-clamp-2">{product.description}</p>
-                )}
-                <p className="mt-3 font-semibold text-[var(--color-primary)]">
+                <p className="mt-1.5 text-sm font-semibold text-primary">
                   {Number(product.basePrice).toLocaleString("tr-TR")} ₺
                 </p>
               </div>

@@ -5,10 +5,12 @@ import { useEffect, useState } from "react";
 export type CartItem = {
   productId: string;
   productName: string;
+  productImage: string;
   basePrice: number;
   variantSelections: Record<string, { id: string; label: string; value: string; priceAddon: number }>;
   quantity: number;
   unitPrice: number;
+  uploadedImages?: string[];
 };
 
 const CART_KEY = "cart";

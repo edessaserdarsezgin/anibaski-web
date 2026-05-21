@@ -2,17 +2,20 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-export default function GirisPage() {
+function GirisForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") ?? "/";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const urlError = searchParams.get("error");
+  const [error, setError] = useState(
+    urlError ? "Giriş başarısız: " + decodeURIComponent(urlError) : ""
+  );
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -43,11 +46,11 @@ export default function GirisPage() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="bg-white rounded-2xl border border-[var(--color-border)] shadow-[var(--shadow-soft)] p-8">
-        <h1 className="font-serif text-2xl text-[var(--color-text)] mb-1">Giriş Yap</h1>
-        <p className="text-sm text-[var(--color-text-light)] mb-8">
+      <div className="bg-white rounded-2xl border border-border shadow-soft p-8">
+        <h1 className="font-serif text-2xl text-text mb-1">Giriş Yap</h1>
+        <p className="text-sm text-text-light mb-8">
           Hesabın yok mu?{" "}
-          <Link href="/kayit" className="text-[var(--color-primary)] hover:underline font-semibold">
+          <Link href="/kayit" className="text-primary hover:underline font-semibold">
             Kayıt ol
           </Link>
         </p>
@@ -55,7 +58,7 @@ export default function GirisPage() {
         <button
           type="button"
           onClick={handleGoogle}
-          className="w-full flex items-center justify-center gap-3 py-2.5 border border-[var(--color-border)] rounded-full text-sm font-semibold text-[var(--color-text)] hover:bg-gray-50 transition-colors mb-6"
+          className="w-full flex items-center justify-center gap-3 py-2.5 border border-border rounded-full text-sm font-semibold text-text hover:bg-gray-50 transition-colors mb-6"
         >
           <svg width="18" height="18" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -67,34 +70,34 @@ export default function GirisPage() {
         </button>
 
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex-1 h-px bg-[var(--color-border)]" />
-          <span className="text-xs text-[var(--color-text-light)]">veya e-posta ile</span>
-          <div className="flex-1 h-px bg-[var(--color-border)]" />
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-xs text-text-light">veya e-posta ile</span>
+          <div className="flex-1 h-px bg-border" />
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-[var(--color-text)]">E-posta</label>
+            <label className="text-sm font-semibold text-text">E-posta</label>
             <input
               type="email"
               required
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="px-4 py-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)] text-sm outline-none focus:border-[var(--color-primary)] transition-colors"
+              className="px-4 py-2.5 rounded-lg border border-border bg-bg text-text text-sm outline-none focus:border-primary transition-colors"
               placeholder="ornek@mail.com"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-[var(--color-text)]">Şifre</label>
+            <label className="text-sm font-semibold text-text">Şifre</label>
             <input
               type="password"
               required
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="px-4 py-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)] text-sm outline-none focus:border-[var(--color-primary)] transition-colors"
+              className="px-4 py-2.5 rounded-lg border border-border bg-bg text-text text-sm outline-none focus:border-primary transition-colors"
               placeholder="••••••••"
             />
           </div>
@@ -108,12 +111,20 @@ export default function GirisPage() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] disabled:opacity-60 text-white font-semibold rounded-full transition-colors"
+            className="mt-2 py-3 bg-primary hover:bg-primary-hover disabled:opacity-60 text-white font-semibold rounded-full transition-colors"
           >
             {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
           </button>
         </form>
       </div>
     </div>
+  );
+}
+
+export default function GirisPage() {
+  return (
+    <Suspense>
+      <GirisForm />
+    </Suspense>
   );
 }

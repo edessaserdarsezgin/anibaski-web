@@ -34,7 +34,7 @@ export default function OrderStatusSelect({
       value={status}
       onChange={handleChange}
       disabled={saving}
-      className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-[var(--color-border)] bg-white text-[var(--color-text)] outline-none focus:border-[var(--color-primary)] transition-colors disabled:opacity-50"
+      className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-border bg-white text-text outline-none focus:border-primary transition-colors disabled:opacity-50"
     >
       {STATUSES.map((s) => (
         <option key={s} value={s}>{STATUS_LABEL[s]}</option>

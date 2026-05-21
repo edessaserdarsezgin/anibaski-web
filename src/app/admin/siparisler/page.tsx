@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@/lib/db/prisma";
+import { createClient } from "@/lib/supabase/server";
 import OrderStatusSelect from "./OrderStatusSelect";
 
 export const metadata = { title: "Siparişler | Admin" };
@@ -17,54 +17,69 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default async function AdminSiparislerPage() {
-  const orders = await prisma.order.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { items: { include: { product: true } }, address: true },
-  });
+  const supabase = await createClient();
+  const { data: orders } = await supabase
+    .from("orders")
+    .select("id, status, total, createdAt, items:order_items(id, quantity, variantSelections, product:products(name)), address:addresses!orders_addressId_fkey(fullName, city)")
+    .order("createdAt", { ascending: false });
 
   return (
     <div>
-      <h1 className="font-serif text-3xl text-[var(--color-text)] mb-8">Siparişler</h1>
+      <h1 className="font-serif text-3xl text-text mb-8">Siparişler</h1>
 
-      <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
-        {orders.length === 0 ? (
-          <p className="text-sm text-[var(--color-text-light)] p-6">Henüz sipariş yok.</p>
+      <div className="bg-white rounded-2xl border border-border overflow-hidden">
+        {!orders?.length ? (
+          <p className="text-sm text-text-light p-6">Henüz sipariş yok.</p>
         ) : (
           <table className="w-full text-sm">
-            <thead className="border-b border-[var(--color-border)] bg-[var(--color-bg)]">
-              <tr className="text-[var(--color-text-light)]">
+            <thead className="border-b border-border bg-bg">
+              <tr className="text-text-light">
                 <th className="text-left px-6 py-3 font-semibold">Sipariş</th>
                 <th className="text-left px-4 py-3 font-semibold">Müşteri</th>
                 <th className="text-left px-4 py-3 font-semibold">Ürünler</th>
                 <th className="text-left px-4 py-3 font-semibold">Durum</th>
                 <th className="text-right px-6 py-3 font-semibold">Toplam</th>
+                <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody>
               {orders.map((order) => (
-                <tr key={order.id} className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-bg)] transition-colors">
+                <tr key={order.id} className="border-b border-border last:border-0 hover:bg-bg transition-colors">
                   <td className="px-6 py-4">
-                    <p className="font-mono text-[var(--color-text-light)] text-xs">#{order.id.slice(0, 8).toUpperCase()}</p>
-                    <p className="text-xs text-[var(--color-text-light)] mt-0.5">
+                    <p className="font-mono text-text-light text-xs">#{order.id.slice(0, 8).toUpperCase()}</p>
+                    <p className="text-xs text-text-light mt-0.5">
                       {new Date(order.createdAt).toLocaleDateString("tr-TR")}
                     </p>
                   </td>
-                  <td className="px-4 py-4 text-[var(--color-text-light)]">
-                    {order.address.fullName}
-                    <p className="text-xs">{order.address.city}</p>
+                  <td className="px-4 py-4 text-text-light">
+                    {(order.address as unknown as { fullName: string; city: string } | null)?.fullName}
+                    <p className="text-xs">{(order.address as unknown as { fullName: string; city: string } | null)?.city}</p>
                   </td>
                   <td className="px-4 py-4">
-                    {order.items.map((item) => (
-                      <p key={item.id} className="text-[var(--color-text-light)]">
-                        {item.product.name} ×{item.quantity}
-                      </p>
-                    ))}
+                    {order.items?.map((item) => {
+                      const product = item.product as unknown as { name: string } | null;
+                      const variants = item.variantSelections as Record<string, { label: string }> | null;
+                      const variantText = variants && Object.keys(variants).length > 0
+                        ? Object.values(variants).map(v => v.label).join(", ")
+                        : null;
+                      return (
+                        <div key={item.id} className="mb-1 last:mb-0">
+                          <p className="text-text">{product?.name} ×{item.quantity}</p>
+                          {variantText && <p className="text-xs text-text-light">{variantText}</p>}
+                        </div>
+                      );
+                    })}
                   </td>
                   <td className="px-4 py-4">
                     <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
                   </td>
-                  <td className="px-6 py-4 text-right font-semibold text-[var(--color-primary)]">
+                  <td className="px-6 py-4 text-right font-semibold text-primary">
                     {Number(order.total).toLocaleString("tr-TR")} ₺
+                  </td>
+                  <td className="px-4 py-4">
+                    <Link href={`/siparisler/${order.id}`} className="text-xs text-primary hover:underline font-semibold">
+                      Detay
+                    </Link>
                   </td>
                 </tr>
               ))}

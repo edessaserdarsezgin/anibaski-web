@@ -1,67 +1,76 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { prisma } from "@/lib/db/prisma";
+import { sendOrderNotification } from "@/lib/email/orderNotification";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { address, paymentMethod, items, subtotal, shippingFee, total } = body;
+  const { shippingAddressId, billingAddressId, paymentMethod, items, subtotal, shippingFee, total } = body;
 
-  // Profil yoksa oluştur
-  await prisma.profile.upsert({
-    where: { id: user.id },
-    update: {},
-    create: {
-      id: user.id,
-      email: user.email!,
-      fullName: user.user_metadata?.full_name ?? null,
-    },
+  if (!shippingAddressId) return NextResponse.json({ error: "Teslimat adresi gerekli" }, { status: 400 });
+
+  await supabase.from("profiles").upsert({
+    id: user.id,
+    email: user.email!,
+    fullName: user.user_metadata?.full_name ?? null,
   });
 
-  // Adresi kaydet
-  const savedAddress = await prisma.address.create({
-    data: {
+  const { data: order, error: orderError } = await supabase
+    .from("orders")
+    .insert({
       userId: user.id,
-      title: "Teslimat Adresi",
-      fullName: address.fullName,
-      phone: address.phone,
-      address: address.address,
-      city: address.city,
-      district: address.district,
-      zip: address.zip ?? null,
-    },
-  });
-
-  // Siparişi oluştur
-  const order = await prisma.order.create({
-    data: {
-      userId: user.id,
-      addressId: savedAddress.id,
+      addressId: shippingAddressId,
+      billingAddressId: billingAddressId ?? shippingAddressId,
       paymentMethod,
       subtotal,
       shippingFee,
       total,
-      items: {
-        create: items.map((item: {
-          productId: string;
-          variantSelections: Record<string, unknown>;
-          quantity: number;
-          unitPrice: number;
-        }) => ({
-          productId: item.productId,
-          variantSelections: item.variantSelections ?? {},
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-        })),
-      },
-    },
-  });
+      status: "PENDING",
+    })
+    .select("id")
+    .single();
+
+  if (orderError || !order) {
+    return NextResponse.json({ error: "Order save failed" }, { status: 500 });
+  }
+
+  const orderItems = items.map((item: {
+    productId: string;
+    variantSelections: Record<string, unknown>;
+    quantity: number;
+    unitPrice: number;
+    uploadedImages?: string[];
+  }) => ({
+    orderId: order.id,
+    productId: item.productId,
+    variantSelections: item.variantSelections ?? {},
+    quantity: item.quantity,
+    unitPrice: item.unitPrice,
+    uploadedImages: item.uploadedImages ?? [],
+  }));
+
+  await supabase.from("order_items").insert(orderItems);
+
+  // E-posta bildirimi — hata olsa sipariş etkilenmesin
+  const { data: address } = await supabase
+    .from("addresses").select("fullName, phone, address, district, city").eq("id", shippingAddressId).single();
+
+  sendOrderNotification({
+    orderId: order.id,
+    customerEmail: user.email!,
+    customerName: user.user_metadata?.full_name ?? null,
+    items: items.map((item: { productId: string; variantSelections: Record<string, unknown>; quantity: number; unitPrice: number; uploadedImages?: string[]; productName?: string }) => ({
+      productName: item.productName ?? item.productId,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      uploadedImages: item.uploadedImages ?? [],
+    })),
+    total,
+    shippingAddress: address ?? { fullName: "", phone: "", address: "", district: "", city: "" },
+  }).catch((err) => console.error("[orderNotification]", err));
 
   return NextResponse.json({ orderId: order.id });
 }
