@@ -43,5 +43,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
+05_CLAUDE_BOOTSTRAP_SHORT.txt
 /src/generated/prisma
