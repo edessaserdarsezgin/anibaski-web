@@ -1,6 +1,0 @@
-Bu oturumda AnıBaskı adlı fotoğraf baskı e‑ticaret projesi üzerinde çalışıyoruz.
-Teknoloji: Next.js + Supabase + iyzico/PayTR + n8n + Resend.
-Özellikler: çoklu fotoğraf yükleme, drag & drop sıralama, DPI kontrolü, mockup önizleme, tek sayfa checkout.
-Otomasyon: sipariş → fatura → kargo → WhatsApp → e‑posta.
-Rakipler: Sosyopix (UX), DorukBaskı (ürün), AnıBaskı (modern + otomasyon + AI).
-Cevaplarında bu bağlamı koru ve teknik/UX/otomasyon odaklı öneriler üret.
