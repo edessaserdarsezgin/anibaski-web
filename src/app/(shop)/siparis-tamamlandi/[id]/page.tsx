@@ -22,7 +22,7 @@ export default async function SiparisTamamlandiPage({ params }: Props) {
 
   const { data: order } = await supabase
     .from("orders")
-    .select("id, status, total, subtotal, shippingFee, createdAt, paymentMethod, items:order_items(id, quantity, unitPrice, product:products(name, images, slug))")
+    .select("id, userId, status, total, subtotal, shippingFee, createdAt, paymentMethod, items:order_items(id, quantity, unitPrice, product:products(name, images, slug))")
     .eq("id", id)
     .single();
 
