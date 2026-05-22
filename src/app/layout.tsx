@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Lora, Nunito } from "next/font/google";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import CookieBanner from "@/components/layout/CookieBanner";
 import "./globals.css";
 
 const lora = Lora({
@@ -40,6 +41,7 @@ export default function RootLayout({
     <html lang="tr" className={`${lora.variable} ${nunito.variable}`}>
       <body className="min-h-full flex flex-col">
         <ToastProvider>{children}</ToastProvider>
+        <CookieBanner />
       </body>
     </html>
   );

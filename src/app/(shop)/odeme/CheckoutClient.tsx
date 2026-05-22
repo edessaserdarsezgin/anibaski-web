@@ -172,7 +172,7 @@ export default function CheckoutClient({ initialAddresses }: { initialAddresses:
       if (!res.ok) throw new Error();
       const { orderId } = await res.json();
       clearCart();
-      router.push(`/siparisler/${orderId}`);
+      router.push(`/siparis-tamamlandi/${orderId}`);
     } catch {
       setError("Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.");
       setLoading(false);
