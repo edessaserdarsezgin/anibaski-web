@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { sendShippingNotification } from "@/lib/email/shippingNotification";
+import { notifyShippingUpdate } from "@/lib/whatsapp/notify";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -39,11 +40,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (order?.userId) {
     const { data: profile } = await admin.supabase
       .from("profiles")
-      .select("email, \"fullName\"")
+      .select("email, \"fullName\", phone")
       .eq("id", order.userId)
       .single();
 
     if (profile) {
+      if (profile.phone) {
+        notifyShippingUpdate({
+          phone: profile.phone,
+          orderNo: id.slice(0, 8).toUpperCase(),
+          trackingCode: trackingCode.trim(),
+        });
+      }
+
       try {
         await sendShippingNotification({
           orderId: id,

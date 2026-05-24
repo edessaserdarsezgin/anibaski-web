@@ -1,0 +1,119 @@
+{
+  "name": "AnıBaskı - WhatsApp Bildirimleri",
+  "n8nWorkflowId": "OPykcQscsFwqaopa",
+  "nodes": [
+    {
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "parameters": {
+        "path": "anibaski-bildirim",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "webhookId": "anibaski-bildirim"
+    },
+    {
+      "id": "event-switch",
+      "name": "Event Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [480, 300],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.event }}",
+                    "rightValue": "order_created",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "output": 0
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.event }}",
+                    "rightValue": "shipping_update",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "output": 1
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "wa-order",
+      "name": "WA - Siparis Bildirimi",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [720, 180],
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "ben",
+        "remoteJid": "={{ $json.body.phone + '@s.whatsapp.net' }}",
+        "messageText": "={{ `🛒 *Siparişiniz Alındı!*\\n\\nSipariş No: *${$json.body.orderNo}*\\nTutar: *${$json.body.total} ₺*\\n${$json.body.items}\\nSiparişiniz hazırlanmaya başladığında tekrar bilgilendireceğiz. 😊\\n\\n_AnıBaskı_` }}",
+        "options_message": {}
+      },
+      "credentials": {
+        "evolutionApi": {
+          "id": "44rKscZqj8K5fsAR",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "id": "wa-shipping",
+      "name": "WA - Kargo Bildirimi",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [720, 420],
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "ben",
+        "remoteJid": "={{ $json.body.phone + '@s.whatsapp.net' }}",
+        "messageText": "={{ `📦 *Siparişiniz Kargoya Verildi!*\\n\\nSipariş No: *${$json.body.orderNo}*\\nKargo Kodu: *${$json.body.trackingCode}*\\n\\nKargonuzu takip edebilirsiniz. Umarız beğenirsiniz! 🎉\\n\\n_AnıBaskı_` }}",
+        "options_message": {}
+      },
+      "credentials": {
+        "evolutionApi": {
+          "id": "44rKscZqj8K5fsAR",
+          "name": "Evolution account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [{ "node": "Event Switch", "type": "main", "index": 0 }]
+      ]
+    },
+    "Event Switch": {
+      "main": [
+        [{ "node": "WA - Siparis Bildirimi", "type": "main", "index": 0 }],
+        [{ "node": "WA - Kargo Bildirimi", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

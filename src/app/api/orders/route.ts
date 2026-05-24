@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { sendOrderNotification } from "@/lib/email/orderNotification";
+import { notifyOrderCreated } from "@/lib/whatsapp/notify";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
         : Math.min(Number(coupon.discount_value), subtotal);
       validatedCouponCode = coupon.code;
 
-      await supabase.from("coupons").update({ used_count: coupon.used_count + 1 }).eq("id", coupon.id);
+      await createAdminClient().from("coupons").update({ used_count: coupon.used_count + 1 }).eq("id", coupon.id);
     }
   }
 
@@ -84,6 +85,18 @@ export async function POST(req: NextRequest) {
   // E-posta bildirimi — hata olsa sipariş etkilenmesin
   const { data: address } = await supabase
     .from("addresses").select("fullName, phone, address, district, city").eq("id", shippingAddressId).single();
+
+  // WhatsApp bildirimi — e-posta gibi fire-and-forget
+  if (address?.phone) {
+    notifyOrderCreated({
+      phone: address.phone,
+      orderNo: order.id.slice(0, 8).toUpperCase(),
+      total: total,
+      items: items.map((item: { productName?: string; productId: string; quantity: number }) =>
+        `• ${item.productName ?? item.productId} ×${item.quantity}`
+      ).join("\n"),
+    });
+  }
 
   sendOrderNotification({
     orderId: order.id,
