@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
 
@@ -133,6 +133,45 @@ export default function CheckoutClient({ initialAddresses }: { initialAddresses:
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("credit_card");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [paytrToken, setPaytrToken] = useState<string | null>(null);
+  const [mssAccepted, setMssAccepted] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // PayTR iframe'den gelen yükseklik mesajlarını dinle
+  useEffect(() => {
+    if (!paytrToken) return;
+
+    const handleMessage = (e: MessageEvent) => {
+      if (e.origin !== "https://www.paytr.com") return;
+      const iframe = iframeRef.current;
+      if (!iframe) return;
+
+      // iFrameResizer formatı: [iFrameSizer]ID:yükseklik:...
+      if (typeof e.data === "string" && e.data.startsWith("[iFrameSizer]")) {
+        const parts = e.data.split(":");
+        const height = parseInt(parts[1]);
+        if (!isNaN(height) && height > 0) {
+          iframe.style.height = height + "px";
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+
+    // paytr.js'yi yükle
+    const script = document.createElement("script");
+    script.src = "https://www.paytrcdn.com/paytr.js";
+    script.onload = () => {
+      const win = window as unknown as { iFrameResize?: (opts: object, selector: string) => void };
+      win.iFrameResize?.({ checkOrigin: false }, "#paytriframe");
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      if (document.body.contains(script)) document.body.removeChild(script);
+    };
+  }, [paytrToken]);
 
   const shippingFee = total >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
   const codFee = paymentMethod === "cod" ? COD_FEE : 0;
@@ -150,12 +189,14 @@ export default function CheckoutClient({ initialAddresses }: { initialAddresses:
     e.preventDefault();
     if (!shippingId) { setError("Lütfen bir teslimat adresi seçin."); return; }
     if (!billingSame && !billingId) { setError("Lütfen bir fatura adresi seçin."); return; }
+    if (!mssAccepted) { setError("Devam edebilmek için Mesafeli Satış Sözleşmesi'ni onaylamanız gerekiyor."); return; }
 
     setError("");
     setLoading(true);
 
     try {
-      const res = await fetch("/api/orders", {
+      // 1. Siparişi oluştur
+      const orderRes = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -169,21 +210,65 @@ export default function CheckoutClient({ initialAddresses }: { initialAddresses:
         }),
       });
 
-      if (!res.ok) throw new Error();
-      const { orderId } = await res.json();
+      if (!orderRes.ok) throw new Error();
+      const { orderId } = await orderRes.json();
+
+      // Kapıda ödeme → doğrudan teşekkür sayfasına
+      if (paymentMethod === "cod") {
+        clearCart();
+        router.push(`/siparis-tamamlandi/${orderId}`);
+        return;
+      }
+
+      // Kredi kartı → PayTR iframe token al
+      const tokenRes = await fetch("/api/paytr/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+
+      if (!tokenRes.ok) {
+        const { error: tokenErr } = await tokenRes.json();
+        throw new Error(tokenErr ?? "Ödeme başlatılamadı");
+      }
+
+      const { token } = await tokenRes.json();
       clearCart();
-      router.push(`/siparis-tamamlandi/${orderId}`);
-    } catch {
-      setError("Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.");
+      setPaytrToken(token);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bir hata oluştu. Lütfen tekrar deneyin.");
       setLoading(false);
     }
   }
 
-  if (items.length === 0) {
+  if (items.length === 0 && !paytrToken) {
     return (
       <div className="max-w-6xl mx-auto px-8 py-24 text-center">
         <h1 className="font-serif text-2xl text-text mb-4">Sepetiniz boş</h1>
         <a href="/urunler" className="text-primary hover:underline font-semibold">Ürünlere git</a>
+      </div>
+    );
+  }
+
+  // PayTR iframe görünümü
+  if (paytrToken) {
+    return (
+      <div className="w-full max-w-xl mx-auto px-4 py-8">
+        <p className="text-center text-xs text-secondary mb-4 flex items-center justify-center gap-1.5">
+          <svg className="w-3.5 h-3.5 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          PayTR güvenli ödeme altyapısı — 256-bit SSL
+        </p>
+        <iframe
+          ref={iframeRef}
+          src={`https://www.paytr.com/odeme/guvenli/${paytrToken}`}
+          id="paytriframe"
+          frameBorder="0"
+          scrolling="no"
+          style={{ width: "100%", height: 900, minHeight: 900 }}
+          allow="payment"
+        />
       </div>
     );
   }
@@ -258,8 +343,9 @@ export default function CheckoutClient({ initialAddresses }: { initialAddresses:
                 ))}
               </div>
               {paymentMethod === "credit_card" && (
-                <div className="mt-4 p-4 rounded-xl bg-bg border border-border text-sm text-text-light text-center">
-                  Ödeme entegrasyonu yakında eklenecek (İyzico / PayTR)
+                <div className="mt-4 p-4 rounded-xl bg-bg border border-border text-sm text-text-light text-center flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                  <span>PayTR güvenli ödeme altyapısı — 256-bit SSL şifreleme</span>
                 </div>
               )}
             </div>
@@ -305,12 +391,35 @@ export default function CheckoutClient({ initialAddresses }: { initialAddresses:
                   {grandTotal.toLocaleString("tr-TR")} ₺
                 </span>
               </div>
+              {/* MSS onay */}
+              <label className="flex items-start gap-3 cursor-pointer mb-4">
+                <input
+                  type="checkbox"
+                  checked={mssAccepted}
+                  onChange={(e) => setMssAccepted(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 accent-primary flex-shrink-0"
+                />
+                <span className="text-xs text-text-light leading-relaxed">
+                  <a href="/politikalar/mesafeli-satis-sozlesmesi" target="_blank"
+                    className="text-primary underline hover:no-underline">
+                    Mesafeli Satış Sözleşmesi
+                  </a>
+                  &apos;ni ve{" "}
+                  <a href="/politikalar/iptal-iade" target="_blank"
+                    className="text-primary underline hover:no-underline">
+                    İptal & İade Politikası
+                  </a>
+                  &apos;nı okudum, kabul ediyorum.
+                </span>
+              </label>
               {error && (
                 <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-lg px-4 py-2.5 mb-4">{error}</p>
               )}
-              <button type="submit" disabled={loading}
+              <button type="submit" disabled={loading || !mssAccepted}
                 className="w-full py-3.5 bg-primary hover:bg-primary-hover disabled:opacity-60 text-white font-semibold rounded-full transition-colors">
-                {loading ? "Sipariş oluşturuluyor..." : "Siparişi Onayla"}
+                {loading
+                  ? (paymentMethod === "credit_card" ? "Ödeme hazırlanıyor..." : "Sipariş oluşturuluyor...")
+                  : (paymentMethod === "credit_card" ? "Ödemeye Geç" : "Siparişi Onayla")}
               </button>
             </div>
           </div>
