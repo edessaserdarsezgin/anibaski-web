@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
-import { notifyStatusUpdate, notifyShippingUpdate } from "@/lib/whatsapp/notify";
+import { notifyStatusUpdate, notifyShippingUpdate, notifyCancelApproved, notifyCancelRejected } from "@/lib/whatsapp/notify";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -18,33 +18,48 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params;
   const { status } = await req.json();
 
-  const validStatuses = ["PENDING", "PREPARING", "SHIPPED", "DELIVERED", "CANCELLED"];
+  const validStatuses = ["PENDING", "PREPARING", "SHIPPED", "DELIVERED", "CANCELLED", "CANCEL_REQUESTED"];
   if (!validStatuses.includes(status)) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
+
+  // Geçişi belirlemek için mevcut durumu al
+  const { data: current } = await admin.supabase
+    .from("orders")
+    .select('"userId", "addressId", "trackingCode", status')
+    .eq("id", id)
+    .single();
+
+  if (!current) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const prevStatus = current.status;
 
   const { data: order, error } = await admin.supabase
     .from("orders")
     .update({ status })
     .eq("id", id)
-    .select('"userId", "addressId", "trackingCode"')
+    .select()
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // WhatsApp bildirimi — fire-and-forget
-  if (order?.userId && ["PREPARING", "SHIPPED", "DELIVERED", "CANCELLED"].includes(status)) {
+  const notifyStatuses = ["PREPARING", "SHIPPED", "DELIVERED", "CANCELLED", "CANCEL_REQUESTED"];
+  if (current.userId && notifyStatuses.includes(status)) {
     const [{ data: profile }, { data: address }] = await Promise.all([
-      admin.supabase.from("profiles").select("phone").eq("id", order.userId).single(),
-      admin.supabase.from("addresses").select("phone").eq("id", order.addressId).single(),
+      admin.supabase.from("profiles").select("phone").eq("id", current.userId).single(),
+      admin.supabase.from("addresses").select("phone").eq("id", current.addressId).single(),
     ]);
 
     const phone = profile?.phone || address?.phone;
     if (phone) {
       const orderNo = id.slice(0, 8).toUpperCase();
-      if (status === "SHIPPED") {
-        notifyShippingUpdate({ phone, orderNo, trackingCode: order.trackingCode ?? "" });
-      } else {
+      if (prevStatus === "CANCEL_REQUESTED" && status === "CANCELLED") {
+        notifyCancelApproved({ phone, orderNo });
+      } else if (prevStatus === "CANCEL_REQUESTED" && status !== "CANCELLED") {
+        notifyCancelRejected({ phone, orderNo });
+      } else if (status === "SHIPPED") {
+        notifyShippingUpdate({ phone, orderNo, trackingCode: current.trackingCode ?? "" });
+      } else if (["PREPARING", "DELIVERED", "CANCELLED"].includes(status)) {
         notifyStatusUpdate({ phone, orderNo, status: status as "PREPARING" | "DELIVERED" | "CANCELLED" });
       }
     }

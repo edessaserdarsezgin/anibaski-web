@@ -15,6 +15,7 @@ const STATUS_COLOR: Record<string, string> = {
   SHIPPED: "text-purple-700 bg-purple-50 border-purple-200",
   DELIVERED: "text-green-700 bg-green-50 border-green-200",
   CANCELLED: "text-red-700 bg-red-50 border-red-200",
+  CANCEL_REQUESTED: "text-orange-700 bg-orange-50 border-orange-200",
 };
 
 export default async function AdminSiparislerPage() {

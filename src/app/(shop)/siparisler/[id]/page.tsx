@@ -3,13 +3,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import OrderStatusSelect from "./OrderStatusSelect";
+import CancelRequestButton from "./CancelRequestButton";
 
 type Props = { params: Promise<{ id: string }> };
 
 const STATUS_STEPS = ["PENDING", "PREPARING", "SHIPPED", "DELIVERED"];
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "Beklemede", PREPARING: "Hazırlanıyor",
-  SHIPPED: "Kargoda", DELIVERED: "Teslim Edildi", CANCELLED: "İptal Edildi",
+  SHIPPED: "Kargoda", DELIVERED: "Teslim Edildi",
+  CANCELLED: "İptal Edildi", CANCEL_REQUESTED: "İptal Talebi İnceleniyor",
 };
 const STATUS_COLOR: Record<string, string> = {
   PENDING: "text-yellow-700 bg-yellow-50 border-yellow-200",
@@ -17,6 +19,7 @@ const STATUS_COLOR: Record<string, string> = {
   SHIPPED: "text-purple-700 bg-purple-50 border-purple-200",
   DELIVERED: "text-green-700 bg-green-50 border-green-200",
   CANCELLED: "text-red-700 bg-red-50 border-red-200",
+  CANCEL_REQUESTED: "text-orange-700 bg-orange-50 border-orange-200",
 };
 const PAYMENT_LABEL: Record<string, string> = {
   credit_card: "Kredi / Banka Kartı",
@@ -49,7 +52,8 @@ export default async function SiparisDetayPage({ params }: Props) {
   if (!order || (!isAdmin && order.userId !== user.id)) notFound();
 
   const isCancelled = order.status === "CANCELLED";
-  const currentStep = isCancelled ? -1 : STATUS_STEPS.indexOf(order.status);
+  const isCancelRequested = order.status === "CANCEL_REQUESTED";
+  const currentStep = (isCancelled || isCancelRequested) ? -1 : STATUS_STEPS.indexOf(order.status);
   const items: OrderItem[] = order.items ?? [];
 
   return (
@@ -74,9 +78,14 @@ export default async function SiparisDetayPage({ params }: Props) {
           {isAdmin ? (
             <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
           ) : (
-            <span className={`text-sm font-semibold px-4 py-1.5 rounded-full border ${STATUS_COLOR[order.status]}`}>
-              {STATUS_LABEL[order.status]}
-            </span>
+            <div className="flex flex-col items-end gap-2">
+              <span className={`text-sm font-semibold px-4 py-1.5 rounded-full border ${STATUS_COLOR[order.status]}`}>
+                {STATUS_LABEL[order.status]}
+              </span>
+              {order.status === "PENDING" && (
+                <CancelRequestButton orderId={order.id} />
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -87,6 +96,10 @@ export default async function SiparisDetayPage({ params }: Props) {
         {isCancelled ? (
           <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
             Bu sipariş iptal edildi.
+          </p>
+        ) : isCancelRequested ? (
+          <p className="text-sm font-semibold text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-4 py-3">
+            İptal talebiniz inceleniyor. En kısa sürede bilgilendireceğiz.
           </p>
         ) : (
           <div className="flex items-center">

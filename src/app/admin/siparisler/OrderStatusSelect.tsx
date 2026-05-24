@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useToast } from "@/components/ui/ToastProvider";
 
-const STATUSES = ["PENDING", "PREPARING", "SHIPPED", "DELIVERED", "CANCELLED"];
+const STATUSES = ["PENDING", "PREPARING", "SHIPPED", "DELIVERED", "CANCELLED", "CANCEL_REQUESTED"];
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "Beklemede", PREPARING: "Hazırlanıyor",
   SHIPPED: "Kargoda", DELIVERED: "Teslim Edildi", CANCELLED: "İptal",
+  CANCEL_REQUESTED: "⚠️ İptal Talebi",
 };
 
 export default function OrderStatusSelect({

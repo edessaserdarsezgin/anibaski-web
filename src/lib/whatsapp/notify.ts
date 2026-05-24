@@ -56,3 +56,21 @@ export function notifyStatusUpdate(params: {
     status: params.status,
   });
 }
+
+export function notifyCancelRequested(params: { phone: string; orderNo: string }) {
+  post({ event: "cancel_requested", phone: formatPhone(params.phone), orderNo: params.orderNo });
+}
+
+export function notifyCancelApproved(params: { phone: string; orderNo: string }) {
+  post({ event: "cancel_approved", phone: formatPhone(params.phone), orderNo: params.orderNo });
+}
+
+export function notifyCancelRejected(params: { phone: string; orderNo: string }) {
+  post({ event: "cancel_rejected", phone: formatPhone(params.phone), orderNo: params.orderNo });
+}
+
+export function notifyAdminCancelRequest(params: { orderNo: string; customerName: string }) {
+  const adminPhone = process.env.ADMIN_WHATSAPP_PHONE;
+  if (!adminPhone) return;
+  post({ event: "admin_cancel_request", phone: formatPhone(adminPhone), orderNo: params.orderNo, customerName: params.customerName });
+}
