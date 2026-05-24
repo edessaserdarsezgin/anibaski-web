@@ -53,7 +53,9 @@ export default async function SiparisDetayPage({ params }: Props) {
 
   const isCancelled = order.status === "CANCELLED";
   const isCancelRequested = order.status === "CANCEL_REQUESTED";
-  const currentStep = (isCancelled || isCancelRequested) ? -1 : STATUS_STEPS.indexOf(order.status);
+  // CANCEL_REQUESTED = müşteri beklemede iken iptal istedi → adım 0 (PENDING) olarak göster
+  const displayStatus = isCancelRequested ? "PENDING" : order.status;
+  const currentStep = isCancelled ? -1 : STATUS_STEPS.indexOf(displayStatus);
   const items: OrderItem[] = order.items ?? [];
 
   return (
@@ -79,9 +81,16 @@ export default async function SiparisDetayPage({ params }: Props) {
             <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
           ) : (
             <div className="flex flex-col items-end gap-2">
-              <span className={`text-sm font-semibold px-4 py-1.5 rounded-full border ${STATUS_COLOR[order.status]}`}>
-                {STATUS_LABEL[order.status]}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-semibold px-4 py-1.5 rounded-full border ${STATUS_COLOR[displayStatus]}`}>
+                  {STATUS_LABEL[displayStatus]}
+                </span>
+                {isCancelRequested && (
+                  <span className="text-xs font-semibold px-3 py-1.5 rounded-full border text-orange-700 bg-orange-50 border-orange-200">
+                    ⚠ İptal Talebi
+                  </span>
+                )}
+              </div>
               {order.status === "PENDING" && (
                 <CancelRequestButton orderId={order.id} />
               )}
@@ -97,11 +106,13 @@ export default async function SiparisDetayPage({ params }: Props) {
           <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
             Bu sipariş iptal edildi.
           </p>
-        ) : isCancelRequested ? (
-          <p className="text-sm font-semibold text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-4 py-3">
-            İptal talebiniz inceleniyor. En kısa sürede bilgilendireceğiz.
-          </p>
         ) : (
+          <>
+          {isCancelRequested && (
+            <p className="text-sm font-semibold text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 mb-5">
+              ⚠ İptal talebiniz inceleniyor. En kısa sürede bilgilendireceğiz.
+            </p>
+          )}
           <div className="flex items-center">
             {STATUS_STEPS.map((step, i) => {
               const done = i <= currentStep;
@@ -127,6 +138,7 @@ export default async function SiparisDetayPage({ params }: Props) {
               );
             })}
           </div>
+          </>
         )}
       </div>
 
