@@ -30,29 +30,28 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // userId'yi çek
   const { data: order } = await admin.supabase
     .from("orders")
-    .select('"userId"')
+    .select('"userId", "addressId"')
     .eq("id", id)
     .single();
 
   if (order?.userId) {
-    const { data: profile } = await admin.supabase
-      .from("profiles")
-      .select("email, \"fullName\", phone")
-      .eq("id", order.userId)
-      .single();
+    const [{ data: profile }, { data: address }] = await Promise.all([
+      admin.supabase.from("profiles").select('email, "fullName", phone').eq("id", order.userId).single(),
+      admin.supabase.from("addresses").select("phone").eq("id", order.addressId).single(),
+    ]);
+
+    const phone = profile?.phone || address?.phone;
+    if (phone) {
+      notifyShippingUpdate({
+        phone,
+        orderNo: id.slice(0, 8).toUpperCase(),
+        trackingCode: trackingCode.trim(),
+      });
+    }
 
     if (profile) {
-      if (profile.phone) {
-        notifyShippingUpdate({
-          phone: profile.phone,
-          orderNo: id.slice(0, 8).toUpperCase(),
-          trackingCode: trackingCode.trim(),
-        });
-      }
-
       try {
         await sendShippingNotification({
           orderId: id,
