@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import AddToCartButton from "./AddToCartButton";
 import ProductGallery from "./ProductGallery";
 import ProductDetailsTabs from "./ProductDetailsTabs";
@@ -40,6 +40,12 @@ export default async function UrunDetayPage({ params }: Props) {
   ]);
 
   if (!product) notFound();
+
+  const adminDb = createAdminClient();
+  const { data: favRow } = user
+    ? await adminDb.from("favorites").select("id").eq("userId", user.id).eq("productId", product.id).maybeSingle()
+    : { data: null };
+  const isFavorited = !!favRow;
 
   const { data: variants } = await supabase
     .from("product_variants")
@@ -111,6 +117,7 @@ export default async function UrunDetayPage({ params }: Props) {
             {/* Fiyat ve aksiyon */}
             <AddToCartButton
               isLoggedIn={!!user}
+              isFavorited={isFavorited}
               product={{
                 id: product.id,
                 name: product.name,
