@@ -31,11 +31,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
-  const { name, slug, basePrice, categoryId, description, images } = await req.json();
+  const { name, slug, basePrice, categoryId, description, images, specs } = await req.json();
 
   const { error } = await admin.supabase
     .from("products")
-    .update({ name, slug, basePrice, categoryId, description: description || null, images })
+    .update({ name, slug, basePrice, categoryId, description: description || null, images, specs: specs || null })
     .eq("id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
