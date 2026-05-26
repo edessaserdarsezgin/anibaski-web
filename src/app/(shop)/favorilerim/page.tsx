@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import ProductCard from "@/components/product/ProductCard";
 
@@ -38,9 +39,9 @@ export default async function FavorilerimPage() {
             <p className="font-serif text-2xl text-text mb-2">Henüz favori ürün yok</p>
             <p className="text-text-light text-sm">Ürünlerdeki ♡ butonuna tıklayarak burada saklayabilirsiniz.</p>
           </div>
-          <a href="/urunler" className="px-6 py-2.5 border border-border rounded-full text-sm font-semibold text-text-light hover:border-primary hover:text-primary transition-colors">
+          <Link href="/urunler" className="px-6 py-2.5 border border-border rounded-full text-sm font-semibold text-text-light hover:border-primary hover:text-primary transition-colors">
             Ürünlere Göz At
-          </a>
+          </Link>
         </div>
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-5">

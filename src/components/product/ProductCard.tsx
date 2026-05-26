@@ -28,11 +28,13 @@ export default function ProductCard({ product, initialFavorited = false }: Props
     const prev = favorited;
     setFavorited(!prev); // optimistic update
     try {
-      const res = await fetch("/api/favorites", {
-        method: prev ? "DELETE" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: product.id }),
-      });
+      const res = await fetch(
+        prev ? `/api/favorites?productId=${product.id}` : "/api/favorites",
+        {
+          method: prev ? "DELETE" : "POST",
+          ...(prev ? {} : { headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: product.id }) }),
+        }
+      );
       if (res.status === 401) {
         setFavorited(prev); // geri al
         window.location.href = `/giris?redirect=${encodeURIComponent(window.location.pathname)}`;

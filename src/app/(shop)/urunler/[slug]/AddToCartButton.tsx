@@ -33,11 +33,13 @@ export default function AddToCartButton({ isLoggedIn, product, variantGroups, is
     const prev = favorited;
     setFavorited(!prev);
     try {
-      const res = await fetch("/api/favorites", {
-        method: prev ? "DELETE" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: product.id }),
-      });
+      const res = await fetch(
+        prev ? `/api/favorites?productId=${product.id}` : "/api/favorites",
+        {
+          method: prev ? "DELETE" : "POST",
+          ...(prev ? {} : { headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: product.id }) }),
+        }
+      );
       if (res.status === 401) {
         setFavorited(prev);
         router.push(`/giris?redirect=${encodeURIComponent(window.location.pathname)}`);

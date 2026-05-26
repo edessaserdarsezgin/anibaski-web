@@ -30,7 +30,8 @@ export async function DELETE(req: NextRequest) {
   const user = await getAuthUser();
   if (!user) return NextResponse.json({ error: "Giriş gerekli" }, { status: 401 });
 
-  const { productId } = await req.json();
+  const { searchParams } = new URL(req.url);
+  const productId = searchParams.get("productId");
   if (!productId) return NextResponse.json({ error: "productId gerekli" }, { status: 400 });
 
   const db = createAdminClient();
