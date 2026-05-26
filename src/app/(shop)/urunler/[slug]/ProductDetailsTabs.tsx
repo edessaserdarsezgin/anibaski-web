@@ -22,7 +22,9 @@ export default function ProductDetailsTabs({ specs }: { specs: Specs }) {
   const [tab, setTab] = useState<"details" | "reviews">("details");
 
   const rows = specs
-    ? (Object.entries(specs) as [string, string][]).filter(([, v]) => v?.trim())
+    ? (Object.entries(specs) as [string, unknown][])
+        .filter(([, v]) => String(v ?? "").trim())
+        .map(([k, v]) => [k, String(v)] as [string, string])
     : [];
 
   if (rows.length === 0) return null;
