@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import AddToCartButton from "./AddToCartButton";
 import ProductGallery from "./ProductGallery";
+import ProductDetailsTabs from "./ProductDetailsTabs";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -165,6 +166,7 @@ export default async function UrunDetayPage({ params }: Props) {
             </div>
           </div>
         </div>
+        <ProductDetailsTabs specs={product.specs as Parameters<typeof ProductDetailsTabs>[0]["specs"]} />
       </div>
     </>
   );
