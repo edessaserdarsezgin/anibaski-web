@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
+import ProductCard from "@/components/product/ProductCard";
 
 export const metadata = {
   title: "Tüm Ürünler | AnıBaskı",
@@ -10,10 +10,18 @@ export const metadata = {
 export default async function UrunlerPage() {
   const supabase = await createClient();
 
+  const { data: { user } } = await supabase.auth.getUser();
+  const adminDb = createAdminClient();
+
   const [{ data: products }, { data: categories }] = await Promise.all([
-    supabase.from("products").select("id, name, slug, description, basePrice, images, category:categories(name, slug)").order("createdAt", { ascending: false }),
-    supabase.from("categories").select("id, name, slug").order("name"),
+    adminDb.from("products").select("id, name, slug, description, basePrice, images, category:categories(name, slug)").order("createdAt", { ascending: false }),
+    adminDb.from("categories").select("id, name, slug").order("name"),
   ]);
+
+  const { data: favoritesData } = user
+    ? await adminDb.from("favorites").select("productId").eq("userId", user.id)
+    : { data: [] };
+  const favoriteIds = new Set((favoritesData ?? []).map((f: { productId: string }) => f.productId));
 
   return (
     <>
@@ -82,58 +90,11 @@ export default async function UrunlerPage() {
             {products.map((product) => {
               const category = product.category as unknown as { name: string; slug: string } | null;
               return (
-                <Link
+                <ProductCard
                   key={product.id}
-                  href={`/urunler/${product.slug}`}
-                  className="group bg-white rounded-3xl border border-border overflow-hidden hover:shadow-hover hover:border-primary/30 hover:-translate-y-1 transition-all duration-300"
-                >
-                  {/* Görsel */}
-                  <div className="relative aspect-[4/3] bg-bg overflow-hidden">
-                    {product.images?.[0] ? (
-                      <Image
-                        src={product.images[0]}
-                        alt={product.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        sizes="(max-width: 768px) 50vw, 33vw"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-border">
-                        <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M13.5 12h.008v.008H13.5V12zm0 0h.008v.008H13.5V12zm4.5-1.5a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span className="text-xs">Görsel yok</span>
-                      </div>
-                    )}
-                    {/* Kategori etiketi — görsel üzerinde */}
-                    {category && (
-                      <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-semibold bg-white/90 backdrop-blur-sm text-text-light border border-white/50">
-                        {category.name}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Bilgi */}
-                  <div className="p-5">
-                    <h2 className="font-serif text-base text-text group-hover:text-primary transition-colors line-clamp-2 leading-snug mb-3">
-                      {product.name}
-                    </h2>
-                    {product.description && (
-                      <p className="text-xs text-text-light line-clamp-2 leading-relaxed mb-4">
-                        {product.description}
-                      </p>
-                    )}
-                    <div className="flex items-center justify-between">
-                      <p className="font-serif text-lg font-semibold text-primary">
-                        {Number(product.basePrice).toLocaleString("tr-TR")} ₺
-                        <span className="text-xs font-sans font-normal text-text-light ml-1">den itibaren</span>
-                      </p>
-                      <span className="w-8 h-8 rounded-full border border-border group-hover:border-primary group-hover:bg-primary flex items-center justify-center text-text-light group-hover:text-white transition-all text-sm">
-                        →
-                      </span>
-                    </div>
-                  </div>
-                </Link>
+                  product={{ ...product, basePrice: Number(product.basePrice), category }}
+                  initialFavorited={favoriteIds.has(product.id)}
+                />
               );
             })}
           </div>
