@@ -1,17 +1,33 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import AddToCartButton from "./AddToCartButton";
 import ProductGallery from "./ProductGallery";
+import ProductDetailsTabs from "./ProductDetailsTabs";
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const supabase = await createClient();
-  const { data: product } = await supabase.from("products").select("name").eq("slug", slug).single();
+  const { data: product } = await supabase
+    .from("products")
+    .select("name, description, images")
+    .eq("slug", slug)
+    .single();
   if (!product) return {};
-  return { title: `${product.name} | AnıBaskı` };
+  const description = product.description
+    ? String(product.description).slice(0, 155)
+    : `${product.name} — AnıBaskı'da fotoğraf baskısı ve kişiye özel hediye seçenekleri.`;
+  return {
+    title: `${product.name} | AnıBaskı`,
+    description,
+    openGraph: {
+      title: product.name,
+      description,
+      images: product.images?.[0] ? [{ url: product.images[0] }] : [],
+    },
+  };
 }
 
 export default async function UrunDetayPage({ params }: Props) {
@@ -24,6 +40,12 @@ export default async function UrunDetayPage({ params }: Props) {
   ]);
 
   if (!product) notFound();
+
+  const adminDb = createAdminClient();
+  const { data: favRow } = user
+    ? await adminDb.from("favorites").select("id").eq("userId", user.id).eq("productId", product.id).maybeSingle()
+    : { data: null };
+  const isFavorited = !!favRow;
 
   const { data: variants } = await supabase
     .from("product_variants")
@@ -39,51 +61,120 @@ export default async function UrunDetayPage({ params }: Props) {
     return acc;
   }, {});
 
+  const category = product.category as unknown as { id: string; name: string; slug: string } | null;
+
   return (
-    <div className="max-w-6xl mx-auto px-8 py-12">
-      <p className="text-sm text-text-light mb-8">
-        <Link href="/" className="hover:text-primary">Ana Sayfa</Link>
-        {" / "}
-        <Link href={`/kategoriler/${product.category.slug}`} className="hover:text-primary">
-          {product.category.name}
-        </Link>
-        {" / "}
-        <span>{product.name}</span>
-      </p>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        <ProductGallery images={product.images ?? []} name={product.name} />
-
-        <div className="flex flex-col">
-          <p className="text-sm text-text-light mb-1">{product.category.name}</p>
-          <h1 className="font-serif text-3xl text-text mb-3">{product.name}</h1>
-
-          {product.description && (
-            <p className="text-text-light mb-6">{product.description}</p>
-          )}
-
-          <AddToCartButton
-            isLoggedIn={!!user}
-            product={{
-              id: product.id,
-              name: product.name,
-              basePrice: Number(product.basePrice),
-              image: product.images?.[0] ?? "",
-              requiresPhotoUpload: product.requiresPhotoUpload ?? false,
-              photoCount: product.photoCount ?? 1,
-            }}
-            variantGroups={Object.entries(variantGroups).map(([type, items]) => ({
-              type,
-              items: items.map((v) => ({
-                id: v.id,
-                label: v.label,
-                value: v.value,
-                priceAddon: Number(v.priceAddon ?? 0),
-              })),
-            }))}
-          />
+    <>
+      {/* ── Breadcrumb ──────────────────────────────── */}
+      <div className="border-b border-border bg-bg">
+        <div className="max-w-6xl mx-auto px-8 py-3.5">
+          <p className="text-sm text-text-light flex items-center gap-1.5 flex-wrap">
+            <Link href="/" className="hover:text-primary transition-colors">Ana Sayfa</Link>
+            <span className="text-border">/</span>
+            <Link href="/urunler" className="hover:text-primary transition-colors">Ürünler</Link>
+            {category && (
+              <>
+                <span className="text-border">/</span>
+                <Link href={`/kategoriler/${category.slug}`} className="hover:text-primary transition-colors">
+                  {category.name}
+                </Link>
+              </>
+            )}
+            <span className="text-border">/</span>
+            <span className="text-text truncate max-w-[200px]">{product.name}</span>
+          </p>
         </div>
       </div>
-    </div>
+
+      {/* ── İçerik ──────────────────────────────────── */}
+      <div className="max-w-6xl mx-auto px-8 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-12 xl:gap-16">
+
+          {/* Galeri */}
+          <ProductGallery images={product.images ?? []} name={product.name} />
+
+          {/* Ürün bilgisi */}
+          <div className="flex flex-col gap-5">
+            {/* Kategori etiketi */}
+            {category && (
+              <div>
+                <Link href={`/kategoriler/${category.slug}`}>
+                  <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">
+                    {category.name}
+                  </span>
+                </Link>
+              </div>
+            )}
+
+            {/* Başlık */}
+            <div>
+              <h1 className="font-serif text-4xl text-text leading-snug">{product.name}</h1>
+              {product.description && (
+                <p className="mt-4 text-text-light leading-relaxed">{product.description}</p>
+              )}
+            </div>
+
+            {/* Fiyat ve aksiyon */}
+            <AddToCartButton
+              isLoggedIn={!!user}
+              isFavorited={isFavorited}
+              product={{
+                id: product.id,
+                name: product.name,
+                basePrice: Number(product.basePrice),
+                image: product.images?.[0] ?? "",
+                requiresPhotoUpload: product.requiresPhotoUpload ?? false,
+                photoCount: product.photoCount ?? 1,
+              }}
+              variantGroups={Object.entries(variantGroups).map(([type, items]) => ({
+                type,
+                items: items.map((v) => ({
+                  id: v.id,
+                  label: v.label,
+                  value: v.value,
+                  priceAddon: Number(v.priceAddon ?? 0),
+                })),
+              }))}
+            />
+
+            {/* Güven rozeti */}
+            <div className="grid grid-cols-3 gap-2 pt-4 border-t border-border">
+              {[
+                {
+                  label: "Ücretsiz Kargo",
+                  sub: "150₺ üzeri",
+                  icon: (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H3m16.5 0h-.75m-7.5 0h6m-6 0V5.625A2.625 2.625 0 0112.375 3h3.75A2.625 2.625 0 0118.75 5.625V18.75m-10.5 0V9.375A2.625 2.625 0 0110.875 6.75h3.75" />
+                  ),
+                },
+                {
+                  label: "Güvenli Ödeme",
+                  sub: "SSL korumalı",
+                  icon: (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                  ),
+                },
+                {
+                  label: "Kolay İade",
+                  sub: "14 gün garantisi",
+                  icon: (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                  ),
+                },
+              ].map((item) => (
+                <div key={item.label} className="flex flex-col items-center text-center gap-1.5 p-3 rounded-2xl bg-bg border border-border">
+                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    {item.icon}
+                  </svg>
+                  <p className="text-xs font-semibold text-text leading-tight">{item.label}</p>
+                  <p className="text-[10px] text-text-light">{item.sub}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <ProductDetailsTabs specs={product.specs as Parameters<typeof ProductDetailsTabs>[0]["specs"]} />
+      </div>
+    </>
   );
 }

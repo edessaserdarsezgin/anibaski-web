@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 type Category = { id: string; name: string; slug: string };
 type VariantOption = { label: string; priceAddon: number };
@@ -39,8 +38,9 @@ export default function YeniUrunPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    createClient().from("categories").select("id, name, slug").order("name")
-      .then(({ data }) => setCategories(data ?? []));
+    fetch("/api/admin/categories")
+      .then(res => res.json())
+      .then(data => setCategories(Array.isArray(data) ? data : []));
   }, []);
 
   async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {

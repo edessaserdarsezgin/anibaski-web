@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { sendShippingNotification } from "@/lib/email/shippingNotification";
+import { notifyShippingUpdate } from "@/lib/whatsapp/notify";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -8,7 +9,7 @@ async function requireAdmin() {
   if (!user) return null;
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   if (!profile || profile.role !== "ADMIN") return null;
-  return { user, supabase };
+  return { user, supabase: createAdminClient() };
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -29,19 +30,26 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // userId'yi çek
   const { data: order } = await admin.supabase
     .from("orders")
-    .select('"userId"')
+    .select('"userId", "addressId"')
     .eq("id", id)
     .single();
 
   if (order?.userId) {
-    const { data: profile } = await admin.supabase
-      .from("profiles")
-      .select("email, \"fullName\"")
-      .eq("id", order.userId)
-      .single();
+    const [{ data: profile }, { data: address }] = await Promise.all([
+      admin.supabase.from("profiles").select('email, "fullName", phone').eq("id", order.userId).single(),
+      admin.supabase.from("addresses").select("phone").eq("id", order.addressId).single(),
+    ]);
+
+    const phone = profile?.phone || address?.phone;
+    if (phone) {
+      notifyShippingUpdate({
+        phone,
+        orderNo: id.slice(0, 8).toUpperCase(),
+        trackingCode: trackingCode.trim(),
+      });
+    }
 
     if (profile) {
       try {

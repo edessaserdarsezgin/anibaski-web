@@ -1,14 +1,17 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import OrderStatusSelect from "./OrderStatusSelect";
+import CancelRequestButton from "./CancelRequestButton";
 
 type Props = { params: Promise<{ id: string }> };
 
 const STATUS_STEPS = ["PENDING", "PREPARING", "SHIPPED", "DELIVERED"];
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "Beklemede", PREPARING: "Hazırlanıyor",
-  SHIPPED: "Kargoda", DELIVERED: "Teslim Edildi", CANCELLED: "İptal Edildi",
+  SHIPPED: "Kargoda", DELIVERED: "Teslim Edildi",
+  CANCELLED: "İptal Edildi", CANCEL_REQUESTED: "İptal Talebi İnceleniyor",
 };
 const STATUS_COLOR: Record<string, string> = {
   PENDING: "text-yellow-700 bg-yellow-50 border-yellow-200",
@@ -16,6 +19,7 @@ const STATUS_COLOR: Record<string, string> = {
   SHIPPED: "text-purple-700 bg-purple-50 border-purple-200",
   DELIVERED: "text-green-700 bg-green-50 border-green-200",
   CANCELLED: "text-red-700 bg-red-50 border-red-200",
+  CANCEL_REQUESTED: "text-orange-700 bg-orange-50 border-orange-200",
 };
 const PAYMENT_LABEL: Record<string, string> = {
   credit_card: "Kredi / Banka Kartı",
@@ -48,7 +52,10 @@ export default async function SiparisDetayPage({ params }: Props) {
   if (!order || (!isAdmin && order.userId !== user.id)) notFound();
 
   const isCancelled = order.status === "CANCELLED";
-  const currentStep = isCancelled ? -1 : STATUS_STEPS.indexOf(order.status);
+  const isCancelRequested = order.status === "CANCEL_REQUESTED";
+  // CANCEL_REQUESTED = müşteri beklemede iken iptal istedi → adım 0 (PENDING) olarak göster
+  const displayStatus = isCancelRequested ? "PENDING" : order.status;
+  const currentStep = isCancelled ? -1 : STATUS_STEPS.indexOf(displayStatus);
   const items: OrderItem[] = order.items ?? [];
 
   return (
@@ -73,9 +80,21 @@ export default async function SiparisDetayPage({ params }: Props) {
           {isAdmin ? (
             <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
           ) : (
-            <span className={`text-sm font-semibold px-4 py-1.5 rounded-full border ${STATUS_COLOR[order.status]}`}>
-              {STATUS_LABEL[order.status]}
-            </span>
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-semibold px-4 py-1.5 rounded-full border ${STATUS_COLOR[displayStatus]}`}>
+                  {STATUS_LABEL[displayStatus]}
+                </span>
+                {isCancelRequested && (
+                  <span className="text-xs font-semibold px-3 py-1.5 rounded-full border text-orange-700 bg-orange-50 border-orange-200">
+                    ⚠ İptal Talebi
+                  </span>
+                )}
+              </div>
+              {order.status === "PENDING" && (
+                <CancelRequestButton orderId={order.id} />
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -88,6 +107,12 @@ export default async function SiparisDetayPage({ params }: Props) {
             Bu sipariş iptal edildi.
           </p>
         ) : (
+          <>
+          {isCancelRequested && (
+            <p className="text-sm font-semibold text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 mb-5">
+              ⚠ İptal talebiniz inceleniyor. En kısa sürede bilgilendireceğiz.
+            </p>
+          )}
           <div className="flex items-center">
             {STATUS_STEPS.map((step, i) => {
               const done = i <= currentStep;
@@ -113,6 +138,7 @@ export default async function SiparisDetayPage({ params }: Props) {
               );
             })}
           </div>
+          </>
         )}
       </div>
 
@@ -131,9 +157,9 @@ export default async function SiparisDetayPage({ params }: Props) {
                   : [];
                 return (
                   <div key={item.id} className="flex gap-4 pb-5 border-b border-border last:border-0 last:pb-0">
-                    <div className="w-20 h-20 rounded-xl bg-bg border border-border flex-shrink-0 overflow-hidden">
+                    <div className="relative w-20 h-20 rounded-xl bg-bg border border-border flex-shrink-0 overflow-hidden">
                       {item.product?.images?.[0]
-                        ? <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover" />
+                        ? <Image src={item.product.images[0]} alt={item.product.name} fill className="object-cover" sizes="80px" />
                         : <div className="w-full h-full" />}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -176,7 +202,7 @@ export default async function SiparisDetayPage({ params }: Props) {
                             {item.uploadedImages.map((url, i) => (
                               <a key={i} href={url} target="_blank" rel="noopener noreferrer"
                                 className="relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary transition-colors group">
-                                <img src={url} alt={`Fotoğraf ${i + 1}`} className="w-full h-full object-cover" />
+                                <Image src={url} alt={`Fotoğraf ${i + 1}`} fill className="object-cover" sizes="20vw" />
                                 {isAdmin && (
                                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">

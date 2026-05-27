@@ -48,6 +48,13 @@ export default function MobileMenu({ email, isAdmin }: Props) {
               >
                 Ürünler
               </Link>
+              <Link
+                href="/urun-rehberi"
+                onClick={() => setOpen(false)}
+                className="py-3 text-sm font-semibold text-text hover:text-primary transition-colors border-b border-border"
+              >
+                Ürün Rehberi
+              </Link>
 
               {isAdmin && (
                 <Link

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export default function OrderTrackingInput({
   orderId,
@@ -12,17 +13,23 @@ export default function OrderTrackingInput({
   const [code, setCode] = useState(currentCode ?? "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(!!currentCode);
+  const { toast } = useToast();
 
   async function handleSave() {
     if (!code.trim()) return;
     setSaving(true);
-    await fetch(`/api/admin/orders/${orderId}/tracking`, {
+    const res = await fetch(`/api/admin/orders/${orderId}/tracking`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ trackingCode: code }),
     });
     setSaving(false);
-    setSaved(true);
+    if (res.ok) {
+      setSaved(true);
+      toast("Kargo kodu kaydedildi, müşteriye e-posta gönderildi.");
+    } else {
+      toast("Kargo kodu kaydedilemedi.", "error");
+    }
   }
 
   return (

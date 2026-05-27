@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className="mt-auto border-t border-border bg-bg">
       <div className="max-w-6xl mx-auto px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <Link href="/" className="font-serif text-xl text-text">
               Anı<span className="text-primary">Baskı</span>
@@ -29,6 +29,15 @@ export default function Footer() {
               <li><Link href="/teslimat" className="hover:text-primary transition-colors">Teslimat</Link></li>
               <li><Link href="/sss" className="hover:text-primary transition-colors">S.S.S</Link></li>
               <li><Link href="/iletisim" className="hover:text-primary transition-colors">İletişim</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-serif text-sm font-semibold text-text mb-3">Yasal</h4>
+            <ul className="space-y-2 text-sm text-text-light">
+              <li><Link href="/politikalar/gizlilik" className="hover:text-primary transition-colors">Gizlilik & KVKK</Link></li>
+              <li><Link href="/politikalar/mesafeli-satis-sozlesmesi" className="hover:text-primary transition-colors">Mesafeli Satış Sözleşmesi</Link></li>
+              <li><Link href="/politikalar/iptal-iade" className="hover:text-primary transition-colors">İptal ve İade</Link></li>
+              <li><Link href="/politikalar/kullanim-kosullari" className="hover:text-primary transition-colors">Kullanım Koşulları</Link></li>
             </ul>
           </div>
         </div>

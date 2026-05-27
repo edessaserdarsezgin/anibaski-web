@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -14,7 +15,7 @@ const STATUS_COLOR: Record<string, string> = {
   CANCELLED: "bg-red-50 text-red-700 border-red-200",
 };
 
-export const metadata = { title: "Siparişlerim | AnıBaskı" };
+export const metadata = { title: "Siparişlerim", robots: { index: false, follow: false } };
 
 export default async function SiparislerPage() {
   const supabase = await createClient();
@@ -69,9 +70,9 @@ export default async function SiparislerPage() {
                     : null;
                   return (
                     <div key={item.id} className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-bg border border-border flex-shrink-0 overflow-hidden">
+                      <div className="relative w-10 h-10 rounded-lg bg-bg border border-border flex-shrink-0 overflow-hidden">
                         {product?.images?.[0]
-                          ? <img src={product.images[0]} alt="" className="w-full h-full object-cover" />
+                          ? <Image src={product.images[0]} alt="" fill className="object-cover" sizes="40px" />
                           : <div className="w-full h-full" />}
                       </div>
                       <div>

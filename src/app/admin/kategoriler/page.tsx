@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 type Category = { id: string; name: string; slug: string; description: string | null };
 
@@ -31,9 +30,8 @@ export default function AdminKategorilerPage() {
   const [editForm, setEditForm] = useState({ name: "", slug: "", description: "" });
 
   async function load() {
-    const supabase = createClient();
-    const { data } = await supabase.from("categories").select("id, name, slug, description").order("name");
-    setCategories(data ?? []);
+    const res = await fetch("/api/admin/categories");
+    setCategories(res.ok ? await res.json() : []);
     setLoading(false);
   }
 
@@ -43,14 +41,18 @@ export default function AdminKategorilerPage() {
     e.preventDefault();
     setError("");
     setSaving(true);
-    const supabase = createClient();
-    const { error } = await supabase.from("categories").insert({
-      name: form.name,
-      slug: form.slug,
-      description: form.description || null,
+    const res = await fetch("/api/admin/categories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: form.name, slug: form.slug, description: form.description }),
     });
-    if (error) setError(error.message);
-    else { setForm({ name: "", slug: "", description: "" }); await load(); }
+    if (!res.ok) {
+      const data = await res.json();
+      setError(data.error ?? "Hata oluştu.");
+    } else {
+      setForm({ name: "", slug: "", description: "" });
+      await load();
+    }
     setSaving(false);
   }
 
@@ -60,19 +62,21 @@ export default function AdminKategorilerPage() {
   }
 
   async function handleUpdate(id: string) {
-    const supabase = createClient();
-    await supabase.from("categories").update({
-      name: editForm.name,
-      slug: editForm.slug,
-      description: editForm.description || null,
-    }).eq("id", id);
+    await fetch("/api/admin/categories", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, name: editForm.name, slug: editForm.slug, description: editForm.description }),
+    });
     setEditingId(null);
     await load();
   }
 
   async function handleDelete(id: string) {
-    const supabase = createClient();
-    await supabase.from("categories").delete().eq("id", id);
+    await fetch("/api/admin/categories", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
     await load();
   }
 
