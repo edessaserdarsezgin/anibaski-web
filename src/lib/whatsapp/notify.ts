@@ -21,6 +21,8 @@ export function notifyOrderCreated(params: {
   orderNo: string;
   total: number;
   items: string;
+  discountCode?: string | null;
+  discountAmount?: number | null;
 }) {
   post({
     event: "order_created",
@@ -28,6 +30,9 @@ export function notifyOrderCreated(params: {
     orderNo: params.orderNo,
     total: params.total.toLocaleString("tr-TR"),
     items: params.items,
+    ...(params.discountCode && params.discountAmount
+      ? { discountCode: params.discountCode, discountAmount: params.discountAmount.toLocaleString("tr-TR") }
+      : {}),
   });
 }
 

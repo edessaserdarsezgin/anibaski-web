@@ -22,13 +22,15 @@ type Params = {
     district: string;
     city: string;
   };
+  discountCode?: string | null;
+  discountAmount?: number | null;
 };
 
 export async function sendOrderNotification(params: Params) {
   const adminEmail = process.env.ADMIN_EMAIL;
   if (!adminEmail || !process.env.RESEND_API_KEY) return;
 
-  const { orderId, customerEmail, customerName, items, total, shippingAddress } = params;
+  const { orderId, customerEmail, customerName, items, total, shippingAddress, discountCode, discountAmount } = params;
   const shortId = orderId.slice(0, 8).toUpperCase();
 
   const photoItems = items.filter(i => i.uploadedImages?.length > 0);
@@ -80,6 +82,12 @@ export async function sendOrderNotification(params: Params) {
         </thead>
         <tbody>${itemRows}</tbody>
         <tfoot>
+          ${discountCode && discountAmount ? `
+          <tr>
+            <td colspan="2" style="padding:8px 12px;text-align:right;color:#2d6a4f">İndirim (${discountCode})</td>
+            <td style="padding:8px 12px;text-align:right;color:#2d6a4f;font-weight:600">−${discountAmount.toLocaleString("tr-TR")} ₺</td>
+            <td></td>
+          </tr>` : ""}
           <tr>
             <td colspan="2" style="padding:12px;text-align:right;font-weight:700">Toplam</td>
             <td style="padding:12px;text-align:right;font-weight:700;color:#e07a5f">${total.toLocaleString("tr-TR")} ₺</td>

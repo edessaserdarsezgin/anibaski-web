@@ -100,6 +100,8 @@ export async function POST(req: NextRequest) {
           : "";
         return `• ${name}${variants} ×${item.quantity}`;
       }).join("\n"),
+      discountCode: validatedCouponCode,
+      discountAmount: discountAmount > 0 ? discountAmount : null,
     });
   }
 
@@ -115,6 +117,8 @@ export async function POST(req: NextRequest) {
     })),
     total,
     shippingAddress: address ?? { fullName: "", phone: "", address: "", district: "", city: "" },
+    discountCode: validatedCouponCode,
+    discountAmount: discountAmount > 0 ? discountAmount : null,
   }).catch((err) => console.error("[orderNotification]", err));
 
   return NextResponse.json({ orderId: order.id });
