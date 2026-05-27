@@ -107,6 +107,7 @@ model Order {
   discountAmount Decimal?    @db.Decimal(10, 2)
   total          Decimal     @db.Decimal(10, 2)
   trackingCode   String?
+  source         String      @default("direct")
   createdAt      DateTime    @default(now()) @db.Timestamptz(6)
   items          OrderItem[]
   address        Address     @relation(fields: [addressId], references: [id], onDelete: NoAction, onUpdate: NoAction)

@@ -207,6 +207,7 @@ export default function CheckoutClient({ initialAddresses }: { initialAddresses:
           subtotal: total,
           shippingFee: shippingFee + codFee,
           total: grandTotal,
+          source: sessionStorage.getItem("source") ?? "direct",
         }),
       });
 
@@ -216,6 +217,7 @@ export default function CheckoutClient({ initialAddresses }: { initialAddresses:
       // Kapıda ödeme → doğrudan teşekkür sayfasına
       if (paymentMethod === "cod") {
         clearCart();
+        sessionStorage.removeItem("source");
         router.push(`/siparis-tamamlandi/${orderId}`);
         return;
       }
@@ -234,6 +236,7 @@ export default function CheckoutClient({ initialAddresses }: { initialAddresses:
 
       const { token } = await tokenRes.json();
       clearCart();
+      sessionStorage.removeItem("source");
       setPaytrToken(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu. Lütfen tekrar deneyin.");

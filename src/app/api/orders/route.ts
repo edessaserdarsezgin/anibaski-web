@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { shippingAddressId, billingAddressId, paymentMethod, items, subtotal, shippingFee, total, discountCode } = body;
+  const { shippingAddressId, billingAddressId, paymentMethod, items, subtotal, shippingFee, total, discountCode, source } = body;
 
   if (!shippingAddressId) return NextResponse.json({ error: "Teslimat adresi gerekli" }, { status: 400 });
 
@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
       discount_amount: discountAmount > 0 ? discountAmount : null,
       total,
       status: "PENDING",
+      source: source === "ai_guided" ? "ai_guided" : "direct",
     })
     .select("id")
     .single();
