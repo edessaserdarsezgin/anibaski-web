@@ -17,6 +17,8 @@ const emptyForm = { title: "", fullName: "", phone: "", address: "", city: "", d
 
 type PaymentMethod = "credit_card" | "cod";
 
+type AppliedCoupon = { code: string; discountAmount: number; discountType: string; discountValue: number };
+
 function AddressPicker({
   label,
   addresses,
@@ -135,6 +137,12 @@ export default function CheckoutClient({ initialAddresses }: { initialAddresses:
   const [error, setError] = useState("");
   const [paytrToken, setPaytrToken] = useState<string | null>(null);
   const [mssAccepted, setMssAccepted] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem("appliedCoupon");
+    if (saved) setAppliedCoupon(JSON.parse(saved));
+  }, []);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // PayTR iframe'den gelen yükseklik mesajlarını dinle
@@ -175,7 +183,8 @@ export default function CheckoutClient({ initialAddresses }: { initialAddresses:
 
   const shippingFee = total >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
   const codFee = paymentMethod === "cod" ? COD_FEE : 0;
-  const grandTotal = total + shippingFee + codFee;
+  const discountAmount = appliedCoupon?.discountAmount ?? 0;
+  const grandTotal = total + shippingFee + codFee - discountAmount;
 
   // AddressPicker'dan yeni adres eklenince listeyi güncelle
   function handleShippingSelect(id: string) {
@@ -207,6 +216,7 @@ export default function CheckoutClient({ initialAddresses }: { initialAddresses:
           subtotal: total,
           shippingFee: shippingFee + codFee,
           total: grandTotal,
+          discountCode: appliedCoupon?.code ?? null,
           source: sessionStorage.getItem("source") ?? "direct",
         }),
       });
@@ -218,6 +228,7 @@ export default function CheckoutClient({ initialAddresses }: { initialAddresses:
       if (paymentMethod === "cod") {
         clearCart();
         sessionStorage.removeItem("source");
+        sessionStorage.removeItem("appliedCoupon");
         router.push(`/siparis-tamamlandi/${orderId}`);
         return;
       }
@@ -237,6 +248,7 @@ export default function CheckoutClient({ initialAddresses }: { initialAddresses:
       const { token } = await tokenRes.json();
       clearCart();
       sessionStorage.removeItem("source");
+      sessionStorage.removeItem("appliedCoupon");
       setPaytrToken(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu. Lütfen tekrar deneyin.");
@@ -375,6 +387,12 @@ export default function CheckoutClient({ initialAddresses }: { initialAddresses:
                   <span className="text-text-light">Ara toplam</span>
                   <span className="font-semibold">{total.toLocaleString("tr-TR")} ₺</span>
                 </div>
+                {appliedCoupon && (
+                  <div className="flex justify-between text-green-700">
+                    <span>İndirim ({appliedCoupon.code})</span>
+                    <span className="font-semibold">−{discountAmount.toLocaleString("tr-TR")} ₺</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-text-light">Kargo</span>
                   <span className="font-semibold">
