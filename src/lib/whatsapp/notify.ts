@@ -36,6 +36,17 @@ export function notifyOrderCreated(params: {
   });
 }
 
+export function notifyPaymentFailed(params: {
+  phone: string;
+  orderNo: string;
+}) {
+  post({
+    event: "payment_failed",
+    phone: formatPhone(params.phone),
+    orderNo: params.orderNo,
+  });
+}
+
 export function notifyShippingUpdate(params: {
   phone: string;
   orderNo: string;

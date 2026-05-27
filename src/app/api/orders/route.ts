@@ -83,43 +83,44 @@ export async function POST(req: NextRequest) {
 
   await supabase.from("order_items").insert(orderItems);
 
-  // E-posta bildirimi — hata olsa sipariş etkilenmesin
-  const { data: address } = await supabase
-    .from("addresses").select("fullName, phone, address, district, city").eq("id", shippingAddressId).single();
+  // Kapıda ödemede bildirim hemen gönderilir; kredi kartında ödeme onayı (PayTR callback) sonrası gönderilir
+  if (paymentMethod === "cod") {
+    const { data: address } = await supabase
+      .from("addresses").select("fullName, phone, address, district, city").eq("id", shippingAddressId).single();
 
-  // WhatsApp bildirimi — e-posta gibi fire-and-forget
-  if (address?.phone) {
-    notifyOrderCreated({
-      phone: address.phone,
-      orderNo: order.id.slice(0, 8).toUpperCase(),
-      total: total,
-      items: items.map((item: { productName?: string; productId: string; quantity: number; variantSelections?: Record<string, string> }) => {
-        const name = item.productName ?? item.productId;
-        const variants = item.variantSelections && Object.keys(item.variantSelections).length > 0
-          ? " (" + Object.entries(item.variantSelections).map(([k, v]) => `${k}: ${v}`).join(", ") + ")"
-          : "";
-        return `• ${name}${variants} ×${item.quantity}`;
-      }).join("\n"),
+    if (address?.phone) {
+      notifyOrderCreated({
+        phone: address.phone,
+        orderNo: order.id.slice(0, 8).toUpperCase(),
+        total: total,
+        items: items.map((item: { productName?: string; productId: string; quantity: number; variantSelections?: Record<string, string> }) => {
+          const name = item.productName ?? item.productId;
+          const variants = item.variantSelections && Object.keys(item.variantSelections).length > 0
+            ? " (" + Object.entries(item.variantSelections).map(([k, v]) => `${k}: ${v}`).join(", ") + ")"
+            : "";
+          return `• ${name}${variants} ×${item.quantity}`;
+        }).join("\n"),
+        discountCode: validatedCouponCode,
+        discountAmount: discountAmount > 0 ? discountAmount : null,
+      });
+    }
+
+    sendOrderNotification({
+      orderId: order.id,
+      customerEmail: user.email!,
+      customerName: user.user_metadata?.full_name ?? null,
+      items: items.map((item: { productId: string; variantSelections: Record<string, unknown>; quantity: number; unitPrice: number; uploadedImages?: string[]; productName?: string }) => ({
+        productName: item.productName ?? item.productId,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        uploadedImages: item.uploadedImages ?? [],
+      })),
+      total,
+      shippingAddress: address ?? { fullName: "", phone: "", address: "", district: "", city: "" },
       discountCode: validatedCouponCode,
       discountAmount: discountAmount > 0 ? discountAmount : null,
-    });
+    }).catch((err) => console.error("[orderNotification]", err));
   }
-
-  sendOrderNotification({
-    orderId: order.id,
-    customerEmail: user.email!,
-    customerName: user.user_metadata?.full_name ?? null,
-    items: items.map((item: { productId: string; variantSelections: Record<string, unknown>; quantity: number; unitPrice: number; uploadedImages?: string[]; productName?: string }) => ({
-      productName: item.productName ?? item.productId,
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      uploadedImages: item.uploadedImages ?? [],
-    })),
-    total,
-    shippingAddress: address ?? { fullName: "", phone: "", address: "", district: "", city: "" },
-    discountCode: validatedCouponCode,
-    discountAmount: discountAmount > 0 ? discountAmount : null,
-  }).catch((err) => console.error("[orderNotification]", err));
 
   return NextResponse.json({ orderId: order.id });
 }
