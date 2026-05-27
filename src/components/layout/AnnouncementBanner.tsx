@@ -1,18 +1,16 @@
 import Link from "next/link";
+import { unstable_noStore as noStore } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 
-export const revalidate = 60;
-
 export default async function AnnouncementBanner() {
-  const now = new Date().toISOString();
+  noStore();
+
   const adminDb = createAdminClient();
 
   const { data: banner } = await adminDb
     .from("banners")
     .select("id, text, url, bgColor")
     .eq("isActive", true)
-    .or(`startAt.is.null,startAt.lte.${now}`)
-    .or(`endAt.is.null,endAt.gte.${now}`)
     .order("createdAt", { ascending: false })
     .limit(1)
     .maybeSingle();
