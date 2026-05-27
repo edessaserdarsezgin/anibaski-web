@@ -4,7 +4,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
 import Image from "next/image";
 
-type Category = { id: string; name: string; slug: string };
+type Category = { id: string; name: string; slug: string; parentId?: string | null };
 type SavedVariant = { id: string; type: string; label: string; value: string; priceAddon: number };
 type PendingOption = { label: string; priceAddon: number };
 
@@ -208,7 +208,18 @@ export default function UrunDuzenle() {
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-text">Kategori</label>
             <select value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} required className={inputCls}>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              <option value="">Kategori seçin</option>
+              {categories.filter(c => !c.parentId).map(parent => {
+                const children = categories.filter(c => c.parentId === parent.id);
+                return children.length > 0 ? (
+                  <optgroup key={parent.id} label={parent.name}>
+                    <option value={parent.id}>{parent.name} (tümü)</option>
+                    {children.map(c => <option key={c.id} value={c.id}>↳ {c.name}</option>)}
+                  </optgroup>
+                ) : (
+                  <option key={parent.id} value={parent.id}>{parent.name}</option>
+                );
+              })}
             </select>
           </div>
           <div className="flex flex-col gap-1.5 col-span-2">

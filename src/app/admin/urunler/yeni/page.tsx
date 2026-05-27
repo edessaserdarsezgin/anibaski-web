@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 
-type Category = { id: string; name: string; slug: string };
+type Category = { id: string; name: string; slug: string; parentId: string | null };
 type VariantOption = { label: string; priceAddon: number };
 type VariantGroup = { type: string; options: VariantOption[] };
 
@@ -197,7 +197,17 @@ export default function YeniUrunPage() {
           <label className="text-sm font-semibold text-text">Kategori</label>
           <select name="categorySlug" required className={inputCls}>
             <option value="">Kategori seçin</option>
-            {categories.map(c => <option key={c.id} value={c.slug}>{c.name}</option>)}
+            {categories.filter(c => !c.parentId).map(parent => {
+              const children = categories.filter(c => c.parentId === parent.id);
+              return children.length > 0 ? (
+                <optgroup key={parent.id} label={parent.name}>
+                  <option value={parent.slug}>{parent.name} (tümü)</option>
+                  {children.map(c => <option key={c.id} value={c.slug}>↳ {c.name}</option>)}
+                </optgroup>
+              ) : (
+                <option key={parent.id} value={parent.slug}>{parent.name}</option>
+              );
+            })}
           </select>
         </div>
         <div className="flex flex-col gap-1.5">

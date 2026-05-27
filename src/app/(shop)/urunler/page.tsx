@@ -15,7 +15,7 @@ export default async function UrunlerPage() {
 
   const [{ data: products }, { data: categories }] = await Promise.all([
     adminDb.from("products").select("id, name, slug, description, basePrice, images, category:categories(name, slug)").eq("isActive", true).order("createdAt", { ascending: false }),
-    adminDb.from("categories").select("id, name, slug").order("name"),
+    adminDb.from("categories").select("id, name, slug, parentId").order("name"),
   ]);
 
   const { data: favoritesData } = user
@@ -60,15 +60,28 @@ export default async function UrunlerPage() {
           >
             Tümü
           </Link>
-          {categories?.map((cat) => (
-            <Link
-              key={cat.id}
-              href={`/kategoriler/${cat.slug}`}
-              className="px-5 py-2 rounded-full text-sm font-semibold border border-border text-text-light hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
-            >
-              {cat.name}
-            </Link>
-          ))}
+          {categories?.filter(c => !c.parentId).map((parent) => {
+            const children = categories.filter(c => c.parentId === parent.id);
+            return (
+              <div key={parent.id} className="flex items-center gap-1 flex-wrap">
+                <Link
+                  href={`/kategoriler/${parent.slug}`}
+                  className="px-5 py-2 rounded-full text-sm font-semibold border border-border text-text-light hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
+                >
+                  {parent.name}
+                </Link>
+                {children.map(sub => (
+                  <Link
+                    key={sub.id}
+                    href={`/kategoriler/${sub.slug}`}
+                    className="px-3 py-1.5 rounded-full text-xs font-semibold border border-border/60 text-text-light hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
+                  >
+                    {sub.name}
+                  </Link>
+                ))}
+              </div>
+            );
+          })}
         </div>
 
         {/* ── Ürün Grid ───────────────────────────────── */}
