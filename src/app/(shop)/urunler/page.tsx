@@ -14,7 +14,7 @@ export default async function UrunlerPage() {
   const adminDb = createAdminClient();
 
   const [{ data: products }, { data: categories }] = await Promise.all([
-    adminDb.from("products").select("id, name, slug, description, basePrice, images, category:categories(name, slug)").order("createdAt", { ascending: false }),
+    adminDb.from("products").select("id, name, slug, description, basePrice, images, category:categories(name, slug)").eq("isActive", true).order("createdAt", { ascending: false }),
     adminDb.from("categories").select("id, name, slug").order("name"),
   ]);
 

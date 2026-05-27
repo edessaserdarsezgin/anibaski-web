@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();
-  const { name, description, basePrice, categorySlug, imageUrls, variants, requiresPhotoUpload, photoCount } = body;
+  const { name, description, basePrice, categorySlug, imageUrls, variants, requiresPhotoUpload, photoCount, specs } = body;
   const TR: Record<string, string> = { ç:"c",ğ:"g",ı:"i",İ:"i",ö:"o",ş:"s",ü:"u",Ç:"c",Ğ:"g",Ö:"o",Ş:"s",Ü:"u" };
   const slug = (body.slug as string).split("").map(c => TR[c] ?? c).join("")
     .toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
   const { data: product, error: productError } = await admin.supabase
     .from("products")
-    .insert({ name, slug, description, basePrice, categoryId: category.id, images: imageUrls?.length ? imageUrls : [], requiresPhotoUpload: !!requiresPhotoUpload, photoCount: photoCount ?? 1 })
+    .insert({ name, slug, description, basePrice, categoryId: category.id, images: imageUrls?.length ? imageUrls : [], requiresPhotoUpload: !!requiresPhotoUpload, photoCount: photoCount ?? 1, specs: specs ?? null })
     .select().single();
 
   if (productError) return NextResponse.json({ error: productError.message }, { status: 500 });

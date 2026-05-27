@@ -28,6 +28,7 @@ export default function YeniUrunPage() {
   const [categories, setCategories] = useState<Category[]>([]);
 
   // Gruplu varyant state
+  const [details, setDetails] = useState("");
   const [requiresPhotoUpload, setRequiresPhotoUpload] = useState(false);
   const [photoCount, setPhotoCount] = useState(1);
   const [groups, setGroups] = useState<VariantGroup[]>([]);
@@ -123,6 +124,7 @@ export default function YeniUrunPage() {
       variants,
       requiresPhotoUpload,
       photoCount: requiresPhotoUpload ? photoCount : 1,
+      specs: details.trim() ? { details: details.trim() } : null,
     };
 
     const res = await fetch("/api/admin/products", {
@@ -205,6 +207,19 @@ export default function YeniUrunPage() {
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text">Açıklama</label>
           <textarea name="description" rows={3} className={`${inputCls} resize-none`} placeholder="Ürün açıklaması..." />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text">
+            Ürün Detayları
+            <span className="ml-1.5 text-xs font-normal text-text-light">(opsiyonel — her satır ayrı madde olarak görünür)</span>
+          </label>
+          <textarea
+            value={details}
+            onChange={e => setDetails(e.target.value)}
+            rows={5}
+            placeholder={"Kağıt: 250gr Kuşe\nBaskı Tekniği: UV Ofset\nÜretim Süresi: 2-3 iş günü\nBoyutlar: 10×15 cm"}
+            className={`${inputCls} resize-none`}
+          />
         </div>
 
         {/* Fotoğraf Yükleme */}

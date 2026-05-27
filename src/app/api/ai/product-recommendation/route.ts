@@ -1,32 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  let body: { imageUrls?: unknown; photoCount?: unknown };
+  let body: { imageUrls?: string[]; photoCount?: number; occasion?: string; budget?: string; notes?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Geçersiz istek" }, { status: 400 });
   }
-  const { imageUrls, photoCount } = body;
+  const { imageUrls, photoCount, occasion = "", budget = "", notes = "" } = body;
 
-  if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
-    return NextResponse.json({ error: "imageUrls gerekli" }, { status: 400 });
-  }
+  const resolvedPhotoCount =
+    typeof photoCount === "number"
+      ? photoCount
+      : Array.isArray(imageUrls)
+      ? imageUrls.length
+      : 1;
 
   const webhookUrl = process.env.N8N_AI_WEBHOOK_URL;
   if (!webhookUrl) {
     return NextResponse.json({ error: "AI servisi yapılandırılmamış" }, { status: 503 });
   }
 
+  const adminDb = createAdminClient();
+
+  const { data: activeProducts } = await adminDb
+    .from("products")
+    .select("name")
+    .eq("isActive", true);
+
+  const productList = (activeProducts ?? []).map((p: { name: string }) => p.name);
+
   const response = await fetch(webhookUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ imageUrls, photoCount: photoCount ?? imageUrls.length }),
+    body: JSON.stringify({
+      photoCount: resolvedPhotoCount,
+      occasion,
+      budget,
+      notes,
+      productList,
+    }),
   });
 
   if (!response.ok) {
@@ -37,5 +55,29 @@ export async function POST(req: NextRequest) {
   if (typeof raw?.recommendedProduct !== "string") {
     return NextResponse.json({ error: "Geçersiz AI yanıtı" }, { status: 502 });
   }
-  return NextResponse.json(raw);
+
+  const { data: recommended } = await adminDb
+    .from("products")
+    .select("slug, images")
+    .ilike("name", `%${raw.recommendedProduct}%`)
+    .limit(1)
+    .maybeSingle();
+
+  let alternativeSlug: string | null = null;
+  if (typeof raw.alternativeProduct === "string" && raw.alternativeProduct) {
+    const { data: alt } = await adminDb
+      .from("products")
+      .select("slug")
+      .ilike("name", `%${raw.alternativeProduct}%`)
+      .limit(1)
+      .maybeSingle();
+    alternativeSlug = alt?.slug ?? null;
+  }
+
+  return NextResponse.json({
+    ...raw,
+    recommendedProductSlug: recommended?.slug ?? null,
+    recommendedProductImage: (recommended?.images as string[] | null)?.[0] ?? null,
+    alternativeProductSlug: alternativeSlug,
+  });
 }
