@@ -40,7 +40,11 @@ export async function POST(req: NextRequest) {
         : Math.min(Number(coupon.discount_value), subtotal);
       validatedCouponCode = coupon.code;
 
-      await createAdminClient().from("coupons").update({ used_count: coupon.used_count + 1 }).eq("id", coupon.id);
+      // Kupon used_count yalnızca kapıda ödemede burada artar
+      // Kredi kartında PayTR callback başarı durumunda artırılır
+      if (paymentMethod === "cod") {
+        await createAdminClient().from("coupons").update({ used_count: coupon.used_count + 1 }).eq("id", coupon.id);
+      }
     }
   }
 

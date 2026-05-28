@@ -57,6 +57,15 @@ export async function POST(req: NextRequest) {
         adminClient.from("profiles").select("email, fullName").eq("id", order.userId).single(),
       ]);
 
+      // Kupon used_count'u ödeme onayı sonrası artır
+      if (order.discount_code) {
+        const { data: coupon } = await adminClient
+          .from("coupons").select("id, used_count").eq("code", order.discount_code).single();
+        if (coupon) {
+          await adminClient.from("coupons").update({ used_count: coupon.used_count + 1 }).eq("id", coupon.id);
+        }
+      }
+
       if (address?.phone) {
         notifyOrderCreated({
           phone: address.phone,

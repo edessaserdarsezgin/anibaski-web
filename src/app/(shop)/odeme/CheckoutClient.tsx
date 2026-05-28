@@ -246,9 +246,8 @@ export default function CheckoutClient({ initialAddresses }: { initialAddresses:
       }
 
       const { token } = await tokenRes.json();
-      clearCart();
-      sessionStorage.removeItem("source");
-      sessionStorage.removeItem("appliedCoupon");
+      // Sepet ve kupon henüz temizlenmez — PayTR callback başarı durumunda
+      // siparis-tamamlandi sayfasında temizlenir; kart reddi olursa kullanıcı tekrar deneyebilir
       setPaytrToken(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu. Lütfen tekrar deneyin.");

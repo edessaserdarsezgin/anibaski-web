@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import CartClearer from "./CartClearer";
 
 export const metadata = { title: "Siparişiniz Alındı", robots: { index: false, follow: false } };
 
@@ -33,6 +34,7 @@ export default async function SiparisTamamlandiPage({ params }: Props) {
 
   return (
     <>
+      <CartClearer />
       <style>{`
         @keyframes checkScale {
           0% { transform: scale(0) rotate(-10deg); opacity: 0; }
