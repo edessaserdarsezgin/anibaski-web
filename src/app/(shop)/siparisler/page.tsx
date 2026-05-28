@@ -24,11 +24,15 @@ export default async function SiparislerPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/giris?redirect=/siparisler");
 
-  const { data: allOrders } = await supabase
-    .from("orders")
-    .select("id, status, total, createdAt, paymentMethod, paymentStatus, items:order_items(id, quantity, variantSelections, product:products(name, images))")
-    .eq("userId", user.id)
-    .order("createdAt", { ascending: false });
+  const [{ data: allOrders }, { data: buyerProfile }] = await Promise.all([
+    supabase
+      .from("orders")
+      .select("id, status, total, createdAt, paymentMethod, paymentStatus, items:order_items(id, quantity, variantSelections, product:products(name, images)), address:addresses!orders_addressId_fkey(fullName)")
+      .eq("userId", user.id)
+      .order("createdAt", { ascending: false }),
+    supabase.from("profiles").select("fullName").eq("id", user.id).single(),
+  ]);
+  const buyerName = buyerProfile?.fullName ?? null;
 
   // Kredi kartıyla oluşturulmuş ama ödeme tamamlanmamış (pending) siparişleri gizle
   const orders = (allOrders ?? []).filter(o =>
@@ -62,6 +66,15 @@ export default async function SiparislerPage() {
                     {new Date(order.createdAt).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}
                   </p>
                   <p className="text-sm font-mono text-text-light">#{order.id.slice(0, 8).toUpperCase()}</p>
+                  {(() => {
+                    const recipient = (order.address as unknown as { fullName: string } | null)?.fullName;
+                    const sameRecipient = buyerName && recipient &&
+                      buyerName.trim().toLowerCase() === recipient.trim().toLowerCase();
+                    if (recipient && !sameRecipient) {
+                      return <p className="text-xs text-text-light mt-1">Teslim alan: <span className="text-text">{recipient}</span></p>;
+                    }
+                    return null;
+                  })()}
                 </div>
                 <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${STATUS_COLOR[order.status]}`}>
                   {STATUS_LABEL[order.status]}

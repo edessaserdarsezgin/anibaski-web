@@ -23,7 +23,7 @@ export default async function AdminSiparislerPage() {
   const supabase = createAdminClient();
   const { data: allOrders } = await supabase
     .from("orders")
-    .select(`id, status, total, createdAt, "trackingCode", "paymentMethod", "paymentStatus", items:order_items(id, quantity, variantSelections, product:products(name)), address:addresses!orders_addressId_fkey(fullName, city)`)
+    .select(`id, status, total, createdAt, "trackingCode", "paymentMethod", "paymentStatus", items:order_items(id, quantity, variantSelections, product:products(name)), address:addresses!orders_addressId_fkey(fullName, city), buyer:profiles!orders_userId_fkey(fullName, email)`)
     .order("createdAt", { ascending: false });
 
   // Tamamlanmamış kredi kartı siparişleri admin listesinde de gizlensin
@@ -61,8 +61,25 @@ export default async function AdminSiparislerPage() {
                     </p>
                   </td>
                   <td className="px-4 py-4 text-text-light">
-                    {(order.address as unknown as { fullName: string; city: string } | null)?.fullName}
-                    <p className="text-xs">{(order.address as unknown as { fullName: string; city: string } | null)?.city}</p>
+                    {(() => {
+                      const address = order.address as unknown as { fullName: string; city: string } | null;
+                      const buyer = order.buyer as unknown as { fullName: string | null; email: string } | null;
+                      const buyerName = buyer?.fullName || buyer?.email || "—";
+                      const recipientName = address?.fullName ?? "—";
+                      const sameRecipient = buyer?.fullName && address?.fullName &&
+                        buyer.fullName.trim().toLowerCase() === address.fullName.trim().toLowerCase();
+                      return (
+                        <>
+                          <p className="text-text font-semibold text-xs">{buyerName}</p>
+                          {!sameRecipient && (
+                            <p className="text-xs mt-0.5">
+                              <span className="text-text-light">Teslim alan:</span> {recipientName}
+                            </p>
+                          )}
+                          <p className="text-xs mt-0.5">{address?.city}</p>
+                        </>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-4">
                     {order.items?.map((item) => {
