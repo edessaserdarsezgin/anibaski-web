@@ -50,3 +50,6 @@ next-env.d.ts
 .claude/
 .superpowers/
 .lazyweb/
+
+# test/dev scripts
+scripts/
