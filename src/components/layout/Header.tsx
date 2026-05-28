@@ -64,16 +64,24 @@ export default async function Header() {
             <CartCount />
           </Link>
 
-          <div className="hidden md:block">
+          <div className="hidden md:flex items-center gap-2 ml-2">
             {user ? (
               <UserMenu email={user.email!} />
             ) : (
-              <Link
-                href="/giris"
-                className="ml-2 px-4 py-2 text-sm font-semibold rounded-full border border-border text-text hover:border-primary hover:text-primary transition-colors"
-              >
-                Giriş Yap
-              </Link>
+              <>
+                <Link
+                  href="/giris"
+                  className="px-4 py-2 text-sm font-semibold rounded-full border border-border text-text hover:border-primary hover:text-primary transition-colors"
+                >
+                  Giriş Yap
+                </Link>
+                <Link
+                  href="/kayit"
+                  className="px-4 py-2 text-sm font-semibold rounded-full bg-primary text-white hover:bg-primary-hover transition-colors"
+                >
+                  Kayıt Ol
+                </Link>
+              </>
             )}
           </div>
 
