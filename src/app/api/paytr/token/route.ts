@@ -34,9 +34,9 @@ export async function POST(req: NextRequest) {
     .select("quantity, unitPrice, product:products(name)")
     .eq("orderId", orderId);
 
-  const merchantId   = process.env.PAYTR_MERCHANT_ID!;
-  const merchantKey  = process.env.PAYTR_MERCHANT_KEY!;
-  const merchantSalt = process.env.PAYTR_MERCHANT_SALT!;
+  const merchantId   = process.env.PAYTR_MERCHANT_ID!.trim();
+  const merchantKey  = process.env.PAYTR_MERCHANT_KEY!.trim();
+  const merchantSalt = process.env.PAYTR_MERCHANT_SALT!.trim();
   const testMode     = process.env.PAYTR_TEST_MODE ?? "1";
   // Redirect URL'i tarayıcıya gider — session cookie'nin geçerli olduğu adres olmalı
   // Canlıda PAYTR_REDIRECT_BASE_URL set edilmezse NEXT_PUBLIC_SITE_URL kullanılır

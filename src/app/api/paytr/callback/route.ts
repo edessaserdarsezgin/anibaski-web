@@ -17,8 +17,8 @@ export async function POST(req: NextRequest) {
     return new Response("MISSING_PARAMS", { status: 400 });
   }
 
-  const merchantKey  = process.env.PAYTR_MERCHANT_KEY!;
-  const merchantSalt = process.env.PAYTR_MERCHANT_SALT!;
+  const merchantKey  = process.env.PAYTR_MERCHANT_KEY!.trim();
+  const merchantSalt = process.env.PAYTR_MERCHANT_SALT!.trim();
 
   // Hash doğrulama — sahte callback'lere karşı
   const expectedHash = crypto
