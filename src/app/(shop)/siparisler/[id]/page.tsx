@@ -50,6 +50,8 @@ export default async function SiparisDetayPage({ params }: Props) {
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   const isAdmin = profile?.role === "ADMIN";
   if (!order || (!isAdmin && order.userId !== user.id)) notFound();
+  // Kredi kartıyla oluşturulmuş ama ödeme tamamlanmamış siparişleri gizle
+  if (!isAdmin && order.paymentMethod === "credit_card" && !order.paymentStatus) notFound();
 
   const isCancelled = order.status === "CANCELLED";
   const isCancelRequested = order.status === "CANCEL_REQUESTED";

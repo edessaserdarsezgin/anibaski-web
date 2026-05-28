@@ -24,8 +24,9 @@ export default async function SiparislerPage() {
 
   const { data: orders } = await supabase
     .from("orders")
-    .select("id, status, total, createdAt, items:order_items(id, quantity, variantSelections, product:products(name, images))")
+    .select("id, status, total, createdAt, paymentMethod, paymentStatus, items:order_items(id, quantity, variantSelections, product:products(name, images))")
     .eq("userId", user.id)
+    .or("paymentMethod.eq.cod,paymentStatus.not.is.null")
     .order("createdAt", { ascending: false });
 
   return (
