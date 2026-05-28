@@ -18,7 +18,7 @@ export default function RoleSelect({ userId, currentRole, colorMap }: Props) {
     const newRole = e.target.value;
     if (!confirm(`Bu üyenin rolünü '${newRole}' yapmak istediğine emin misin?`)) return;
     setSaving(true);
-    const res = await fetch(`/api/admin/users/${userId}/role`, {
+    const res = await fetch(`/api/admin/users/${userId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role: newRole }),

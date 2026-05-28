@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import RoleSelect from "./RoleSelect";
@@ -59,6 +60,7 @@ export default async function AdminUyelerPage() {
                 <th className="text-center px-4 py-3 font-semibold">Sipariş</th>
                 <th className="text-right px-4 py-3 font-semibold">Toplam Harcama</th>
                 <th className="px-4 py-3 font-semibold">Rol</th>
+                <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody>
@@ -80,6 +82,11 @@ export default async function AdminUyelerPage() {
                     </td>
                     <td className="px-4 py-4">
                       <RoleSelect userId={u.id} currentRole={u.role} colorMap={ROLE_COLOR} />
+                    </td>
+                    <td className="px-4 py-4">
+                      <Link href={`/admin/uyeler/${u.id}`} className="text-xs text-primary hover:underline font-semibold">
+                        Detay
+                      </Link>
                     </td>
                   </tr>
                 );
