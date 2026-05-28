@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_noStore as noStore } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import OrderStatusSelect from "./OrderStatusSelect";
 import OrderTrackingInput from "./OrderTrackingInput";
@@ -18,11 +19,17 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default async function AdminSiparislerPage() {
+  noStore();
   const supabase = createAdminClient();
-  const { data: orders } = await supabase
+  const { data: allOrders } = await supabase
     .from("orders")
-    .select(`id, status, total, createdAt, "trackingCode", items:order_items(id, quantity, variantSelections, product:products(name)), address:addresses!orders_addressId_fkey(fullName, city)`)
+    .select(`id, status, total, createdAt, "trackingCode", "paymentMethod", "paymentStatus", items:order_items(id, quantity, variantSelections, product:products(name)), address:addresses!orders_addressId_fkey(fullName, city)`)
     .order("createdAt", { ascending: false });
+
+  // Tamamlanmamış kredi kartı siparişleri admin listesinde de gizlensin
+  const orders = (allOrders ?? []).filter(o =>
+    o.paymentMethod === "cod" || o.paymentStatus === "paid"
+  );
 
   return (
     <div>
