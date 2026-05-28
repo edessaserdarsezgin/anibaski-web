@@ -7,6 +7,7 @@ import Cropper from "react-easy-crop";
 import type { Area, Point } from "react-easy-crop";
 import "react-easy-crop/react-easy-crop.css";
 import { syncCartSnapshot } from "@/hooks/useCart";
+import ProductMockup from "@/components/product/ProductMockup";
 
 type Photo = {
   url: string;
@@ -37,6 +38,7 @@ type PendingItem = {
   quantity: number;
   unitPrice: number;
   photoCount: number;
+  mockupTemplateUrl?: string | null;
 };
 
 const ASPECT_RATIOS: { label: string; value: number | undefined }[] = [
@@ -267,6 +269,22 @@ export default function FotografYuklePage() {
             ? "Tüm fotoğraflar hazır. Kırpabilir, optimize edebilirsiniz."
             : `${required - photos.length} fotoğraf daha ekleyin`}
         </p>
+
+        {/* Mockup önizleme */}
+        {photos.length > 0 && item.mockupTemplateUrl && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-1 h-4 rounded-full bg-primary" />
+              <p className="text-sm font-semibold text-text">Ürün Önizleme</p>
+              <span className="text-xs text-text-light">— fotoğrafınız çerçevede böyle görünecek</span>
+            </div>
+            <ProductMockup
+              templateUrl={item.mockupTemplateUrl}
+              photoUrl={photos[0].preview}
+              className="max-w-md mx-auto rounded-2xl shadow-xl"
+            />
+          </div>
+        )}
 
         {/* Fotoğraf grid */}
         {photos.length > 0 && (

@@ -126,6 +126,7 @@ export default async function UrunDetayPage({ params }: Props) {
                 image: product.images?.[0] ?? "",
                 requiresPhotoUpload: product.requiresPhotoUpload ?? false,
                 photoCount: product.photoCount ?? 1,
+                mockupTemplateUrl: product.mockupTemplateUrl ?? null,
               }}
               variantGroups={Object.entries(variantGroups).map(([type, items]) => ({
                 type,

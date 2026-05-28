@@ -16,6 +16,7 @@ type Props = {
     image: string;
     requiresPhotoUpload: boolean;
     photoCount: number;
+    mockupTemplateUrl?: string | null;
   };
   variantGroups: VariantGroup[];
 };
@@ -71,6 +72,7 @@ export default function AddToCartButton({ isLoggedIn, product, variantGroups }: 
       quantity,
       unitPrice,
       photoCount: product.photoCount,
+      mockupTemplateUrl: product.mockupTemplateUrl ?? null,
     }));
     router.push("/fotograf-yukle");
   }

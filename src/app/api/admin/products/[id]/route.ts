@@ -31,7 +31,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
-  const { name, slug, basePrice, categoryId, description, images, specs, isActive, requiresPhotoUpload, photoCount } = await req.json();
+  const { name, slug, basePrice, categoryId, description, images, specs, isActive, requiresPhotoUpload, photoCount, mockupTemplateUrl } = await req.json();
 
   const updateData: Record<string, unknown> = { name, slug, basePrice, categoryId, description: description || null, images, specs: specs || null };
   if (typeof isActive === "boolean") updateData.isActive = isActive;
@@ -39,6 +39,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     updateData.requiresPhotoUpload = requiresPhotoUpload;
     updateData.photoCount = photoCount ?? 1;
   }
+  if (mockupTemplateUrl !== undefined) updateData.mockupTemplateUrl = mockupTemplateUrl || null;
 
   const { error } = await admin.supabase
     .from("products")

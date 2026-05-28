@@ -26,9 +26,10 @@ model Product {
   slug        String           @unique
   description String?
   basePrice   Decimal          @db.Decimal(10, 2)
-  images      String[]         @default([])
-  specs       Json?
-  createdAt   DateTime         @default(now()) @db.Timestamptz(6)
+  images             String[]         @default([])
+  specs              Json?
+  mockupTemplateUrl  String?
+  createdAt          DateTime         @default(now()) @db.Timestamptz(6)
   cartItems   CartItem[]
   orderItems  OrderItem[]
   variants    ProductVariant[]

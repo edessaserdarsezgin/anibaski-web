@@ -32,6 +32,9 @@ export default function UrunDuzenle() {
   const [photoCount, setPhotoCount] = useState(1);
   const [images, setImages] = useState<string[]>([]);
   const [imageUploading, setImageUploading] = useState(false);
+  const [mockupTemplateUrl, setMockupTemplateUrl] = useState<string>("");
+  const [mockupUploading, setMockupUploading] = useState(false);
+  const mockupFileRef = useRef<HTMLInputElement>(null);
 
   const [variants, setVariants] = useState<SavedVariant[]>([]);
   const [pending, setPending] = useState<Record<string, PendingOption>>({});
@@ -60,6 +63,7 @@ export default function UrunDuzenle() {
         setImages(product.images ?? []);
         setRequiresPhotoUpload(!!product.requiresPhotoUpload);
         setPhotoCount(product.photoCount ?? 1);
+        setMockupTemplateUrl(product.mockupTemplateUrl ?? "");
       }
       setVariants(savedVariants);
       const types = [...new Set(savedVariants.map(v => v.type))];
@@ -86,6 +90,20 @@ export default function UrunDuzenle() {
 
   function removeImage(url: string) {
     setImages(prev => prev.filter(u => u !== url));
+  }
+
+  async function handleMockupUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMockupUploading(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+    const data = await res.json();
+    if (res.ok) setMockupTemplateUrl(data.url);
+    else setError("Mockup şablonu yüklenemedi.");
+    setMockupUploading(false);
+    e.target.value = "";
   }
 
   function addGroupLocally() {
@@ -137,7 +155,7 @@ export default function UrunDuzenle() {
     const res = await fetch(`/api/admin/products/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: form.name, slug: form.slug, basePrice: form.basePrice, categoryId: form.categoryId, description: form.description, images, specs: form.details.trim() ? { details: form.details.trim() } : null, requiresPhotoUpload, photoCount: requiresPhotoUpload ? photoCount : 1 }),
+      body: JSON.stringify({ name: form.name, slug: form.slug, basePrice: form.basePrice, categoryId: form.categoryId, description: form.description, images, specs: form.details.trim() ? { details: form.details.trim() } : null, requiresPhotoUpload, photoCount: requiresPhotoUpload ? photoCount : 1, mockupTemplateUrl: mockupTemplateUrl || null }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -263,6 +281,38 @@ export default function UrunDuzenle() {
               />
             </div>
           )}
+        </div>
+
+        {/* Mockup Şablonu */}
+        <div className="flex flex-col gap-3 pt-2 border-t border-border">
+          <div>
+            <p className="text-sm font-semibold text-text">Ürün Mockup Şablonu</p>
+            <p className="text-xs text-text-light mt-0.5">Şeffaf delikli PNG — müşterinin fotoğrafı bu şablonun arkasında gösterilir</p>
+          </div>
+          {mockupTemplateUrl ? (
+            <div className="flex items-start gap-4">
+              <div className="relative w-32 h-32 rounded-xl overflow-hidden border border-border bg-[#ccc] bg-[repeating-conic-gradient(#aaa_0%_25%,transparent_0%_50%)] bg-[length:16px_16px]">
+                <Image src={mockupTemplateUrl} alt="Mockup şablonu" fill className="object-contain" sizes="128px" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <button type="button" onClick={() => mockupFileRef.current?.click()} disabled={mockupUploading}
+                  className="px-4 py-2 border border-border text-sm font-semibold rounded-lg hover:border-primary hover:text-primary transition-colors disabled:opacity-50">
+                  {mockupUploading ? "Yükleniyor..." : "Değiştir"}
+                </button>
+                <button type="button" onClick={() => setMockupTemplateUrl("")}
+                  className="px-4 py-2 border border-red-200 text-red-500 text-sm font-semibold rounded-lg hover:bg-red-50 transition-colors">
+                  Kaldır
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button type="button" onClick={() => mockupFileRef.current?.click()} disabled={mockupUploading}
+              className="w-32 h-32 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-text-light hover:border-primary hover:text-primary transition-colors text-xs gap-1 disabled:opacity-50">
+              <span className="text-2xl">+</span>
+              <span>{mockupUploading ? "Yükleniyor" : "Şablon Ekle"}</span>
+            </button>
+          )}
+          <input ref={mockupFileRef} type="file" accept="image/png,image/webp" className="hidden" onChange={handleMockupUpload} />
         </div>
 
         {/* Varyantlar */}
