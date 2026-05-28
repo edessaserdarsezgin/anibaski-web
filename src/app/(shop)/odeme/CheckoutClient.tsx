@@ -372,13 +372,18 @@ export default function CheckoutClient({ initialAddresses }: { initialAddresses:
               <h2 className="font-serif text-xl text-text mb-4">Sipariş Özeti</h2>
               <div className="flex flex-col gap-2 text-sm mb-4">
                 {items.map((item, i) => (
-                  <div key={i} className="flex justify-between">
-                    <span className="text-text-light truncate max-w-[180px]">
-                      {item.productName} ×{item.quantity}
-                    </span>
-                    <span className="font-semibold ml-2 shrink-0">
-                      {(item.unitPrice * item.quantity).toLocaleString("tr-TR")} ₺
-                    </span>
+                  <div key={i} className="flex justify-between items-start">
+                    <span className="text-text-light truncate max-w-[180px]">{item.productName}</span>
+                    <div className="text-right ml-2 shrink-0">
+                      {item.quantity > 1 && (
+                        <p className="text-xs text-text-light">
+                          {item.unitPrice.toLocaleString("tr-TR")} ₺ × {item.quantity}
+                        </p>
+                      )}
+                      <span className="font-semibold">
+                        {(item.unitPrice * item.quantity).toLocaleString("tr-TR")} ₺
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>

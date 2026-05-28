@@ -94,12 +94,13 @@ export async function POST(req: NextRequest) {
         phone: address.phone,
         orderNo: order.id.slice(0, 8).toUpperCase(),
         total: total,
-        items: items.map((item: { productName?: string; productId: string; quantity: number; variantSelections?: Record<string, string> }) => {
+        items: items.map((item: { productName?: string; productId: string; quantity: number; unitPrice: number; variantSelections?: Record<string, string> }) => {
           const name = item.productName ?? item.productId;
           const variants = item.variantSelections && Object.keys(item.variantSelections).length > 0
             ? " (" + Object.entries(item.variantSelections).map(([k, v]) => `${k}: ${v}`).join(", ") + ")"
             : "";
-          return `• ${name}${variants} ×${item.quantity}`;
+          const lineTotal = (item.unitPrice * item.quantity).toLocaleString("tr-TR");
+          return `• ${name}${variants} ×${item.quantity} — ${lineTotal} ₺`;
         }).join("\n"),
         discountCode: validatedCouponCode,
         discountAmount: discountAmount > 0 ? discountAmount : null,

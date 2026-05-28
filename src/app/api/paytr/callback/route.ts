@@ -69,7 +69,8 @@ export async function POST(req: NextRequest) {
             const variants = vs && Object.keys(vs).length > 0
               ? " (" + Object.entries(vs).map(([k, v]) => `${k}: ${v}`).join(", ") + ")"
               : "";
-            return `• ${name}${variants} ×${item.quantity}`;
+            const lineTotal = (Number(item.unitPrice) * item.quantity).toLocaleString("tr-TR");
+            return `• ${name}${variants} ×${item.quantity} — ${lineTotal} ₺`;
           }).join("\n"),
           discountCode: order.discount_code ?? null,
           discountAmount: order.discount_amount ? Number(order.discount_amount) : null,

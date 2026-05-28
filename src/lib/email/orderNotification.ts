@@ -40,7 +40,8 @@ export async function sendOrderNotification(params: Params) {
     <tr>
       <td style="padding:8px 12px;border-bottom:1px solid #ece8e1">${item.productName}</td>
       <td style="padding:8px 12px;border-bottom:1px solid #ece8e1;text-align:center">${item.quantity}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #ece8e1;text-align:right">${(item.unitPrice * item.quantity).toLocaleString("tr-TR")} ₺</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #ece8e1;text-align:right">${item.unitPrice.toLocaleString("tr-TR")} ₺</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #ece8e1;text-align:right;font-weight:600">${(item.unitPrice * item.quantity).toLocaleString("tr-TR")} ₺</td>
       <td style="padding:8px 12px;border-bottom:1px solid #ece8e1;text-align:center">
         ${item.uploadedImages?.length > 0 ? `<span style="color:#e07a5f;font-weight:600">${item.uploadedImages.length} fotoğraf</span>` : "—"}
       </td>
@@ -76,6 +77,7 @@ export async function sendOrderNotification(params: Params) {
           <tr style="background:#fdfbf7">
             <th style="padding:8px 12px;text-align:left;font-size:12px;color:#8187a2">ÜRÜN</th>
             <th style="padding:8px 12px;text-align:center;font-size:12px;color:#8187a2">ADET</th>
+            <th style="padding:8px 12px;text-align:right;font-size:12px;color:#8187a2">BİRİM</th>
             <th style="padding:8px 12px;text-align:right;font-size:12px;color:#8187a2">TUTAR</th>
             <th style="padding:8px 12px;text-align:center;font-size:12px;color:#8187a2">FOTOĞRAF</th>
           </tr>
@@ -84,12 +86,12 @@ export async function sendOrderNotification(params: Params) {
         <tfoot>
           ${discountCode && discountAmount ? `
           <tr>
-            <td colspan="2" style="padding:8px 12px;text-align:right;color:#2d6a4f">İndirim (${discountCode})</td>
+            <td colspan="3" style="padding:8px 12px;text-align:right;color:#2d6a4f">İndirim (${discountCode})</td>
             <td style="padding:8px 12px;text-align:right;color:#2d6a4f;font-weight:600">−${discountAmount.toLocaleString("tr-TR")} ₺</td>
             <td></td>
           </tr>` : ""}
           <tr>
-            <td colspan="2" style="padding:12px;text-align:right;font-weight:700">Toplam</td>
+            <td colspan="3" style="padding:12px;text-align:right;font-weight:700">Toplam</td>
             <td style="padding:12px;text-align:right;font-weight:700;color:#e07a5f">${total.toLocaleString("tr-TR")} ₺</td>
             <td></td>
           </tr>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/hooks/useCart";
@@ -23,9 +23,20 @@ export default function SepetPage() {
     return saved ? JSON.parse(saved) : null;
   });
 
-  const discountAmount = appliedCoupon?.discountAmount ?? 0;
+  const discountAmount = appliedCoupon
+    ? appliedCoupon.discountType === "percentage"
+      ? Math.round(total * (appliedCoupon.discountValue / 100) * 100) / 100
+      : Math.min(appliedCoupon.discountValue, total)
+    : 0;
   const shippingFee = total >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
   const grandTotal = total + shippingFee - discountAmount;
+
+  // Adet değişince sessionStorage'daki indirim tutarını güncelle
+  useEffect(() => {
+    if (!appliedCoupon) return;
+    const updated = { ...appliedCoupon, discountAmount };
+    sessionStorage.setItem("appliedCoupon", JSON.stringify(updated));
+  }, [total, appliedCoupon, discountAmount]);
 
   async function handleApplyCoupon() {
     if (!couponInput.trim()) return;
@@ -115,9 +126,16 @@ export default function SepetPage() {
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <p className="font-semibold text-primary">
-                      {(item.unitPrice * item.quantity).toLocaleString("tr-TR")} ₺
-                    </p>
+                    <div className="text-right">
+                      {item.quantity > 1 && (
+                        <p className="text-xs text-text-light">
+                          {item.unitPrice.toLocaleString("tr-TR")} ₺ × {item.quantity}
+                        </p>
+                      )}
+                      <p className="font-semibold text-primary">
+                        {(item.unitPrice * item.quantity).toLocaleString("tr-TR")} ₺
+                      </p>
+                    </div>
                     <button
                       onClick={() => removeItem(index)}
                       className="text-xs text-text-light hover:text-red-500 transition-colors"
