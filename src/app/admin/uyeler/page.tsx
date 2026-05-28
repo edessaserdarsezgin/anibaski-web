@@ -1,0 +1,93 @@
+import { unstable_noStore as noStore } from "next/cache";
+import { createAdminClient } from "@/lib/supabase/server";
+import RoleSelect from "./RoleSelect";
+
+export const metadata = { title: "Üyeler | Admin" };
+
+const ROLE_COLOR: Record<string, string> = {
+  ADMIN: "bg-primary/10 text-primary border-primary/20",
+  CUSTOMER: "bg-bg text-text-light border-border",
+};
+
+type Profile = {
+  id: string;
+  email: string;
+  fullName: string | null;
+  phone: string | null;
+  role: string;
+  createdAt: string;
+};
+
+type OrderRow = { userId: string; total: number };
+
+export default async function AdminUyelerPage() {
+  noStore();
+  const supabase = createAdminClient();
+
+  const [{ data: profiles }, { data: orders }] = await Promise.all([
+    supabase.from("profiles").select(`id, email, "fullName", phone, role, "createdAt"`).order("createdAt", { ascending: false }),
+    supabase.from("orders").select(`"userId", total, "paymentMethod", "paymentStatus"`),
+  ]);
+
+  // Tamamlanmış (paid veya cod) siparişlerin kullanıcıya göre özetini çıkar
+  const completed = (orders ?? []).filter((o) => o.paymentMethod === "cod" || o.paymentStatus === "paid");
+  const stats = completed.reduce<Record<string, { count: number; total: number }>>((acc, o: OrderRow) => {
+    const k = o.userId;
+    if (!acc[k]) acc[k] = { count: 0, total: 0 };
+    acc[k].count += 1;
+    acc[k].total += Number(o.total);
+    return acc;
+  }, {});
+
+  const users: Profile[] = (profiles ?? []) as Profile[];
+
+  return (
+    <div>
+      <h1 className="font-serif text-3xl text-text mb-2">Üyeler</h1>
+      <p className="text-sm text-text-light mb-8">Toplam {users.length} üye</p>
+
+      <div className="bg-white rounded-2xl border border-border overflow-hidden">
+        {!users.length ? (
+          <p className="text-sm text-text-light p-6">Henüz üye yok.</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="border-b border-border bg-bg">
+              <tr className="text-text-light">
+                <th className="text-left px-6 py-3 font-semibold">Üye</th>
+                <th className="text-left px-4 py-3 font-semibold">Telefon</th>
+                <th className="text-left px-4 py-3 font-semibold">Üyelik</th>
+                <th className="text-center px-4 py-3 font-semibold">Sipariş</th>
+                <th className="text-right px-4 py-3 font-semibold">Toplam Harcama</th>
+                <th className="px-4 py-3 font-semibold">Rol</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u) => {
+                const stat = stats[u.id];
+                return (
+                  <tr key={u.id} className="border-b border-border last:border-0 hover:bg-bg transition-colors">
+                    <td className="px-6 py-4">
+                      <p className="text-text font-semibold">{u.fullName || "—"}</p>
+                      <p className="text-xs text-text-light">{u.email}</p>
+                    </td>
+                    <td className="px-4 py-4 text-text-light">{u.phone || "—"}</td>
+                    <td className="px-4 py-4 text-text-light text-xs">
+                      {new Date(u.createdAt).toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric" })}
+                    </td>
+                    <td className="px-4 py-4 text-center">{stat?.count ?? 0}</td>
+                    <td className="px-4 py-4 text-right font-semibold text-primary">
+                      {stat ? `${stat.total.toLocaleString("tr-TR")} ₺` : "—"}
+                    </td>
+                    <td className="px-4 py-4">
+                      <RoleSelect userId={u.id} currentRole={u.role} colorMap={ROLE_COLOR} />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
