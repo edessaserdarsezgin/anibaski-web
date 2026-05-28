@@ -45,3 +45,8 @@ yarn-error.log*
 next-env.d.ts
 05_CLAUDE_BOOTSTRAP_SHORT.txt
 /src/generated/prisma
+
+# claude
+.claude/
+.superpowers/
+.lazyweb/
