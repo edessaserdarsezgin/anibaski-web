@@ -69,8 +69,10 @@ export async function POST(req: NextRequest) {
             const variants = vs && Object.keys(vs).length > 0
               ? " (" + Object.entries(vs).map(([k, v]) => `${k}: ${v}`).join(", ") + ")"
               : "";
+            const unitPrice = Number(item.unitPrice).toLocaleString("tr-TR");
             const lineTotal = (Number(item.unitPrice) * item.quantity).toLocaleString("tr-TR");
-            return `• ${name}${variants} ×${item.quantity} — ${lineTotal} ₺`;
+            const priceStr = item.quantity > 1 ? `${unitPrice} ₺ × ${item.quantity} = ${lineTotal} ₺` : `${lineTotal} ₺`;
+            return `• ${name}${variants}: ${priceStr}`;
           }).join("\n"),
           discountCode: order.discount_code ?? null,
           discountAmount: order.discount_amount ? Number(order.discount_amount) : null,

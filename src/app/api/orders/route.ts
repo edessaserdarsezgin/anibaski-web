@@ -99,8 +99,10 @@ export async function POST(req: NextRequest) {
           const variants = item.variantSelections && Object.keys(item.variantSelections).length > 0
             ? " (" + Object.entries(item.variantSelections).map(([k, v]) => `${k}: ${v}`).join(", ") + ")"
             : "";
+          const unitPrice = item.unitPrice.toLocaleString("tr-TR");
           const lineTotal = (item.unitPrice * item.quantity).toLocaleString("tr-TR");
-          return `• ${name}${variants} ×${item.quantity} — ${lineTotal} ₺`;
+          const priceStr = item.quantity > 1 ? `${unitPrice} ₺ × ${item.quantity} = ${lineTotal} ₺` : `${lineTotal} ₺`;
+          return `• ${name}${variants}: ${priceStr}`;
         }).join("\n"),
         discountCode: validatedCouponCode,
         discountAmount: discountAmount > 0 ? discountAmount : null,
