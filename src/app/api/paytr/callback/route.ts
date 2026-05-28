@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { sendOrderNotification } from "@/lib/email/orderNotification";
-import { notifyOrderCreated, notifyPaymentFailed } from "@/lib/whatsapp/notify";
+import { notifyOrderCreated } from "@/lib/whatsapp/notify";
 import crypto from "crypto";
 
 // PayTR callback URL'si — session/auth koruması olmadan erişilebilir olmalı
@@ -105,22 +105,7 @@ export async function POST(req: NextRequest) {
       .from("orders")
       .update({ paymentStatus: "failed" })
       .eq("id", orderId);
-
-    // Ödeme başarısız → müşteriye WhatsApp
-    const { data: order } = await adminClient
-      .from("orders").select("addressId").eq("id", orderId).single();
-
-    if (order) {
-      const { data: address } = await adminClient
-        .from("addresses").select("phone").eq("id", order.addressId).single();
-
-      if (address?.phone) {
-        notifyPaymentFailed({
-          phone: address.phone,
-          orderNo: orderId.slice(0, 8).toUpperCase(),
-        });
-      }
-    }
+    // Başarısız ödeme bildirimi gönderilmiyor — PayTR/banka iframe'de kullanıcıya gösteriyor
   }
 
   // PayTR "OK" yanıtı bekler — farklı bir şey dönerse 1 dk sonra tekrar dener

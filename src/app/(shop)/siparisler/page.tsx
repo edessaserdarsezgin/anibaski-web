@@ -32,7 +32,7 @@ export default async function SiparislerPage() {
 
   // Kredi kartıyla oluşturulmuş ama ödeme tamamlanmamış (pending) siparişleri gizle
   const orders = (allOrders ?? []).filter(o =>
-    o.paymentMethod === "cod" || o.paymentStatus === "paid" || o.paymentStatus === "failed"
+    o.paymentMethod === "cod" || o.paymentStatus === "paid"
   );
 
   return (
