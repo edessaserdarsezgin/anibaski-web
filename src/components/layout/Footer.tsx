@@ -16,10 +16,10 @@ export default function Footer() {
           <div>
             <h4 className="font-serif text-sm font-semibold text-text mb-3">Kategoriler</h4>
             <ul className="space-y-2 text-sm text-text-light">
-              <li><Link href="/urunler/foto-kitap" className="hover:text-primary transition-colors">Foto Kitap</Link></li>
-              <li><Link href="/urunler/fotograf-baski" className="hover:text-primary transition-colors">Fotoğraf Baskı</Link></li>
-              <li><Link href="/urunler/duvar-dekorasyonu" className="hover:text-primary transition-colors">Duvar Dekorasyonu</Link></li>
-              <li><Link href="/urunler/hediyeler" className="hover:text-primary transition-colors">Hediyelikler</Link></li>
+              <li><Link href="/kategoriler/albumler-ve-kitaplar" className="hover:text-primary transition-colors">Foto Kitap</Link></li>
+              <li><Link href="/kategoriler/fotograf-baskilari" className="hover:text-primary transition-colors">Fotoğraf Baskı</Link></li>
+              <li><Link href="/kategoriler/duvar-dekorasyonu" className="hover:text-primary transition-colors">Duvar Dekorasyonu</Link></li>
+              <li><Link href="/kategoriler/kisiye-ozel-hediyeler" className="hover:text-primary transition-colors">Hediyelikler</Link></li>
             </ul>
           </div>
           <div>
