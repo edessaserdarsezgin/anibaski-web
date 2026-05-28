@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import ProfileForm from "./ProfileForm";
 import AddressBook from "./AddressBook";
+import PhoneVerification from "./PhoneVerification";
 
 export const metadata = { title: "Profilim", robots: { index: false, follow: false } };
 
@@ -67,7 +68,13 @@ export default async function ProfilPage() {
 
         {/* Kişisel Bilgiler */}
         <section className="bg-white rounded-2xl border border-border p-6">
-          <h2 className="font-serif text-xl text-text mb-5">Kişisel Bilgiler</h2>
+          <div className="flex items-start justify-between gap-4 mb-5 flex-wrap">
+            <h2 className="font-serif text-xl text-text">Kişisel Bilgiler</h2>
+            <PhoneVerification
+              phone={profile?.phone ?? null}
+              verified={profile?.phone_verified ?? false}
+            />
+          </div>
           <ProfileForm
             email={user.email!}
             fullName={profile?.fullName ?? null}

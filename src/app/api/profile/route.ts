@@ -12,12 +12,19 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Telefon numarası zorunludur." }, { status: 400 });
   }
 
+  // Mevcut telefonu kontrol et — değişmişse phone_verified resetlensin
+  const { data: current } = await supabase
+    .from("profiles").select("phone").eq("id", user.id).single();
+
   const updates: Record<string, unknown> = {
     fullName: fullName || null,
     phone: phone.trim(),
   };
   if (typeof notify_delivery_contact === "boolean") {
     updates.notify_delivery_contact = notify_delivery_contact;
+  }
+  if (current?.phone !== phone.trim()) {
+    updates.phone_verified = false;
   }
 
   const { data, error } = await supabase
