@@ -26,7 +26,7 @@ export default async function SiparislerPage() {
     .from("orders")
     .select("id, status, total, createdAt, paymentMethod, paymentStatus, items:order_items(id, quantity, variantSelections, product:products(name, images))")
     .eq("userId", user.id)
-    .or("paymentMethod.eq.cod,paymentStatus.not.is.null")
+    .or("paymentMethod.eq.cod,paymentStatus.eq.paid,paymentStatus.eq.failed")
     .order("createdAt", { ascending: false });
 
   return (

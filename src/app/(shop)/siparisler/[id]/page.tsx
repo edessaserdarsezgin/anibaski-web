@@ -51,7 +51,7 @@ export default async function SiparisDetayPage({ params }: Props) {
   const isAdmin = profile?.role === "ADMIN";
   if (!order || (!isAdmin && order.userId !== user.id)) notFound();
   // Kredi kartıyla oluşturulmuş ama ödeme tamamlanmamış siparişleri gizle
-  if (!isAdmin && order.paymentMethod === "credit_card" && !order.paymentStatus) notFound();
+  if (!isAdmin && order.paymentMethod === "credit_card" && order.paymentStatus === "pending") notFound();
 
   const isCancelled = order.status === "CANCELLED";
   const isCancelRequested = order.status === "CANCEL_REQUESTED";
