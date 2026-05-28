@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import AnnouncementBanner from "@/components/layout/AnnouncementBanner";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -43,15 +44,9 @@ export default function HomePage() {
         .cat-large .cat-icon { transition: transform 0.5s ease, opacity 0.5s ease; }
       `}</style>
 
+      <AnnouncementBanner />
       <Header />
       <main className="overflow-hidden">
-
-        {/* ── Promo Bar ─────────────────────────────────── */}
-        <div className="bg-text text-white text-center py-2.5 text-xs font-semibold tracking-widest uppercase">
-          Anneler Günü&apos;ne özel — foto kitaplarda %20 indirim &nbsp;·&nbsp;
-          <span className="font-mono bg-white/15 px-2 py-0.5 rounded-sm text-accent tracking-normal">ANNE20</span>
-          &nbsp;·&nbsp; Bugün sipariş ver, 5 iş gününde kapında
-        </div>
 
         {/* ── Hero ──────────────────────────────────────── */}
         <section className="relative min-h-[92vh] flex items-center bg-bg">

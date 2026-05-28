@@ -38,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="tr" className={`${lora.variable} ${nunito.variable}`}>
+    <html lang="tr" className={`${lora.variable} ${nunito.variable}`} data-scroll-behavior="smooth">
       <body className="min-h-full flex flex-col">
         <ToastProvider>{children}</ToastProvider>
         <CookieBanner />

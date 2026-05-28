@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -26,20 +26,37 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function KategoriPage({ params }: Props) {
   const { slug } = await params;
-  const supabase = await createClient();
+  const adminDb = createAdminClient();
 
-  const { data: category } = await supabase
+  const { data: category } = await adminDb
     .from("categories")
-    .select("id, name, slug, description")
+    .select("id, name, slug, description, parentId")
     .eq("slug", slug)
     .single();
 
   if (!category) notFound();
 
-  const { data: products } = await supabase
+  // Alt kategoriler (bu bir ana kategori ise)
+  const { data: subCategories } = await adminDb
+    .from("categories")
+    .select("id, name, slug")
+    .eq("parentId", category.id)
+    .order("name");
+
+  // Ana kategori (bu bir alt kategori ise)
+  const { data: parentCategory } = category.parentId
+    ? await adminDb.from("categories").select("id, name, slug").eq("id", category.parentId).single()
+    : { data: null };
+
+  // Ürünler: bu kategorinin ürünleri + alt kategorilerinin ürünleri
+  const subCategoryIds = (subCategories ?? []).map(s => s.id);
+  const allCategoryIds = [category.id, ...subCategoryIds];
+
+  const { data: products } = await adminDb
     .from("products")
-    .select("id, name, slug, description, basePrice, images")
-    .eq("categoryId", category.id)
+    .select("id, name, slug, description, basePrice, images, categoryId")
+    .in("categoryId", allCategoryIds)
+    .eq("isActive", true)
     .order("createdAt", { ascending: false });
 
   return (
@@ -51,10 +68,18 @@ export default async function KategoriPage({ params }: Props) {
           <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full bg-accent/15 blur-3xl" />
         </div>
         <div className="relative max-w-6xl mx-auto px-8 py-14">
-          <p className="text-sm text-text-light flex items-center gap-1.5 mb-6">
+          <p className="text-sm text-text-light flex items-center gap-1.5 mb-6 flex-wrap">
             <Link href="/" className="hover:text-primary transition-colors">Ana Sayfa</Link>
             <span className="text-border">/</span>
             <Link href="/urunler" className="hover:text-primary transition-colors">Ürünler</Link>
+            {parentCategory && (
+              <>
+                <span className="text-border">/</span>
+                <Link href={`/kategoriler/${parentCategory.slug}`} className="hover:text-primary transition-colors">
+                  {parentCategory.name}
+                </Link>
+              </>
+            )}
             <span className="text-border">/</span>
             <span className="text-text">{category.name}</span>
           </p>
@@ -68,6 +93,27 @@ export default async function KategoriPage({ params }: Props) {
       </section>
 
       <div className="max-w-6xl mx-auto px-8 py-12">
+
+        {/* ── Alt Kategori Filtreleri (sadece ana kategoride göster) ── */}
+        {(subCategories?.length ?? 0) > 0 && (
+          <div className="flex gap-2 flex-wrap mb-10">
+            <Link
+              href={`/kategoriler/${category.slug}`}
+              className="px-5 py-2 rounded-full text-sm font-semibold border bg-text text-white border-text transition-all"
+            >
+              Tümü
+            </Link>
+            {subCategories!.map((sub) => (
+              <Link
+                key={sub.id}
+                href={`/kategoriler/${sub.slug}`}
+                className="px-5 py-2 rounded-full text-sm font-semibold border border-border text-text-light hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
+              >
+                {sub.name}
+              </Link>
+            ))}
+          </div>
+        )}
 
         {!products?.length ? (
           <div className="flex flex-col items-center justify-center py-32 gap-5">
@@ -91,7 +137,6 @@ export default async function KategoriPage({ params }: Props) {
           </div>
         ) : (
           <>
-            {/* ── Ürün Grid ───────────────────────────── */}
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-5">
               {products.map((product) => (
                 <Link
@@ -99,7 +144,6 @@ export default async function KategoriPage({ params }: Props) {
                   href={`/urunler/${product.slug}`}
                   className="group bg-white rounded-3xl border border-border overflow-hidden hover:shadow-hover hover:border-primary/30 hover:-translate-y-1 transition-all duration-300"
                 >
-                  {/* Görsel */}
                   <div className="relative aspect-[4/3] bg-bg overflow-hidden">
                     {product.images?.[0] ? (
                       <Image
@@ -118,8 +162,6 @@ export default async function KategoriPage({ params }: Props) {
                       </div>
                     )}
                   </div>
-
-                  {/* Bilgi */}
                   <div className="p-5">
                     <h2 className="font-serif text-base text-text group-hover:text-primary transition-colors line-clamp-2 leading-snug mb-3">
                       {product.name}
@@ -143,7 +185,6 @@ export default async function KategoriPage({ params }: Props) {
               ))}
             </div>
 
-            {/* ── Alt CTA ─────────────────────────────── */}
             <div className="mt-20 py-14 px-10 rounded-3xl bg-text flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
               <div className="pointer-events-none absolute inset-0">
                 <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-primary/20 blur-3xl" />

@@ -15,9 +15,10 @@ type Props = {
     category?: { name: string; slug: string } | null;
   };
   initialFavorited?: boolean;
+  priority?: boolean;
 };
 
-export default function ProductCard({ product, initialFavorited = false }: Props) {
+export default function ProductCard({ product, initialFavorited = false, priority = false }: Props) {
   const [favorited, setFavorited] = useState(initialFavorited);
   const [loading, setLoading] = useState(false);
 
@@ -80,6 +81,7 @@ export default function ProductCard({ product, initialFavorited = false }: Props
               src={product.images[0]}
               alt={product.name}
               fill
+              priority={priority}
               className="object-cover group-hover:scale-105 transition-transform duration-500"
               sizes="(max-width: 768px) 50vw, 33vw"
             />

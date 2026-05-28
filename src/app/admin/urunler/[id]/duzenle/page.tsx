@@ -4,7 +4,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
 import Image from "next/image";
 
-type Category = { id: string; name: string; slug: string };
+type Category = { id: string; name: string; slug: string; parentId?: string | null };
 type SavedVariant = { id: string; type: string; label: string; value: string; priceAddon: number };
 type PendingOption = { label: string; priceAddon: number };
 
@@ -26,8 +26,10 @@ export default function UrunDuzenle() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState({
     name: "", slug: "", basePrice: 0, categoryId: "", description: "",
-    specs: { paper_quality: "", print_technique: "", surface_finish: "", delivery_days: "", dimensions_note: "" },
+    details: "",
   });
+  const [requiresPhotoUpload, setRequiresPhotoUpload] = useState(false);
+  const [photoCount, setPhotoCount] = useState(1);
   const [images, setImages] = useState<string[]>([]);
   const [imageUploading, setImageUploading] = useState(false);
 
@@ -53,15 +55,11 @@ export default function UrunDuzenle() {
         setForm({
           name: product.name, slug: product.slug, basePrice: Number(product.basePrice),
           categoryId: product.categoryId, description: product.description ?? "",
-          specs: {
-            paper_quality: s.paper_quality ?? "",
-            print_technique: s.print_technique ?? "",
-            surface_finish: s.surface_finish ?? "",
-            delivery_days: s.delivery_days ?? "",
-            dimensions_note: s.dimensions_note ?? "",
-          },
+          details: s.details ?? "",
         });
         setImages(product.images ?? []);
+        setRequiresPhotoUpload(!!product.requiresPhotoUpload);
+        setPhotoCount(product.photoCount ?? 1);
       }
       setVariants(savedVariants);
       const types = [...new Set(savedVariants.map(v => v.type))];
@@ -139,7 +137,7 @@ export default function UrunDuzenle() {
     const res = await fetch(`/api/admin/products/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: form.name, slug: form.slug, basePrice: form.basePrice, categoryId: form.categoryId, description: form.description, images, specs: form.specs }),
+      body: JSON.stringify({ name: form.name, slug: form.slug, basePrice: form.basePrice, categoryId: form.categoryId, description: form.description, images, specs: form.details.trim() ? { details: form.details.trim() } : null, requiresPhotoUpload, photoCount: requiresPhotoUpload ? photoCount : 1 }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -210,7 +208,18 @@ export default function UrunDuzenle() {
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-text">Kategori</label>
             <select value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} required className={inputCls}>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              <option value="">Kategori seçin</option>
+              {categories.filter(c => !c.parentId).map(parent => {
+                const children = categories.filter(c => c.parentId === parent.id);
+                return children.length > 0 ? (
+                  <optgroup key={parent.id} label={parent.name}>
+                    <option value={parent.id}>{parent.name} (tümü)</option>
+                    {children.map(c => <option key={c.id} value={c.id}>↳ {c.name}</option>)}
+                  </optgroup>
+                ) : (
+                  <option key={parent.id} value={parent.id}>{parent.name}</option>
+                );
+              })}
             </select>
           </div>
           <div className="flex flex-col gap-1.5 col-span-2">
@@ -220,28 +229,40 @@ export default function UrunDuzenle() {
         </div>
 
         {/* Ürün Detayları */}
-        <div className="mt-6">
-          <h3 className="text-sm font-semibold text-text mb-3">Ürün Detayları (opsiyonel)</h3>
-          <div className="grid grid-cols-1 gap-3">
-            {([
-              { key: "paper_quality",   label: "Kağıt Kalitesi",  placeholder: "Parlak 250gr" },
-              { key: "print_technique", label: "Baskı Tekniği",   placeholder: "Dijital ofset" },
-              { key: "surface_finish",  label: "Yüzey",           placeholder: "Mat laminasyon" },
-              { key: "delivery_days",   label: "Üretim Süresi",   placeholder: "2-3 iş günü" },
-              { key: "dimensions_note", label: "Boyut Notu",      placeholder: "10×15 cm, 13×18 cm" },
-            ] as { key: keyof typeof form.specs; label: string; placeholder: string }[]).map(({ key, label, placeholder }) => (
-              <div key={key} className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-text-light">{label}</label>
-                <input
-                  type="text"
-                  value={form.specs[key]}
-                  onChange={e => setForm(f => ({ ...f, specs: { ...f.specs, [key]: e.target.value } }))}
-                  placeholder={placeholder}
-                  className="px-3 py-2 rounded-lg border border-border bg-bg text-sm outline-none focus:border-primary transition-colors"
-                />
-              </div>
-            ))}
-          </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text">
+            Ürün Detayları
+            <span className="ml-1.5 text-xs font-normal text-text-light">(opsiyonel — her satır ayrı madde olarak görünür)</span>
+          </label>
+          <textarea
+            value={form.details}
+            onChange={e => setForm(f => ({ ...f, details: e.target.value }))}
+            rows={5}
+            placeholder={"Kağıt: 250gr Kuşe\nBaskı Tekniği: UV Ofset\nÜretim Süresi: 2-3 iş günü\nBoyutlar: 10×15 cm"}
+            className={`${inputCls} resize-none`}
+          />
+        </div>
+
+        {/* Fotoğraf Yükleme */}
+        <div className="flex flex-col gap-3 pt-2 border-t border-border">
+          <p className="text-sm font-semibold text-text">Fotoğraf Yükleme</p>
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <input type="checkbox" checked={requiresPhotoUpload}
+              onChange={e => setRequiresPhotoUpload(e.target.checked)}
+              className="w-4 h-4 accent-primary" />
+            <span className="text-sm text-text">Bu ürün müşteriden fotoğraf istiyor</span>
+          </label>
+          {requiresPhotoUpload && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text">Gereken fotoğraf sayısı</label>
+              <input
+                type="number" min={1} max={200}
+                value={photoCount}
+                onChange={e => setPhotoCount(Number(e.target.value))}
+                className={inputCls + " w-32"}
+              />
+            </div>
+          )}
         </div>
 
         {/* Varyantlar */}

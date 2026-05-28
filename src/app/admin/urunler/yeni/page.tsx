@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 
-type Category = { id: string; name: string; slug: string };
+type Category = { id: string; name: string; slug: string; parentId: string | null };
 type VariantOption = { label: string; priceAddon: number };
 type VariantGroup = { type: string; options: VariantOption[] };
 
@@ -28,6 +28,7 @@ export default function YeniUrunPage() {
   const [categories, setCategories] = useState<Category[]>([]);
 
   // Gruplu varyant state
+  const [details, setDetails] = useState("");
   const [requiresPhotoUpload, setRequiresPhotoUpload] = useState(false);
   const [photoCount, setPhotoCount] = useState(1);
   const [groups, setGroups] = useState<VariantGroup[]>([]);
@@ -123,6 +124,7 @@ export default function YeniUrunPage() {
       variants,
       requiresPhotoUpload,
       photoCount: requiresPhotoUpload ? photoCount : 1,
+      specs: details.trim() ? { details: details.trim() } : null,
     };
 
     const res = await fetch("/api/admin/products", {
@@ -195,7 +197,17 @@ export default function YeniUrunPage() {
           <label className="text-sm font-semibold text-text">Kategori</label>
           <select name="categorySlug" required className={inputCls}>
             <option value="">Kategori seçin</option>
-            {categories.map(c => <option key={c.id} value={c.slug}>{c.name}</option>)}
+            {categories.filter(c => !c.parentId).map(parent => {
+              const children = categories.filter(c => c.parentId === parent.id);
+              return children.length > 0 ? (
+                <optgroup key={parent.id} label={parent.name}>
+                  <option value={parent.slug}>{parent.name} (tümü)</option>
+                  {children.map(c => <option key={c.id} value={c.slug}>↳ {c.name}</option>)}
+                </optgroup>
+              ) : (
+                <option key={parent.id} value={parent.slug}>{parent.name}</option>
+              );
+            })}
           </select>
         </div>
         <div className="flex flex-col gap-1.5">
@@ -205,6 +217,19 @@ export default function YeniUrunPage() {
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text">Açıklama</label>
           <textarea name="description" rows={3} className={`${inputCls} resize-none`} placeholder="Ürün açıklaması..." />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text">
+            Ürün Detayları
+            <span className="ml-1.5 text-xs font-normal text-text-light">(opsiyonel — her satır ayrı madde olarak görünür)</span>
+          </label>
+          <textarea
+            value={details}
+            onChange={e => setDetails(e.target.value)}
+            rows={5}
+            placeholder={"Kağıt: 250gr Kuşe\nBaskı Tekniği: UV Ofset\nÜretim Süresi: 2-3 iş günü\nBoyutlar: 10×15 cm"}
+            className={`${inputCls} resize-none`}
+          />
         </div>
 
         {/* Fotoğraf Yükleme */}

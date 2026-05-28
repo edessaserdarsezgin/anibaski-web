@@ -15,9 +15,9 @@ export async function GET() {
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { data, error } = await admin.supabase
-    .from("categories")
-    .select("id, name, slug, description, parentId")
-    .order("name");
+    .from("banners")
+    .select("*")
+    .order("createdAt", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data ?? []);
@@ -27,11 +27,11 @@ export async function POST(req: NextRequest) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { name, slug, description, parentId } = await req.json();
+  const { text, url, bgColor, isActive, startAt, endAt } = await req.json();
 
   const { data, error } = await admin.supabase
-    .from("categories")
-    .insert({ name, slug, description: description || null, parentId: parentId || null })
+    .from("banners")
+    .insert({ text, url: url || null, bgColor: bgColor || "#6d55e8", isActive: isActive ?? true, startAt: startAt || null, endAt: endAt || null })
     .select()
     .single();
 
@@ -43,11 +43,11 @@ export async function PATCH(req: NextRequest) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { id, name, slug, description, parentId } = await req.json();
+  const { id, text, url, bgColor, isActive, startAt, endAt } = await req.json();
 
   const { error } = await admin.supabase
-    .from("categories")
-    .update({ name, slug, description: description || null, parentId: parentId || null })
+    .from("banners")
+    .update({ text, url: url || null, bgColor: bgColor || "#6d55e8", isActive, startAt: startAt || null, endAt: endAt || null })
     .eq("id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -59,8 +59,7 @@ export async function DELETE(req: NextRequest) {
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await req.json();
-
-  const { error } = await admin.supabase.from("categories").delete().eq("id", id);
+  const { error } = await admin.supabase.from("banners").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

@@ -41,7 +41,7 @@ export default function KayitPage() {
   if (success) {
     return (
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl border border-border shadow-soft p-8 text-center">
+        <div className="bg-white/93 backdrop-blur-md rounded-2xl border border-white/40 shadow-2xl p-8 text-center">
           <div className="text-4xl mb-4">📬</div>
           <h2 className="font-serif text-xl text-text mb-2">E-postanı doğrula</h2>
           <p className="text-sm text-text-light mb-6">
@@ -68,7 +68,7 @@ export default function KayitPage() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="bg-white rounded-2xl border border-border shadow-soft p-8">
+      <div className="bg-white/93 backdrop-blur-md rounded-2xl border border-white/40 shadow-2xl p-8">
         <h1 className="font-serif text-2xl text-text mb-1">Hesap Oluştur</h1>
         <p className="text-sm text-text-light mb-8">
           Zaten hesabın var mı?{" "}

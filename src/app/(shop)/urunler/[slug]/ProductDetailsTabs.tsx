@@ -1,74 +1,60 @@
-"use client";
+type Specs = Record<string, unknown> | null;
 
-import { useState } from "react";
-
-type Specs = {
-  paper_quality?: string;
-  print_technique?: string;
-  surface_finish?: string;
-  delivery_days?: string;
-  dimensions_note?: string;
-} | null;
-
-const SPEC_LABELS: Record<string, string> = {
-  paper_quality: "Kağıt Kalitesi",
-  print_technique: "Baskı Tekniği",
-  surface_finish: "Yüzey",
-  delivery_days: "Üretim Süresi",
-  dimensions_note: "Boyut Notu",
+type Props = {
+  specs: Specs;
+  description: string;
 };
 
-export default function ProductDetailsTabs({ specs }: { specs: Specs }) {
-  const [tab, setTab] = useState<"details" | "reviews">("details");
+export default function ProductDetailsTabs({ specs, description }: Props) {
+  const text = (specs as { details?: string } | null)?.details ?? "";
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
 
-  const rows = specs
-    ? (Object.entries(specs) as [string, unknown][])
-        .filter(([, v]) => String(v ?? "").trim())
-        .map(([k, v]) => [k, String(v)] as [string, string])
-    : [];
+  const hasDescription = description.trim().length > 0;
+  const hasDetails = lines.length > 0;
 
-  if (rows.length === 0) return null;
+  if (!hasDescription && !hasDetails) return null;
 
   return (
-    <div className="mt-12 border-t border-border pt-8">
-      {/* Tab bar */}
-      <div role="tablist" className="flex gap-1 border-b border-border mb-6">
-        {(["details", "reviews"] as const).map((t) => (
-          <button
-            key={t}
-            role="tab"
-            aria-selected={tab === t}
-            onClick={() => setTab(t)}
-            className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-sm ${
-              tab === t
-                ? "border-primary text-primary"
-                : "border-transparent text-text-light hover:text-text"
-            }`}
-          >
-            {t === "details" ? "Ürün Detayları" : "Müşteri Yorumları"}
-          </button>
-        ))}
-      </div>
+    <section aria-labelledby="product-details-heading" className="mt-16 border-t border-border pt-10">
+      <div className={`grid gap-10 ${hasDescription && hasDetails ? "lg:grid-cols-2" : "grid-cols-1"}`}>
 
-      {/* Tab içeriği */}
-      {tab === "details" && (
-        <dl role="tabpanel" className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-3">
-          {rows.map(([key, value]) => (
-            <div key={key} className="flex justify-between py-2 border-b border-border/50">
-              <dt className="text-sm text-text-light">{SPEC_LABELS[key] ?? key}</dt>
-              <dd className="text-sm font-semibold text-text text-right">{value}</dd>
+        {hasDescription && (
+          <div>
+            <h2 id="product-details-heading" className="font-serif text-2xl text-text mb-5 flex items-center gap-3">
+              <span aria-hidden="true" className="inline-block w-1 h-6 rounded-full bg-primary" />
+              Ürün Hakkında
+            </h2>
+            <div className="p-5 rounded-2xl bg-bg border border-border">
+              <p className="text-sm text-text leading-relaxed whitespace-pre-line">{description}</p>
             </div>
-          ))}
-        </dl>
-      )}
+          </div>
+        )}
 
-      {tab === "reviews" && (
-        <div role="tabpanel">
-          <p className="text-sm text-text-light py-8 text-center">
-            Müşteri yorumları yakında eklenecek.
-          </p>
-        </div>
-      )}
-    </div>
+        {hasDetails && (
+          <div>
+            <h2
+              id={hasDescription ? undefined : "product-details-heading"}
+              className="font-serif text-2xl text-text mb-5 flex items-center gap-3"
+            >
+              <span aria-hidden="true" className="inline-block w-1 h-6 rounded-full bg-primary" />
+              Ürün Detayları
+            </h2>
+            <ul className="flex flex-col gap-2.5">
+              {lines.map((line, i) => (
+                <li key={i} className="flex items-start gap-3 p-3.5 rounded-xl bg-bg border border-border">
+                  <span aria-hidden="true" className="mt-0.5 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 text-primary">
+                      <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  <span className="text-sm text-text leading-relaxed">{line}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+      </div>
+    </section>
   );
 }

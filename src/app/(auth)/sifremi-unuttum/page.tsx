@@ -40,7 +40,7 @@ export default function SifremiUnuttumPage() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="bg-white rounded-2xl border border-border shadow-soft p-8">
+      <div className="bg-white/93 backdrop-blur-md rounded-2xl border border-white/40 shadow-2xl p-8">
         <h1 className="font-serif text-2xl text-text mb-1">Şifremi Unuttum</h1>
         <p className="text-sm text-text-light mb-8">
           E-posta adresinize şifre sıfırlama bağlantısı göndereceğiz.
