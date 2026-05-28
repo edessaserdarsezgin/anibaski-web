@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
       const [{ data: address }, { data: orderItems }, { data: profile }] = await Promise.all([
         adminClient.from("addresses").select("fullName, phone, address, district, city").eq("id", order.addressId).single(),
         adminClient.from("order_items").select("quantity, unitPrice, uploadedImages, variantSelections, product:products(name)").eq("orderId", orderId),
-        adminClient.from("profiles").select("email, fullName").eq("id", order.userId).single(),
+        adminClient.from("profiles").select("email, fullName, phone, notify_delivery_contact").eq("id", order.userId).single(),
       ]);
 
       // Kupon used_count'u ödeme onayı sonrası artır
@@ -69,29 +69,35 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      if (address?.phone) {
-        notifyOrderCreated({
-          phone: address.phone,
-          orderNo: orderId.slice(0, 8).toUpperCase(),
-          subtotal: Number(order.subtotal),
-          shippingFee: Number(order.shippingFee),
-          total: Number(order.total),
-          items: (orderItems ?? []).map((item) => {
-            const p = item.product as { name: string } | { name: string }[] | null;
-            const name = (Array.isArray(p) ? p[0]?.name : p?.name) ?? "Ürün";
-            const vs = item.variantSelections as Record<string, string> | null;
-            const variants = vs && Object.keys(vs).length > 0
-              ? " (" + Object.entries(vs).map(([k, v]) => `${k}: ${v}`).join(", ") + ")"
-              : "";
-            const unitPrice = Number(item.unitPrice).toLocaleString("tr-TR");
-            const lineTotal = (Number(item.unitPrice) * item.quantity).toLocaleString("tr-TR");
-            const priceStr = item.quantity > 1 ? `${unitPrice} ₺ × ${item.quantity} = ${lineTotal} ₺` : `${lineTotal} ₺`;
-            return `• ${name}${variants}: ${priceStr}`;
-          }).join("\n"),
-          discountCode: order.discount_code ?? null,
-          discountAmount: order.discount_amount ? Number(order.discount_amount) : null,
-        });
-      }
+      const itemsText = (orderItems ?? []).map((item) => {
+        const p = item.product as { name: string } | { name: string }[] | null;
+        const name = (Array.isArray(p) ? p[0]?.name : p?.name) ?? "Ürün";
+        const vs = item.variantSelections as Record<string, string> | null;
+        const variants = vs && Object.keys(vs).length > 0
+          ? " (" + Object.entries(vs).map(([k, v]) => `${k}: ${v}`).join(", ") + ")"
+          : "";
+        const unitPrice = Number(item.unitPrice).toLocaleString("tr-TR");
+        const lineTotal = (Number(item.unitPrice) * item.quantity).toLocaleString("tr-TR");
+        const priceStr = item.quantity > 1 ? `${unitPrice} ₺ × ${item.quantity} = ${lineTotal} ₺` : `${lineTotal} ₺`;
+        return `• ${name}${variants}: ${priceStr}`;
+      }).join("\n");
+
+      const notifyPayload = {
+        orderNo: orderId.slice(0, 8).toUpperCase(),
+        subtotal: Number(order.subtotal),
+        shippingFee: Number(order.shippingFee),
+        total: Number(order.total),
+        items: itemsText,
+        discountCode: order.discount_code ?? null,
+        discountAmount: order.discount_amount ? Number(order.discount_amount) : null,
+      };
+
+      const recipients = new Set<string>();
+      if (profile?.phone) recipients.add(profile.phone);
+      if (profile?.notify_delivery_contact && address?.phone) recipients.add(address.phone);
+      if (recipients.size === 0 && address?.phone) recipients.add(address.phone);
+
+      recipients.forEach((phone) => notifyOrderCreated({ phone, ...notifyPayload }));
 
       if (profile?.email) {
         sendOrderNotification({

@@ -90,30 +90,39 @@ export async function POST(req: NextRequest) {
   // Kapıda ödemede bildirim hemen gönderilir (ödeme zaten kapıda)
   // Kredi kartında bildirimler PayTR callback'te gönderilir (ödeme onayı sonrası)
   if (paymentMethod === "cod") {
-    const { data: address } = await supabase
-      .from("addresses").select("fullName, phone, address, district, city").eq("id", shippingAddressId).single();
+    const [{ data: address }, { data: profile }] = await Promise.all([
+      supabase.from("addresses").select("fullName, phone, address, district, city").eq("id", shippingAddressId).single(),
+      supabase.from("profiles").select("phone, notify_delivery_contact").eq("id", user.id).single(),
+    ]);
 
-    if (address?.phone) {
-      notifyOrderCreated({
-        phone: address.phone,
-        orderNo: order.id.slice(0, 8).toUpperCase(),
-        subtotal,
-        shippingFee,
-        total,
-        items: items.map((item: { productName?: string; productId: string; quantity: number; unitPrice: number; variantSelections?: Record<string, string> }) => {
-          const name = item.productName ?? item.productId;
-          const variants = item.variantSelections && Object.keys(item.variantSelections).length > 0
-            ? " (" + Object.entries(item.variantSelections).map(([k, v]) => `${k}: ${v}`).join(", ") + ")"
-            : "";
-          const unitPrice = item.unitPrice.toLocaleString("tr-TR");
-          const lineTotal = (item.unitPrice * item.quantity).toLocaleString("tr-TR");
-          const priceStr = item.quantity > 1 ? `${unitPrice} ₺ × ${item.quantity} = ${lineTotal} ₺` : `${lineTotal} ₺`;
-          return `• ${name}${variants}: ${priceStr}`;
-        }).join("\n"),
-        discountCode: validatedCouponCode,
-        discountAmount: discountAmount > 0 ? discountAmount : null,
-      });
-    }
+    const itemsText = items.map((item: { productName?: string; productId: string; quantity: number; unitPrice: number; variantSelections?: Record<string, string> }) => {
+      const name = item.productName ?? item.productId;
+      const variants = item.variantSelections && Object.keys(item.variantSelections).length > 0
+        ? " (" + Object.entries(item.variantSelections).map(([k, v]) => `${k}: ${v}`).join(", ") + ")"
+        : "";
+      const unitPrice = item.unitPrice.toLocaleString("tr-TR");
+      const lineTotal = (item.unitPrice * item.quantity).toLocaleString("tr-TR");
+      const priceStr = item.quantity > 1 ? `${unitPrice} ₺ × ${item.quantity} = ${lineTotal} ₺` : `${lineTotal} ₺`;
+      return `• ${name}${variants}: ${priceStr}`;
+    }).join("\n");
+
+    const notifyPayload = {
+      orderNo: order.id.slice(0, 8).toUpperCase(),
+      subtotal,
+      shippingFee,
+      total,
+      items: itemsText,
+      discountCode: validatedCouponCode,
+      discountAmount: discountAmount > 0 ? discountAmount : null,
+    };
+
+    const recipients = new Set<string>();
+    if (profile?.phone) recipients.add(profile.phone);
+    if (profile?.notify_delivery_contact && address?.phone) recipients.add(address.phone);
+    // Fallback: profil telefonu yoksa adres telefonuna gönder (eski davranış)
+    if (recipients.size === 0 && address?.phone) recipients.add(address.phone);
+
+    recipients.forEach((phone) => notifyOrderCreated({ phone, ...notifyPayload }));
 
     sendOrderNotification({
       orderId: order.id,

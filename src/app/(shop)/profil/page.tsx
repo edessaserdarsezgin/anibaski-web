@@ -72,6 +72,7 @@ export default async function ProfilPage() {
             email={user.email!}
             fullName={profile?.fullName ?? null}
             phone={profile?.phone ?? null}
+            notifyDeliveryContact={profile?.notify_delivery_contact ?? false}
           />
         </section>
 

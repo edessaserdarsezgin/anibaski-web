@@ -6,10 +6,15 @@ type Props = {
   fullName: string | null;
   phone: string | null;
   email: string;
+  notifyDeliveryContact: boolean;
 };
 
-export default function ProfileForm({ fullName, phone, email }: Props) {
-  const [form, setForm] = useState({ fullName: fullName ?? "", phone: phone ?? "" });
+export default function ProfileForm({ fullName, phone, email, notifyDeliveryContact }: Props) {
+  const [form, setForm] = useState({
+    fullName: fullName ?? "",
+    phone: phone ?? "",
+    notify_delivery_contact: notifyDeliveryContact,
+  });
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
@@ -66,7 +71,22 @@ export default function ProfileForm({ fullName, phone, email }: Props) {
         />
       </div>
 
-      {error && <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-lg px-4 py-2.5">{error}</p>}
+      <label className="flex items-start gap-3 p-4 rounded-xl border border-border bg-bg hover:border-primary/40 cursor-pointer transition-colors">
+        <input
+          type="checkbox"
+          checked={form.notify_delivery_contact}
+          onChange={e => setForm(f => ({ ...f, notify_delivery_contact: e.target.checked }))}
+          className="mt-0.5 w-4 h-4 accent-primary cursor-pointer"
+        />
+        <div>
+          <p className="text-sm font-semibold text-text">Teslimat adresindeki kişiye de bildirim gönder</p>
+          <p className="text-xs text-text-light mt-0.5">
+            Farklı bir kişiye gönderim yapıyorsanız, sipariş ve kargo bilgilendirmesi onun telefonuna da WhatsApp ile iletilsin.
+          </p>
+        </div>
+      </label>
+
+      {error &&<p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-lg px-4 py-2.5">{error}</p>}
       {success && <p className="text-sm text-green-700 bg-green-50 border border-green-100 rounded-lg px-4 py-2.5">Bilgiler kaydedildi.</p>}
 
       <button type="submit" disabled={saving}
