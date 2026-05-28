@@ -89,6 +89,25 @@ export function notifyCancelRejected(params: { phone: string; orderNo: string })
   post({ event: "cancel_rejected", phone: formatPhone(params.phone), orderNo: params.orderNo });
 }
 
+export function notifyAbandonedCart(params: {
+  phone: string;
+  itemCount: number;
+  subtotal: number;
+  cartUrl: string;
+  couponCode: string;
+  stage: "first" | "second";
+}) {
+  post({
+    event: "abandoned_cart",
+    phone: formatPhone(params.phone),
+    stage: params.stage,
+    itemCount: params.itemCount,
+    subtotal: params.subtotal.toLocaleString("tr-TR"),
+    cartUrl: params.cartUrl,
+    couponCode: params.couponCode,
+  });
+}
+
 export function notifyAdminCancelRequest(params: { orderNo: string; customerName: string }) {
   const adminPhone = process.env.ADMIN_WHATSAPP_PHONE;
   if (!adminPhone) return;

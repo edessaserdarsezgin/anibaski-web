@@ -27,6 +27,30 @@ function readCart(): CartItem[] {
 function writeCart(items: CartItem[]) {
   localStorage.setItem(CART_KEY, JSON.stringify(items));
   window.dispatchEvent(new Event("cart-updated"));
+  scheduleSnapshotSync(items);
+}
+
+let syncTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleSnapshotSync(items: CartItem[]) {
+  if (typeof window === "undefined") return;
+  if (syncTimer) clearTimeout(syncTimer);
+  // 2 saniye debounce — sürekli klik'lerde gereksiz istek olmasın
+  syncTimer = setTimeout(() => {
+    const payload = items.map((i) => ({
+      productId: i.productId,
+      productName: i.productName,
+      productImage: i.productImage,
+      quantity: i.quantity,
+      unitPrice: i.unitPrice,
+      variantSelections: i.variantSelections,
+    }));
+    fetch("/api/cart/snapshot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: payload }),
+    }).catch(() => {});
+  }, 2000);
 }
 
 export function useCart() {
