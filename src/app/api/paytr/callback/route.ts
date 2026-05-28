@@ -38,9 +38,11 @@ export async function POST(req: NextRequest) {
   const adminClient = createAdminClient();
 
   if (status === "success") {
+    // status: PENDING bırakılır (admin onaylayıp PREPARING'e çekecek)
+    // paymentStatus: paid → ödeme onaylandı, üretim henüz başlamadı
     const { error: updateErr } = await adminClient
       .from("orders")
-      .update({ paymentStatus: "paid", paymentRef: merchantOid, status: "PREPARING" })
+      .update({ paymentStatus: "paid", paymentRef: merchantOid })
       .eq("id", orderId);
     if (updateErr) console.error("[PayTR callback] update error:", updateErr);
 
