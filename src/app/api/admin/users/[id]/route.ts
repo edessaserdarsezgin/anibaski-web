@@ -36,3 +36,46 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data: caller } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (caller?.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const { id } = await params;
+
+  if (id === user.id) {
+    return NextResponse.json({ error: "Kendi hesabınızı silemezsiniz." }, { status: 400 });
+  }
+
+  const adminClient = createAdminClient();
+
+  // Sipariş varsa silmeye izin verme (muhasebe/yasal gereklilik)
+  const { count: orderCount } = await adminClient
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("userId", id);
+
+  if ((orderCount ?? 0) > 0) {
+    return NextResponse.json(
+      { error: `Bu üyenin ${orderCount} siparişi var. Sipariş kaydı bulunan üye silinemez.` },
+      { status: 400 }
+    );
+  }
+
+  // 1. Profili sil (CASCADE: addresses + cart_items + favorites + phone_verifications)
+  const { error: profileErr } = await adminClient.from("profiles").delete().eq("id", id);
+  if (profileErr) return NextResponse.json({ error: profileErr.message }, { status: 500 });
+
+  // 2. auth.users kaydını sil
+  const { error: authErr } = await adminClient.auth.admin.deleteUser(id);
+  if (authErr) {
+    console.error("[admin/users] auth silinemedi (profil silindi):", authErr);
+    return NextResponse.json({ error: "Profil silindi ama auth kaydı temizlenemedi: " + authErr.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
+}

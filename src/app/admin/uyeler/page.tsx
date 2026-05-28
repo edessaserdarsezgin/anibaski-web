@@ -2,6 +2,7 @@ import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import RoleSelect from "./RoleSelect";
+import UserDelete from "./UserDelete";
 
 export const metadata = { title: "Üyeler | Admin" };
 
@@ -84,9 +85,12 @@ export default async function AdminUyelerPage() {
                       <RoleSelect userId={u.id} currentRole={u.role} colorMap={ROLE_COLOR} />
                     </td>
                     <td className="px-4 py-4">
-                      <Link href={`/admin/uyeler/${u.id}`} className="text-xs text-primary hover:underline font-semibold">
-                        Detay
-                      </Link>
+                      <div className="flex items-center gap-3 justify-end">
+                        <Link href={`/admin/uyeler/${u.id}`} className="text-xs text-primary hover:underline font-semibold">
+                          Detay
+                        </Link>
+                        <UserDelete userId={u.id} userName={u.fullName || u.email} />
+                      </div>
                     </td>
                   </tr>
                 );
