@@ -7,13 +7,15 @@ type Props = {
   phone: string | null;
   email: string;
   notifyDeliveryContact: boolean;
+  marketingConsent: boolean;
 };
 
-export default function ProfileForm({ fullName, phone, email, notifyDeliveryContact }: Props) {
+export default function ProfileForm({ fullName, phone, email, notifyDeliveryContact, marketingConsent }: Props) {
   const [form, setForm] = useState({
     fullName: fullName ?? "",
     phone: phone ?? "",
     notify_delivery_contact: notifyDeliveryContact,
+    marketing_consent: marketingConsent,
   });
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -86,6 +88,21 @@ export default function ProfileForm({ fullName, phone, email, notifyDeliveryCont
           <p className="text-sm font-semibold text-text">Teslimat adresindeki kişiye de bildirim gönder</p>
           <p className="text-xs text-text-light mt-0.5">
             Farklı bir kişiye gönderim yapıyorsanız, sipariş ve kargo bilgilendirmesi onun telefonuna da WhatsApp ile iletilsin.
+          </p>
+        </div>
+      </label>
+
+      <label className="flex items-start gap-3 p-4 rounded-xl border border-border bg-bg hover:border-primary/40 cursor-pointer transition-colors">
+        <input
+          type="checkbox"
+          checked={form.marketing_consent}
+          onChange={e => setForm(f => ({ ...f, marketing_consent: e.target.checked }))}
+          className="mt-0.5 w-4 h-4 accent-primary cursor-pointer"
+        />
+        <div>
+          <p className="text-sm font-semibold text-text">Kampanya ve fırsat bildirimleri</p>
+          <p className="text-xs text-text-light mt-0.5">
+            Yeni kampanyalar, özel indirimler ve fırsatlardan haberdar olun (e-posta + WhatsApp).
           </p>
         </div>
       </label>

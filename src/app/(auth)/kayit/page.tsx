@@ -10,9 +10,12 @@ export default function KayitPage() {
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [kvkkAccepted, setKvkkAccepted] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(true);
   const [showKvkkModal, setShowKvkkModal] = useState(false);
+  const [phoneInfoVisible, setPhoneInfoVisible] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -30,7 +33,13 @@ export default function KayitPage() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName } },
+      options: {
+        data: {
+          full_name: fullName,
+          phone: phone.trim(),
+          marketing_consent: marketingConsent,
+        },
+      },
     });
 
     if (error) {
@@ -135,6 +144,26 @@ export default function KayitPage() {
           </div>
 
           <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text">Telefon</label>
+            <input
+              type="tel"
+              required
+              autoComplete="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              onFocus={() => setPhoneInfoVisible(true)}
+              className="px-4 py-2.5 rounded-lg border border-border bg-bg text-text text-sm outline-none focus:border-primary transition-colors"
+              placeholder="05xx xxx xx xx"
+            />
+            {phoneInfoVisible && (
+              <p className="text-xs text-text-light flex items-start gap-1.5">
+                <span>📱</span>
+                <span>Sipariş ve kargo bildirimleri WhatsApp ile gönderilecek. Profilinizden doğrulama kodu ile onaylayabilirsiniz.</span>
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-text">Şifre</label>
             <input
               type="password"
@@ -167,6 +196,18 @@ export default function KayitPage() {
               <Link href="/politikalar/gizlilik" target="_blank" className="text-primary hover:underline">
                 Detaylı bilgi
               </Link>
+            </span>
+          </label>
+
+          <label className="flex items-start gap-3 text-xs text-text-light cursor-pointer">
+            <input
+              type="checkbox"
+              checked={marketingConsent}
+              onChange={(e) => setMarketingConsent(e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-primary cursor-pointer shrink-0"
+            />
+            <span>
+              Kampanya ve fırsat bildirimlerini e-posta ve WhatsApp üzerinden almak istiyorum. <span className="text-text-light/70">(opsiyonel — istediğin zaman profilinden değiştirebilirsin)</span>
             </span>
           </label>
 

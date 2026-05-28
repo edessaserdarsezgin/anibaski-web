@@ -80,6 +80,7 @@ export default async function ProfilPage() {
             fullName={profile?.fullName ?? null}
             phone={profile?.phone ?? null}
             notifyDeliveryContact={profile?.notify_delivery_contact ?? false}
+            marketingConsent={profile?.marketing_consent ?? false}
           />
         </section>
 

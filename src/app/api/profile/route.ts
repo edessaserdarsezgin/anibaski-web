@@ -6,7 +6,7 @@ export async function PATCH(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { fullName, phone, notify_delivery_contact } = await req.json();
+  const { fullName, phone, notify_delivery_contact, marketing_consent } = await req.json();
 
   if (!phone || !phone.trim()) {
     return NextResponse.json({ error: "Telefon numarası zorunludur." }, { status: 400 });
@@ -22,6 +22,9 @@ export async function PATCH(req: NextRequest) {
   };
   if (typeof notify_delivery_contact === "boolean") {
     updates.notify_delivery_contact = notify_delivery_contact;
+  }
+  if (typeof marketing_consent === "boolean") {
+    updates.marketing_consent = marketing_consent;
   }
   if (current?.phone !== phone.trim()) {
     updates.phone_verified = false;
