@@ -8,9 +8,13 @@ export async function PATCH(req: NextRequest) {
 
   const { fullName, phone, notify_delivery_contact } = await req.json();
 
+  if (!phone || !phone.trim()) {
+    return NextResponse.json({ error: "Telefon numarası zorunludur." }, { status: 400 });
+  }
+
   const updates: Record<string, unknown> = {
     fullName: fullName || null,
-    phone: phone || null,
+    phone: phone.trim(),
   };
   if (typeof notify_delivery_contact === "boolean") {
     updates.notify_delivery_contact = notify_delivery_contact;

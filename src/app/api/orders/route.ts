@@ -119,8 +119,6 @@ export async function POST(req: NextRequest) {
     const recipients = new Set<string>();
     if (profile?.phone) recipients.add(profile.phone);
     if (profile?.notify_delivery_contact && address?.phone) recipients.add(address.phone);
-    // Fallback: profil telefonu yoksa adres telefonuna gönder (eski davranış)
-    if (recipients.size === 0 && address?.phone) recipients.add(address.phone);
 
     recipients.forEach((phone) => notifyOrderCreated({ phone, ...notifyPayload }));
 

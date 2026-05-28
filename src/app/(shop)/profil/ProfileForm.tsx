@@ -61,14 +61,18 @@ export default function ProfileForm({ fullName, phone, email, notifyDeliveryCont
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-semibold text-text">Telefon</label>
+        <label className="text-sm font-semibold text-text">
+          Telefon <span className="text-red-500">*</span>
+        </label>
         <input
           value={form.phone}
           onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
           className={inputCls}
           placeholder="05xx xxx xx xx"
           type="tel"
+          required
         />
+        <p className="text-xs text-text-light">Sipariş ve kargo bilgilendirmeleri WhatsApp ile gönderildiği için telefon zorunludur.</p>
       </div>
 
       <label className="flex items-start gap-3 p-4 rounded-xl border border-border bg-bg hover:border-primary/40 cursor-pointer transition-colors">
