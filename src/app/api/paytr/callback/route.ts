@@ -38,10 +38,11 @@ export async function POST(req: NextRequest) {
   const adminClient = createAdminClient();
 
   if (status === "success") {
-    await adminClient
+    const { error: updateErr } = await adminClient
       .from("orders")
-      .update({ paymentStatus: "paid", paymentRef: merchantOid, status: "PROCESSING" })
+      .update({ paymentStatus: "paid", paymentRef: merchantOid, status: "PREPARING" })
       .eq("id", orderId);
+    if (updateErr) console.error("[PayTR callback] update error:", updateErr);
 
     // Ödeme onaylandı → bildirim gönder
     const { data: order } = await adminClient
