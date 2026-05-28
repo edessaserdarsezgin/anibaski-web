@@ -6,6 +6,7 @@ import Link from "next/link";
 import Cropper from "react-easy-crop";
 import type { Area, Point } from "react-easy-crop";
 import "react-easy-crop/react-easy-crop.css";
+import { syncCartSnapshot } from "@/hooks/useCart";
 
 type Photo = {
   url: string;
@@ -235,6 +236,7 @@ export default function FotografYuklePage() {
     existing.push({ ...item, uploadedImages: photos.map(p => p.url) });
     localStorage.setItem("cart", JSON.stringify(existing));
     window.dispatchEvent(new Event("cart-updated"));
+    syncCartSnapshot();
     sessionStorage.removeItem("pendingPhotoUpload");
     setAdded(true);
     setTimeout(() => router.push("/sepet"), 1000);

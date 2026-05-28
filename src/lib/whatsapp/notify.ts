@@ -30,12 +30,12 @@ export function notifyOrderCreated(params: {
     event: "order_created",
     phone: formatPhone(params.phone),
     orderNo: params.orderNo,
-    subtotal: params.subtotal.toLocaleString("tr-TR"),
-    shippingFee: params.shippingFee === 0 ? "Ücretsiz" : params.shippingFee.toLocaleString("tr-TR") + " ₺",
-    total: params.total.toLocaleString("tr-TR"),
+    subtotal: params.subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    shippingFee: params.shippingFee === 0 ? "Ücretsiz" : params.shippingFee.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " ₺",
+    total: params.total.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     items: params.items,
     ...(params.discountCode && params.discountAmount
-      ? { discountCode: params.discountCode, discountAmount: params.discountAmount.toLocaleString("tr-TR") }
+      ? { discountCode: params.discountCode, discountAmount: params.discountAmount.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
       : {}),
   });
 }
@@ -102,7 +102,7 @@ export function notifyAbandonedCart(params: {
     phone: formatPhone(params.phone),
     stage: params.stage,
     itemCount: params.itemCount,
-    subtotal: params.subtotal.toLocaleString("tr-TR"),
+    subtotal: params.subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     cartUrl: params.cartUrl,
     couponCode: params.couponCode,
   });

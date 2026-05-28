@@ -20,7 +20,10 @@ type Params = {
 };
 
 export async function sendAbandonedCartEmail(params: Params) {
-  if (!process.env.RESEND_API_KEY) return;
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("[abandonedCart] RESEND_API_KEY tanımlı değil");
+    return;
+  }
 
   const from = process.env.EMAIL_FROM || "AnıBaskı <onboarding@resend.dev>";
   const { to, customerName, items, subtotal, cartUrl, couponCode, stage } = params;
@@ -46,7 +49,7 @@ export async function sendAbandonedCartEmail(params: Params) {
         <p style="margin:2px 0 0;font-size:12px;color:#8187a2">Adet: ${item.quantity}</p>
       </td>
       <td style="padding:12px 8px;border-bottom:1px solid #ece8e1;text-align:right;font-weight:600;color:#e07a5f">
-        ${(item.unitPrice * item.quantity).toLocaleString("tr-TR")} ₺
+        ${(item.unitPrice * item.quantity).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺
       </td>
     </tr>
   `).join("");
@@ -72,7 +75,7 @@ export async function sendAbandonedCartEmail(params: Params) {
           <tr>
             <td colspan="2" style="padding:12px 8px;text-align:right;font-weight:700;font-size:15px">Toplam</td>
             <td style="padding:12px 8px;text-align:right;font-weight:700;color:#e07a5f;font-size:15px">
-              ${subtotal.toLocaleString("tr-TR")} ₺
+              ${subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺
             </td>
           </tr>
         </tfoot>
@@ -99,5 +102,10 @@ export async function sendAbandonedCartEmail(params: Params) {
 </body>
 </html>`;
 
-  await resend.emails.send({ from, to, subject, html });
+  const result = await resend.emails.send({ from, to, subject, html });
+  if (result.error) {
+    console.error("[abandonedCart] Resend hatası:", JSON.stringify(result.error));
+  } else {
+    console.log("[abandonedCart] Mail gönderildi:", to, "→", result.data?.id);
+  }
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { syncCartSnapshot } from "@/hooks/useCart";
 
 type VariantItem = { id: string; label: string; value: string; priceAddon: number };
 type VariantGroup = { type: string; items: VariantItem[] };
@@ -52,6 +53,7 @@ export default function AddToCartButton({ isLoggedIn, product, variantGroups }: 
     }
     localStorage.setItem("cart", JSON.stringify(existing));
     window.dispatchEvent(new Event("cart-updated"));
+    syncCartSnapshot();
     setShowModal(true);
   }
 

@@ -32,6 +32,12 @@ function writeCart(items: CartItem[]) {
 
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
 
+export function syncCartSnapshot() {
+  if (typeof window === "undefined") return;
+  const items = readCart();
+  scheduleSnapshotSync(items);
+}
+
 function scheduleSnapshotSync(items: CartItem[]) {
   if (typeof window === "undefined") return;
   if (syncTimer) clearTimeout(syncTimer);
