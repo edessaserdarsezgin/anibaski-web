@@ -39,7 +39,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr" className={`${lora.variable} ${nunito.variable}`} data-scroll-behavior="smooth">
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <ToastProvider>{children}</ToastProvider>
         <CookieBanner />
       </body>
