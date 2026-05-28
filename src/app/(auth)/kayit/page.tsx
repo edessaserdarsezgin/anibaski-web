@@ -11,12 +11,18 @@ export default function KayitPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [kvkkAccepted, setKvkkAccepted] = useState(false);
+  const [showKvkkModal, setShowKvkkModal] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!kvkkAccepted) {
+      setError("Devam etmek için Üye Müşteri Aydınlatma Metni'ni onaylamanız gerekiyor.");
+      return;
+    }
     setError("");
     setLoading(true);
 
@@ -59,6 +65,10 @@ export default function KayitPage() {
   }
 
   async function handleGoogle() {
+    if (!kvkkAccepted) {
+      setError("Devam etmek için Üye Müşteri Aydınlatma Metni'ni onaylamanız gerekiyor.");
+      return;
+    }
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -138,6 +148,28 @@ export default function KayitPage() {
             />
           </div>
 
+          <label className="flex items-start gap-3 text-xs text-text-light cursor-pointer">
+            <input
+              type="checkbox"
+              checked={kvkkAccepted}
+              onChange={(e) => setKvkkAccepted(e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-primary cursor-pointer shrink-0"
+            />
+            <span>
+              <button
+                type="button"
+                onClick={() => setShowKvkkModal(true)}
+                className="text-primary hover:underline font-semibold"
+              >
+                Üye Müşteri Aydınlatma Metni
+              </button>
+              {"'ni okudum, kişisel verilerimin işlenmesini onaylıyorum. "}
+              <Link href="/politikalar/gizlilik" target="_blank" className="text-primary hover:underline">
+                Detaylı bilgi
+              </Link>
+            </span>
+          </label>
+
           {error && (
             <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-lg px-4 py-2.5">
               {error}
@@ -153,6 +185,80 @@ export default function KayitPage() {
           </button>
         </form>
       </div>
+
+      {showKvkkModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setShowKvkkModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+              <h2 className="font-serif text-xl text-text">Üye Müşteri Aydınlatma Metni</h2>
+              <button
+                type="button"
+                onClick={() => setShowKvkkModal(false)}
+                className="text-text-light hover:text-text text-2xl leading-none"
+                aria-label="Kapat"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-6 py-5 text-sm text-text leading-relaxed">
+              <p className="mb-4">
+                Üye olduğun takdirde <strong>AnıBaskı</strong>; başta <strong>ad soyad ve cep telefonu</strong> olmak üzere paylaşacağın kişisel verilerini, 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamındaki Gizlilik ve Kişisel Verilerin Korunması Politikası&apos;nda yer alan amaçlar çerçevesinde işleyecektir.
+              </p>
+              <p className="mb-4 font-semibold">Hangi verileri işliyoruz?</p>
+              <ul className="list-disc pl-5 mb-4 space-y-1 text-text-light">
+                <li>Kimlik bilgileri (ad, soyad)</li>
+                <li>İletişim bilgileri (e-posta, telefon, adres)</li>
+                <li>Sipariş ve işlem bilgileri</li>
+                <li>Yüklenen fotoğraflar (yalnızca sipariş için)</li>
+                <li>Teknik veriler (IP, çerez, tarayıcı)</li>
+              </ul>
+              <p className="mb-4 font-semibold">Amaçlar:</p>
+              <ul className="list-disc pl-5 mb-4 space-y-1 text-text-light">
+                <li>Siparişlerin alınması, hazırlanması ve teslimatı</li>
+                <li>Ödeme işlemlerinin gerçekleştirilmesi</li>
+                <li>Sipariş ve kargo bildirimleri (e-posta + WhatsApp)</li>
+                <li>Müşteri destek ve hizmetleri</li>
+                <li>Yasal yükümlülüklerin yerine getirilmesi</li>
+              </ul>
+              <p className="mb-4">
+                Kişisel verilerin <strong>üçüncü kişilerle paylaşılmaz</strong>; yalnızca yasal zorunluluk veya hizmet sunumu için gerekli olan ödeme/kargo gibi iş ortaklarına aktarılır.
+              </p>
+              <p>
+                Detaylı bilgi için{" "}
+                <Link href="/politikalar/gizlilik" target="_blank" className="text-primary hover:underline font-semibold">
+                  Gizlilik Politikası ve KVKK Aydınlatma Metni
+                </Link>{" "}
+                sayfamızı inceleyebilirsiniz.
+              </p>
+            </div>
+            <div className="px-6 py-4 border-t border-border flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowKvkkModal(false)}
+                className="flex-1 py-2.5 border border-border text-text font-semibold text-sm rounded-full hover:bg-bg transition-colors"
+              >
+                Kapat
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setKvkkAccepted(true);
+                  setShowKvkkModal(false);
+                }}
+                className="flex-1 py-2.5 bg-primary hover:bg-primary-hover text-white font-semibold text-sm rounded-full transition-colors"
+              >
+                Okudum, Onaylıyorum
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
