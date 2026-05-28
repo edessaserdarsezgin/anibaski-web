@@ -97,7 +97,9 @@ export async function POST(req: NextRequest) {
       notifyOrderCreated({
         phone: address.phone,
         orderNo: order.id.slice(0, 8).toUpperCase(),
-        total: total,
+        subtotal,
+        shippingFee,
+        total,
         items: items.map((item: { productName?: string; productId: string; quantity: number; unitPrice: number; variantSelections?: Record<string, string> }) => {
           const name = item.productName ?? item.productId;
           const variants = item.variantSelections && Object.keys(item.variantSelections).length > 0
@@ -123,6 +125,8 @@ export async function POST(req: NextRequest) {
         unitPrice: item.unitPrice,
         uploadedImages: item.uploadedImages ?? [],
       })),
+      subtotal,
+      shippingFee,
       total,
       shippingAddress: address ?? { fullName: "", phone: "", address: "", district: "", city: "" },
       discountCode: validatedCouponCode,

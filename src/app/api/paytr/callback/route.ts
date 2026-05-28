@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     // Ödeme onaylandı → bildirim gönder
     const { data: order } = await adminClient
       .from("orders")
-      .select("id, total, discount_code, discount_amount, userId, addressId")
+      .select(`id, total, subtotal, "shippingFee", discount_code, discount_amount, "userId", "addressId"`)
       .eq("id", orderId)
       .single();
 
@@ -71,6 +71,8 @@ export async function POST(req: NextRequest) {
         notifyOrderCreated({
           phone: address.phone,
           orderNo: orderId.slice(0, 8).toUpperCase(),
+          subtotal: Number(order.subtotal),
+          shippingFee: Number(order.shippingFee),
           total: Number(order.total),
           items: (orderItems ?? []).map((item) => {
             const p = item.product as { name: string } | { name: string }[] | null;
@@ -103,6 +105,8 @@ export async function POST(req: NextRequest) {
               uploadedImages: (item.uploadedImages as string[]) ?? [],
             };
           }),
+          subtotal: Number(order.subtotal),
+          shippingFee: Number(order.shippingFee),
           total: Number(order.total),
           shippingAddress: address ?? { fullName: "", phone: "", address: "", district: "", city: "" },
           discountCode: order.discount_code ?? null,

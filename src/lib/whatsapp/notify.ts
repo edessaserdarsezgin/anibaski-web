@@ -19,6 +19,8 @@ function post(body: Record<string, unknown>) {
 export function notifyOrderCreated(params: {
   phone: string;
   orderNo: string;
+  subtotal: number;
+  shippingFee: number;
   total: number;
   items: string;
   discountCode?: string | null;
@@ -28,6 +30,8 @@ export function notifyOrderCreated(params: {
     event: "order_created",
     phone: formatPhone(params.phone),
     orderNo: params.orderNo,
+    subtotal: params.subtotal.toLocaleString("tr-TR"),
+    shippingFee: params.shippingFee === 0 ? "Ücretsiz" : params.shippingFee.toLocaleString("tr-TR") + " ₺",
     total: params.total.toLocaleString("tr-TR"),
     items: params.items,
     ...(params.discountCode && params.discountAmount
