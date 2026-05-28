@@ -86,7 +86,7 @@ export async function sendOrderNotification(params: Params) {
         <tfoot>
           ${discountCode && discountAmount ? `
           <tr>
-            <td colspan="3" style="padding:8px 12px;text-align:right;color:#2d6a4f">İndirim (${discountCode})</td>
+            <td colspan="3" style="padding:8px 12px;text-align:right;color:#2d6a4f">Kupon (${discountCode})</td>
             <td style="padding:8px 12px;text-align:right;color:#2d6a4f;font-weight:600">−${discountAmount.toLocaleString("tr-TR")} ₺</td>
             <td></td>
           </tr>` : ""}
