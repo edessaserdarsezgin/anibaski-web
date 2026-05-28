@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import CartCount from "./CartCount";
 import UserMenu from "./UserMenu";
 import MobileMenu from "./MobileMenu";
+import SearchBar from "./SearchBar";
 
 export default async function Header() {
   const supabase = await createClient();
@@ -21,12 +22,12 @@ export default async function Header() {
           Anı<span className="text-primary">Baskı</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-text-light">
+        <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-text-light shrink-0">
           <Link href="/urunler" className="hover:text-text transition-colors">
             Ürünler
           </Link>
           <Link href="/urun-rehberi" className="hover:text-text transition-colors">
-            Ürün Rehberi
+            Rehber
           </Link>
           {isAdmin && (
             <Link href="/admin" className="hover:text-text transition-colors text-primary">
@@ -34,6 +35,10 @@ export default async function Header() {
             </Link>
           )}
         </nav>
+
+        <div className="hidden md:flex flex-1 max-w-md">
+          <SearchBar />
+        </div>
 
         <div className="flex items-center gap-2">
           <Link
@@ -71,6 +76,10 @@ export default async function Header() {
 
           <MobileMenu email={user?.email ?? undefined} isAdmin={isAdmin} />
         </div>
+      </div>
+
+      <div className="md:hidden border-t border-border px-4 py-2.5">
+        <SearchBar />
       </div>
     </header>
   );
