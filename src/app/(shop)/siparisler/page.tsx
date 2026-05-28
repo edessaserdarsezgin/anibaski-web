@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import { unstable_noStore as noStore } from "next/cache";
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "Beklemede", PREPARING: "Hazırlanıyor",
@@ -18,16 +19,21 @@ const STATUS_COLOR: Record<string, string> = {
 export const metadata = { title: "Siparişlerim", robots: { index: false, follow: false } };
 
 export default async function SiparislerPage() {
+  noStore();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/giris?redirect=/siparisler");
 
-  const { data: orders } = await supabase
+  const { data: allOrders } = await supabase
     .from("orders")
     .select("id, status, total, createdAt, paymentMethod, paymentStatus, items:order_items(id, quantity, variantSelections, product:products(name, images))")
     .eq("userId", user.id)
-    .or("paymentMethod.eq.cod,paymentStatus.eq.paid,paymentStatus.eq.failed")
     .order("createdAt", { ascending: false });
+
+  // Kredi kartıyla oluşturulmuş ama ödeme tamamlanmamış (pending) siparişleri gizle
+  const orders = (allOrders ?? []).filter(o =>
+    o.paymentMethod === "cod" || o.paymentStatus === "paid" || o.paymentStatus === "failed"
+  );
 
   return (
     <div className="max-w-4xl mx-auto px-8 py-12">
