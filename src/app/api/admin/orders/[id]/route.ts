@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
-import { notifyStatusUpdate, notifyShippingUpdate, notifyCancelApproved, notifyCancelRejected } from "@/lib/whatsapp/notify";
+import { notifyStatusUpdate, notifyCancelApproved, notifyCancelRejected } from "@/lib/whatsapp/notify";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -18,7 +18,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params;
   const { status } = await req.json();
 
-  const validStatuses = ["PENDING", "PREPARING", "SHIPPED", "DELIVERED", "CANCELLED", "CANCEL_REQUESTED"];
+  // SHIPPED yalnızca tracking endpoint'inden set edilir
+  const validStatuses = ["PENDING", "PREPARING", "DELIVERED", "CANCELLED", "CANCEL_REQUESTED"];
   if (!validStatuses.includes(status)) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
@@ -43,7 +44,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // WhatsApp bildirimi — fire-and-forget
-  const notifyStatuses = ["PREPARING", "SHIPPED", "DELIVERED", "CANCELLED", "CANCEL_REQUESTED"];
+  // Not: SHIPPED bildirimi yalnızca kargo kodu kaydedilince gider (tracking/route.ts)
+  const notifyStatuses = ["PREPARING", "DELIVERED", "CANCELLED", "CANCEL_REQUESTED"];
   if (current.userId && notifyStatuses.includes(status)) {
     const [{ data: profile }, { data: address }] = await Promise.all([
       admin.supabase.from("profiles").select("phone").eq("id", current.userId).single(),
@@ -57,8 +59,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         notifyCancelApproved({ phone, orderNo });
       } else if (prevStatus === "CANCEL_REQUESTED" && status !== "CANCELLED") {
         notifyCancelRejected({ phone, orderNo });
-      } else if (status === "SHIPPED") {
-        notifyShippingUpdate({ phone, orderNo, trackingCode: current.trackingCode ?? "" });
       } else if (["PREPARING", "DELIVERED", "CANCELLED"].includes(status)) {
         notifyStatusUpdate({ phone, orderNo, status: status as "PREPARING" | "DELIVERED" | "CANCELLED" });
       }

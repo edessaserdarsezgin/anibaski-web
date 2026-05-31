@@ -1,13 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/ToastProvider";
 
-const STATUSES = ["PENDING", "PREPARING", "SHIPPED", "DELIVERED", "CANCELLED"];
+const STATUSES = ["PENDING", "PREPARING", "DELIVERED", "CANCELLED"];
+const STATUSES_AFTER_SHIPPED = ["SHIPPED", "DELIVERED", "CANCELLED"];
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "Beklemede", PREPARING: "Hazırlanıyor",
   SHIPPED: "Kargoda", DELIVERED: "Teslim Edildi", CANCELLED: "İptal",
 };
+// SHIPPED durumu yalnızca kargo kodu kaydedilince otomatik set edilir;
+// dropdown'dan seçilmez — bildirim yalnızca kargo kodu kaydında gider.
 
 export default function OrderStatusSelect({
   orderId, currentStatus,
@@ -16,10 +20,12 @@ export default function OrderStatusSelect({
   currentStatus: string;
 }) {
   const isCancelRequested = currentStatus === "CANCEL_REQUESTED";
-  // CANCEL_REQUESTED durumunda select PENDING üzerinde durur (iptal öncesi son durum)
+  const isShipped = currentStatus === "SHIPPED";
+  // CANCEL_REQUESTED → PENDING göster; SHIPPED → kargo kodu ile set edilir, dropdown pasif
   const [status, setStatus] = useState(isCancelRequested ? "PENDING" : currentStatus);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const next = e.target.value;
@@ -32,6 +38,7 @@ export default function OrderStatusSelect({
     if (res.ok) {
       setStatus(next);
       toast(`Durum güncellendi: ${STATUS_LABEL[next]}`);
+      router.refresh();
     } else {
       toast("Durum güncellenemedi.", "error");
     }
@@ -51,7 +58,7 @@ export default function OrderStatusSelect({
         disabled={saving}
         className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-border bg-white text-text outline-none focus:border-primary transition-colors disabled:opacity-50"
       >
-        {STATUSES.map((s) => (
+        {(isShipped ? STATUSES_AFTER_SHIPPED : STATUSES).map((s) => (
           <option key={s} value={s}>{STATUS_LABEL[s]}</option>
         ))}
       </select>

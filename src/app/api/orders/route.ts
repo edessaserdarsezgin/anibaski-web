@@ -30,8 +30,12 @@ export async function POST(req: NextRequest) {
       .eq("is_active", true)
       .single();
 
-    if (coupon &&
-      !(coupon.expires_at && new Date(coupon.expires_at) < new Date()) &&
+    const expired = coupon && coupon.expires_at && new Date(coupon.expires_at) < new Date();
+    if (expired) {
+      createAdminClient().from("coupons").update({ is_active: false }).eq("id", coupon.id);
+    }
+
+    if (coupon && !expired &&
       !(coupon.max_uses !== null && coupon.used_count >= coupon.max_uses) &&
       !(coupon.min_order_amount && subtotal < Number(coupon.min_order_amount))
     ) {
@@ -43,7 +47,12 @@ export async function POST(req: NextRequest) {
       // Kupon used_count yalnızca kapıda ödemede burada artar
       // Kredi kartında PayTR callback başarı durumunda artırılır
       if (paymentMethod === "cod") {
-        await createAdminClient().from("coupons").update({ used_count: coupon.used_count + 1 }).eq("id", coupon.id);
+        const newCount = coupon.used_count + 1;
+        const limitReached = coupon.max_uses !== null && newCount >= coupon.max_uses;
+        await createAdminClient().from("coupons").update({
+          used_count: newCount,
+          ...(limitReached && { is_active: false }),
+        }).eq("id", coupon.id);
       }
     }
   }

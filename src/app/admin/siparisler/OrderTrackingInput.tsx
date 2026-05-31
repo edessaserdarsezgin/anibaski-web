@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/ToastProvider";
 
 export default function OrderTrackingInput({
@@ -14,6 +15,7 @@ export default function OrderTrackingInput({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(!!currentCode);
   const { toast } = useToast();
+  const router = useRouter();
 
   async function handleSave() {
     if (!code.trim()) return;
@@ -27,6 +29,7 @@ export default function OrderTrackingInput({
     if (res.ok) {
       setSaved(true);
       toast("Kargo kodu kaydedildi, müşteriye e-posta gönderildi.");
+      router.refresh();
     } else {
       toast("Kargo kodu kaydedilemedi.", "error");
     }

@@ -60,12 +60,17 @@ export async function POST(req: NextRequest) {
         adminClient.from("profiles").select("email, fullName, phone, notify_delivery_contact").eq("id", order.userId).single(),
       ]);
 
-      // Kupon used_count'u ödeme onayı sonrası artır
+      // Kupon used_count'u ödeme onayı sonrası artır; limit dolunca pasife al
       if (order.discount_code) {
         const { data: coupon } = await adminClient
-          .from("coupons").select("id, used_count").eq("code", order.discount_code).single();
+          .from("coupons").select("id, used_count, max_uses").eq("code", order.discount_code).single();
         if (coupon) {
-          await adminClient.from("coupons").update({ used_count: coupon.used_count + 1 }).eq("id", coupon.id);
+          const newCount = coupon.used_count + 1;
+          const limitReached = coupon.max_uses !== null && newCount >= coupon.max_uses;
+          await adminClient.from("coupons").update({
+            used_count: newCount,
+            ...(limitReached && { is_active: false }),
+          }).eq("id", coupon.id);
         }
       }
 
