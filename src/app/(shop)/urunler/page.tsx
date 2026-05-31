@@ -41,12 +41,6 @@ export default async function UrunlerPage() {
               {products?.length ?? 0} ürün · Türkiye geneli kargo
             </p>
           </div>
-          <Link
-            href="/fotograf-yukle"
-            className="self-start md:self-auto px-7 py-3.5 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full transition-all shadow-soft hover:shadow-hover hover:-translate-y-0.5 shrink-0"
-          >
-            Fotoğraf Yükle
-          </Link>
         </div>
       </section>
 
@@ -122,13 +116,13 @@ export default async function UrunlerPage() {
             </div>
             <div className="relative">
               <h3 className="font-serif text-3xl text-white mb-1">Hangi anıyı yaşatmak istersiniz?</h3>
-              <p className="text-white/50 text-sm">Fotoğrafınızı yükleyin, gerisini biz halledelim.</p>
+              <p className="text-white/50 text-sm">Size en uygun ürünü bulmak için yardım edelim.</p>
             </div>
             <Link
-              href="/fotograf-yukle"
+              href="/urun-rehberi"
               className="relative shrink-0 px-8 py-3.5 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full transition-all hover:-translate-y-0.5 whitespace-nowrap"
             >
-              Hemen Başla
+              Ürün Rehberi
             </Link>
           </div>
         )}

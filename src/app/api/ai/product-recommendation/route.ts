@@ -51,8 +51,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "AI analiz başarısız" }, { status: 502 });
   }
 
-  const raw = await response.json();
+  let raw: Record<string, unknown>;
+  try {
+    raw = await response.json();
+  } catch {
+    const text = await response.text().catch(() => "(okunamadı)");
+    console.error("[AI] n8n webhook geçersiz JSON döndü:", text);
+    return NextResponse.json({ error: "AI servisi geçersiz yanıt döndü" }, { status: 502 });
+  }
+
   if (typeof raw?.recommendedProduct !== "string") {
+    console.error("[AI] n8n yanıtında recommendedProduct yok:", JSON.stringify(raw));
     return NextResponse.json({ error: "Geçersiz AI yanıtı" }, { status: 502 });
   }
 

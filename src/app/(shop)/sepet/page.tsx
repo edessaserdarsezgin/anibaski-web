@@ -6,14 +6,24 @@ import Image from "next/image";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/components/ui/ToastProvider";
 
-const SHIPPING_FEE = 49;
-const FREE_SHIPPING_THRESHOLD = 500;
-
 type AppliedCoupon = { code: string; discountAmount: number; discountType: string; discountValue: number };
 
 export default function SepetPage() {
   const { items, total, updateQuantity, removeItem } = useCart();
   const { toast } = useToast();
+
+  const [shippingFeeVal, setShippingFeeVal] = useState(49);
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState(500);
+
+  useEffect(() => {
+    fetch("/api/shipping-settings")
+      .then(r => r.json())
+      .then(d => {
+        setShippingFeeVal(d.shippingFee);
+        setFreeShippingThreshold(d.freeShippingThreshold);
+      })
+      .catch(() => {});
+  }, []);
 
   const [couponInput, setCouponInput] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
@@ -28,7 +38,7 @@ export default function SepetPage() {
       ? Math.round(total * (appliedCoupon.discountValue / 100) * 100) / 100
       : Math.min(appliedCoupon.discountValue, total)
     : 0;
-  const shippingFee = total >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
+  const shippingFee = total >= freeShippingThreshold ? 0 : shippingFeeVal;
   const grandTotal = total + shippingFee - discountAmount;
 
   // Adet değişince sessionStorage'daki indirim tutarını güncelle
@@ -212,7 +222,7 @@ export default function SepetPage() {
               </div>
               {shippingFee > 0 && (
                 <p className="text-xs text-text-light">
-                  {FREE_SHIPPING_THRESHOLD} ₺ üzeri alışverişlerde kargo ücretsiz.
+                  {freeShippingThreshold} ₺ üzeri alışverişlerde kargo ücretsiz.
                 </p>
               )}
             </div>

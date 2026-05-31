@@ -20,6 +20,7 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    color-scheme: only light;
   }
 
   body {
@@ -27,6 +28,22 @@
     color: var(--color-text);
     font-family: var(--font-sans);
     line-height: 1.6;
+  }
+
+  select {
+    color: var(--color-text);
+    background-color: white;
+    color-scheme: only light;
+  }
+
+  select option {
+    color: var(--color-text);
+    background-color: white;
+  }
+
+  select option:checked {
+    background-color: var(--color-primary);
+    color: white;
   }
 
   h1, h2, h3, h4 {

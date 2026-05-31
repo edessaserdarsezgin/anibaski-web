@@ -4,10 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
 
-const SHIPPING_FEE = 49;
-const FREE_SHIPPING_THRESHOLD = 500;
-const COD_FEE = 30;
-
 type Address = {
   id: string; title: string; fullName: string; phone: string;
   address: string; city: string; district: string; zip: string | null;
@@ -124,7 +120,7 @@ function AddressPicker({
   );
 }
 
-export default function CheckoutClient({ initialAddresses }: { initialAddresses: Address[] }) {
+export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING_FEE, freeShippingThreshold: FREE_SHIPPING_THRESHOLD, codFee: COD_FEE }: { initialAddresses: Address[]; shippingFee: number; freeShippingThreshold: number; codFee: number }) {
   const router = useRouter();
   const { items, total, clearCart } = useCart();
 

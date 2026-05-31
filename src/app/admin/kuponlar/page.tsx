@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/ToastProvider";
 
 type Coupon = {
@@ -229,126 +229,113 @@ export default function KuponlarPage() {
                 const expired = isExpired(c);
                 const usedUp = isFullyUsed(c);
                 const inactive = expired || usedUp;
-                return (
-                  <Fragment key={c.id}>
-                    <tr className={`border-b border-border last:border-0 hover:bg-bg transition-colors ${inactive ? "opacity-60" : ""}`}>
-                      <td className="px-6 py-4 font-mono font-semibold text-text">{c.code}</td>
-                      <td className="px-4 py-4 text-primary font-semibold">
-                        {c.discount_type === "percentage" ? `%${c.discount_value}` : `${Number(c.discount_value).toLocaleString("tr-TR")} ₺`}
-                      </td>
-                      <td className="px-4 py-4 text-text-light">
-                        {c.min_order_amount ? `${Number(c.min_order_amount).toLocaleString("tr-TR")} ₺` : "—"}
-                      </td>
-                      <td className="px-4 py-4 text-text-light">
-                        {c.used_count}{c.max_uses ? ` / ${c.max_uses}` : ""}
-                      </td>
-                      <td className="px-4 py-4 text-text-light">
-                        {c.expires_at ? new Date(c.expires_at).toLocaleDateString("tr-TR") : "—"}
-                      </td>
-                      <td className="px-4 py-4">
-                        {expired ? (
-                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full border text-orange-700 bg-orange-50 border-orange-200">
-                            Süresi Doldu
-                          </span>
-                        ) : usedUp ? (
-                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full border text-purple-700 bg-purple-50 border-purple-200">
-                            Hak Doldu
-                          </span>
-                        ) : (
-                          <button onClick={() => toggleActive(c)}
-                            className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition-colors ${
-                              c.is_active
-                                ? "text-green-700 bg-green-50 border-green-200 hover:bg-green-100"
-                                : "text-text-light bg-bg border-border hover:border-primary"
-                            }`}>
-                            {c.is_active ? "Aktif" : "Pasif"}
-                          </button>
-                        )}
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => editingId === c.id ? setEditingId(null) : startEdit(c)}
-                            className="text-xs text-primary hover:text-primary-hover font-semibold transition-colors"
-                          >
-                            {editingId === c.id ? "Kapat" : "Düzenle"}
-                          </button>
-                          <button onClick={() => handleDelete(c.id)}
-                            className="text-xs text-red-500 hover:text-red-700 font-semibold transition-colors">
-                            Sil
-                          </button>
-                        </div>
+                return [
+                  <tr key={c.id} className={`border-b border-border last:border-0 hover:bg-bg transition-colors ${inactive ? "opacity-60" : ""}`}>
+                    <td className="px-6 py-4 font-mono font-semibold text-text">{c.code}</td>
+                    <td className="px-4 py-4 text-primary font-semibold">
+                      {c.discount_type === "percentage" ? `%${c.discount_value}` : `${Number(c.discount_value).toLocaleString("tr-TR")} ₺`}
+                    </td>
+                    <td className="px-4 py-4 text-text-light">
+                      {c.min_order_amount ? `${Number(c.min_order_amount).toLocaleString("tr-TR")} ₺` : "—"}
+                    </td>
+                    <td className="px-4 py-4 text-text-light">
+                      {c.used_count}{c.max_uses ? ` / ${c.max_uses}` : ""}
+                    </td>
+                    <td className="px-4 py-4 text-text-light">
+                      {c.expires_at ? new Date(c.expires_at).toLocaleDateString("tr-TR") : "—"}
+                    </td>
+                    <td className="px-4 py-4">
+                      {expired ? (
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full border text-orange-700 bg-orange-50 border-orange-200">Süresi Doldu</span>
+                      ) : usedUp ? (
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full border text-purple-700 bg-purple-50 border-purple-200">Hak Doldu</span>
+                      ) : (
+                        <button onClick={() => toggleActive(c)}
+                          className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition-colors ${c.is_active ? "text-green-700 bg-green-50 border-green-200 hover:bg-green-100" : "text-text-light bg-bg border-border hover:border-primary"}`}>
+                          {c.is_active ? "Aktif" : "Pasif"}
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => editingId === c.id ? setEditingId(null) : startEdit(c)}
+                          className="text-xs text-primary hover:text-primary-hover font-semibold transition-colors">
+                          {editingId === c.id ? "Kapat" : "Düzenle"}
+                        </button>
+                        <button onClick={() => handleDelete(c.id)}
+                          className="text-xs text-red-500 hover:text-red-700 font-semibold transition-colors">
+                          Sil
+                        </button>
+                      </div>
+                    </td>
+                  </tr>,
+                  editingId === c.id ? (
+                    <tr key={`${c.id}-edit`} className="border-b border-border bg-bg">
+                      <td colSpan={7} className="px-6 py-5">
+                        <form onSubmit={handleEdit}>
+                          <p className="text-xs font-semibold text-text-light uppercase tracking-wide mb-4">
+                            Düzenle — <span className="font-mono text-text">{c.code}</span>
+                          </p>
+                          <div className="grid grid-cols-3 gap-4 mb-4">
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-xs font-semibold text-text">İndirim Türü</label>
+                              <select value={editForm.discountType} onChange={e => setEditForm(p => ({ ...p, discountType: e.target.value }))}
+                                className="px-3 py-2 text-sm rounded-lg border border-border outline-none focus:border-primary bg-white">
+                                <option value="percentage">Yüzde (%)</option>
+                                <option value="fixed">Sabit Tutar (₺)</option>
+                              </select>
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-xs font-semibold text-text">
+                                {editForm.discountType === "percentage" ? "Oran (%)" : "Tutar (₺)"}
+                              </label>
+                              <input required type="number" min="1" value={editForm.discountValue}
+                                onChange={e => setEditForm(p => ({ ...p, discountValue: e.target.value }))}
+                                className="px-3 py-2 text-sm rounded-lg border border-border outline-none focus:border-primary" />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-xs font-semibold text-text">Min. Sipariş (₺)</label>
+                              <input type="number" min="0" value={editForm.minOrderAmount}
+                                onChange={e => setEditForm(p => ({ ...p, minOrderAmount: e.target.value }))}
+                                placeholder="—" className="px-3 py-2 text-sm rounded-lg border border-border outline-none focus:border-primary" />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-xs font-semibold text-text">Maks. Kullanım</label>
+                              <input type="number" min="1" value={editForm.maxUses}
+                                onChange={e => setEditForm(p => ({ ...p, maxUses: e.target.value }))}
+                                placeholder="—" className="px-3 py-2 text-sm rounded-lg border border-border outline-none focus:border-primary" />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-xs font-semibold text-text">Son Kullanım Tarihi</label>
+                              <input type="date" value={editForm.expiresAt}
+                                onChange={e => setEditForm(p => ({ ...p, expiresAt: e.target.value }))}
+                                className="px-3 py-2 text-sm rounded-lg border border-border outline-none focus:border-primary" />
+                            </div>
+                            <div className="flex flex-col gap-1.5 justify-end">
+                              <label className="text-xs font-semibold text-text">Durum</label>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" checked={editForm.isActive}
+                                  onChange={e => setEditForm(p => ({ ...p, isActive: e.target.checked }))}
+                                  className="w-4 h-4 accent-primary" />
+                                <span className="text-sm text-text">Aktif</span>
+                              </label>
+                            </div>
+                          </div>
+                          <div className="flex gap-3">
+                            <button type="submit" disabled={editSaving}
+                              className="px-5 py-2 bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-semibold rounded-full transition-colors">
+                              {editSaving ? "Kaydediliyor..." : "Güncelle"}
+                            </button>
+                            <button type="button" onClick={() => setEditingId(null)}
+                              className="px-5 py-2 border border-border text-text-light text-sm font-semibold rounded-full hover:border-primary transition-colors">
+                              İptal
+                            </button>
+                          </div>
+                        </form>
                       </td>
                     </tr>
-
-                    {editingId === c.id && (
-                      <tr className="border-b border-border bg-bg">
-                        <td colSpan={7} className="px-6 py-5">
-                          <form onSubmit={handleEdit}>
-                            <p className="text-xs font-semibold text-text-light uppercase tracking-wide mb-4">
-                              Düzenle — <span className="font-mono text-text">{c.code}</span>
-                            </p>
-                            <div className="grid grid-cols-3 gap-4 mb-4">
-                              <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-semibold text-text">İndirim Türü</label>
-                                <select value={editForm.discountType} onChange={e => setEditForm(p => ({ ...p, discountType: e.target.value }))}
-                                  className="px-3 py-2 text-sm rounded-lg border border-border outline-none focus:border-primary bg-white">
-                                  <option value="percentage">Yüzde (%)</option>
-                                  <option value="fixed">Sabit Tutar (₺)</option>
-                                </select>
-                              </div>
-                              <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-semibold text-text">
-                                  {editForm.discountType === "percentage" ? "Oran (%)" : "Tutar (₺)"}
-                                </label>
-                                <input required type="number" min="1" value={editForm.discountValue}
-                                  onChange={e => setEditForm(p => ({ ...p, discountValue: e.target.value }))}
-                                  className="px-3 py-2 text-sm rounded-lg border border-border outline-none focus:border-primary" />
-                              </div>
-                              <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-semibold text-text">Min. Sipariş (₺)</label>
-                                <input type="number" min="0" value={editForm.minOrderAmount}
-                                  onChange={e => setEditForm(p => ({ ...p, minOrderAmount: e.target.value }))}
-                                  placeholder="—" className="px-3 py-2 text-sm rounded-lg border border-border outline-none focus:border-primary" />
-                              </div>
-                              <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-semibold text-text">Maks. Kullanım</label>
-                                <input type="number" min="1" value={editForm.maxUses}
-                                  onChange={e => setEditForm(p => ({ ...p, maxUses: e.target.value }))}
-                                  placeholder="—" className="px-3 py-2 text-sm rounded-lg border border-border outline-none focus:border-primary" />
-                              </div>
-                              <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-semibold text-text">Son Kullanım Tarihi</label>
-                                <input type="date" value={editForm.expiresAt}
-                                  onChange={e => setEditForm(p => ({ ...p, expiresAt: e.target.value }))}
-                                  className="px-3 py-2 text-sm rounded-lg border border-border outline-none focus:border-primary" />
-                              </div>
-                              <div className="flex flex-col gap-1.5 justify-end">
-                                <label className="text-xs font-semibold text-text">Durum</label>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                  <input type="checkbox" checked={editForm.isActive}
-                                    onChange={e => setEditForm(p => ({ ...p, isActive: e.target.checked }))}
-                                    className="w-4 h-4 accent-primary" />
-                                  <span className="text-sm text-text">Aktif</span>
-                                </label>
-                              </div>
-                            </div>
-                            <div className="flex gap-3">
-                              <button type="submit" disabled={editSaving}
-                                className="px-5 py-2 bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-semibold rounded-full transition-colors">
-                                {editSaving ? "Kaydediliyor..." : "Güncelle"}
-                              </button>
-                              <button type="button" onClick={() => setEditingId(null)}
-                                className="px-5 py-2 border border-border text-text-light text-sm font-semibold rounded-full hover:border-primary transition-colors">
-                                İptal
-                              </button>
-                            </div>
-                          </form>
-                        </td>
-                      </tr>
-                    )}
-                  </Fragment>
-                );
+                  ) : null,
+                ];
               })}
             </tbody>
           </table>

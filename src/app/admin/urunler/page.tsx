@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/server";
 import ToggleActiveButton from "./ToggleActiveButton";
+import DuplicateButton from "./DuplicateButton";
 
 export const metadata = { title: "Ürünler | Admin" };
 
@@ -49,9 +50,12 @@ export default async function AdminUrunlerPage() {
                     <ToggleActiveButton id={product.id} isActive={product.isActive ?? true} />
                   </td>
                   <td className="px-6 py-4">
-                    <Link href={`/admin/urunler/${product.id}/duzenle`} className="text-xs text-primary hover:underline font-semibold">
-                      Düzenle
-                    </Link>
+                    <div className="flex items-center gap-3">
+                      <Link href={`/admin/urunler/${product.id}/duzenle`} className="text-xs text-primary hover:underline font-semibold">
+                        Düzenle
+                      </Link>
+                      <DuplicateButton id={product.id} />
+                    </div>
                   </td>
                 </tr>
               ))}

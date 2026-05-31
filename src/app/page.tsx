@@ -3,6 +3,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import AnnouncementBanner from "@/components/layout/AnnouncementBanner";
 import Link from "next/link";
+import { getShippingSettings } from "@/lib/shipping";
 
 export const metadata: Metadata = {
   title: "AnıBaskı | Anılarınızı Dokunulur Kılın",
@@ -16,7 +17,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { freeShippingThreshold } = await getShippingSettings();
   return (
     <>
       <style>{`
@@ -96,12 +98,6 @@ export default function HomePage() {
                   className="px-9 py-4 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full transition-all shadow-soft hover:shadow-hover hover:-translate-y-0.5 active:translate-y-0"
                 >
                   Baskıya Başla
-                </Link>
-                <Link
-                  href="/fotograf-yukle"
-                  className="px-9 py-4 border-2 border-border hover:border-primary text-text font-semibold rounded-full transition-all hover:-translate-y-0.5 active:translate-y-0"
-                >
-                  Fotoğraf Yükle
                 </Link>
               </div>
 
@@ -237,7 +233,7 @@ export default function HomePage() {
         <section className="py-12 px-8 bg-primary">
           <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
             {[
-              { icon: "🚚", title: "Ücretsiz Kargo", desc: "500 ₺ ve üzeri siparişlerde" },
+              { icon: "🚚", title: "Ücretsiz Kargo", desc: `${freeShippingThreshold} ₺ ve üzeri siparişlerde` },
               { icon: "🔒", title: "Güvenli Ödeme", desc: "256-bit SSL şifreleme" },
               { icon: "🎁", title: "Özel Paketleme", desc: "Hediyeye hazır kutularda" },
               { icon: "↩️", title: "Memnuniyet Garantisi", desc: "Sorun varsa yeniden basıyoruz" },
