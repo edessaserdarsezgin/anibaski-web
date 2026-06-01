@@ -4,6 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
+type ProductTagItem = {
+  tagId: string;
+  position: string;
+  tag: { name: string; color: string };
+};
+
 type Props = {
   product: {
     id: string;
@@ -13,6 +19,7 @@ type Props = {
     basePrice: number;
     images?: string[] | null;
     category?: { name: string; slug: string } | null;
+    productTags?: ProductTagItem[] | null;
   };
   initialFavorited?: boolean;
   priority?: boolean;
@@ -93,16 +100,38 @@ export default function ProductCard({ product, initialFavorited = false, priorit
               <span className="text-xs">Görsel yok</span>
             </div>
           )}
-          {/* Kategori etiketi — görsel üzerinde */}
-          {product.category && (
-            <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-semibold bg-white/90 backdrop-blur-sm text-text-light border border-white/50">
-              {product.category.name}
-            </span>
-          )}
+          {/* Renkli etiketler — konum bazlı gruplar */}
+          {(["top-left", "bottom-left", "bottom-right"] as const).map((pos) => {
+            const labels = product.productTags?.filter((pt) => pt.position === pos) ?? [];
+            if (!labels.length) return null;
+            const cls: Record<string, string> = {
+              "top-left":    "absolute top-3 left-3 z-10 flex flex-col gap-1.5",
+              "bottom-left": "absolute bottom-3 left-3 z-10 flex flex-col gap-1.5",
+              "bottom-right":"absolute bottom-3 right-3 z-10 flex flex-col items-end gap-1.5",
+            };
+            return (
+              <div key={pos} className={cls[pos]}>
+                {labels.map((pt) => (
+                  <span
+                    key={pt.tagId}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-md"
+                    style={{ backgroundColor: pt.tag.color }}
+                  >
+                    {pt.tag.name}
+                  </span>
+                ))}
+              </div>
+            );
+          })}
         </div>
 
         {/* Bilgi */}
         <div className="p-5">
+          {product.category && (
+            <span className="inline-block mb-2 text-[10px] font-semibold text-text-light uppercase tracking-wide">
+              {product.category.name}
+            </span>
+          )}
           <h2 className="font-serif text-base text-text group-hover:text-primary transition-colors line-clamp-2 leading-snug mb-3">
             {product.name}
           </h2>

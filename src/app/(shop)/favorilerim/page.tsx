@@ -13,7 +13,7 @@ export default async function FavorilerimPage() {
   const adminDb = createAdminClient();
   const { data: favorites } = await adminDb
     .from("favorites")
-    .select("productId, product:products(id, name, slug, description, basePrice, images, category:categories(name, slug))")
+    .select("productId, product:products(id, name, slug, description, basePrice, images, category:categories(name, slug), productTags:product_tags(tagId, position, tag:tags(name, color)))")
     .eq("userId", user.id)
     .order("createdAt", { ascending: false });
 
@@ -22,6 +22,7 @@ export default async function FavorilerimPage() {
       id: string; name: string; slug: string; description?: string | null;
       basePrice: number; images?: string[] | null;
       category?: { name: string; slug: string } | null;
+      productTags?: { tagId: string; position: string; tag: { name: string; color: string } }[] | null;
     })
     .filter(Boolean);
 

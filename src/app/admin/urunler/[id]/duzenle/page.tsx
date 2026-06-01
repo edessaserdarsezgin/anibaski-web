@@ -7,6 +7,8 @@ import Image from "next/image";
 type Category = { id: string; name: string; slug: string; parentId?: string | null };
 type SavedVariant = { id: string; type: string; label: string; value: string; priceAddon: number };
 type PendingOption = { label: string; priceAddon: number };
+type Tag = { id: string; name: string; color: string };
+type SelectedTag = { tagId: string; position: string };
 
 const TR_MAP: Record<string, string> = {
   ç: "c", ğ: "g", ı: "i", İ: "i", ö: "o", ş: "s", ü: "u",
@@ -39,19 +41,27 @@ export default function UrunDuzenle() {
   const [variants, setVariants] = useState<SavedVariant[]>([]);
   const [pending, setPending] = useState<Record<string, PendingOption>>({});
   const [newGroupType, setNewGroupType] = useState("");
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<SelectedTag[]>([]);
+  const [tagSelect, setTagSelect] = useState("");
+  const [tagPosition, setTagPosition] = useState("bottom-left");
 
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function load() {
-      const [productRes, catsRes, variantsRes] = await Promise.all([
+      const [productRes, catsRes, variantsRes, tagsRes, productTagsRes] = await Promise.all([
         fetch(`/api/admin/products/${id}`),
         fetch("/api/admin/categories"),
         fetch(`/api/admin/variants?productId=${id}`),
+        fetch("/api/admin/tags"),
+        fetch(`/api/admin/products/${id}/tags`),
       ]);
       const product = productRes.ok ? await productRes.json() : null;
       const cats = catsRes.ok ? await catsRes.json() : [];
       const savedVariants: SavedVariant[] = variantsRes.ok ? await variantsRes.json() : [];
+      const tags: Tag[] = tagsRes.ok ? await tagsRes.json() : [];
+      const productTags: SelectedTag[] = productTagsRes.ok ? (await productTagsRes.json()).map((pt: { tagId: string; position: string }) => ({ tagId: pt.tagId, position: pt.position })) : [];
 
       if (product) {
         const s = (product.specs as Record<string, string>) ?? {};
@@ -69,6 +79,8 @@ export default function UrunDuzenle() {
       const types = [...new Set(savedVariants.map(v => v.type))];
       setPending(Object.fromEntries(types.map(t => [t, { label: "", priceAddon: 0 }])));
       setCategories(Array.isArray(cats) ? cats : []);
+      setAllTags(tags);
+      setSelectedTags(productTags);
       setLoading(false);
     }
     load();
@@ -163,6 +175,11 @@ export default function UrunDuzenle() {
       setSaving(false);
       return;
     }
+    await fetch(`/api/admin/products/${id}/tags`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tags: selectedTags }),
+    });
     router.push("/admin/urunler");
     router.refresh();
   }
@@ -386,6 +403,77 @@ export default function UrunDuzenle() {
               + Tip Ekle
             </button>
           </div>
+        </div>
+
+        {/* Etiketler */}
+        <div className="flex flex-col gap-3 pt-2 border-t border-border">
+          <p className="text-sm font-semibold text-text">Etiketler</p>
+          {selectedTags.length > 0 && (
+            <div className="flex flex-col gap-2">
+              {selectedTags.map(st => {
+                const tag = allTags.find(t => t.id === st.tagId);
+                if (!tag) return null;
+                return (
+                  <div key={st.tagId} className="flex items-center gap-2">
+                    <span className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold text-white"
+                      style={{ backgroundColor: tag.color }}>
+                      {tag.name}
+                    </span>
+                    <select
+                      value={st.position}
+                      onChange={e => setSelectedTags(s => s.map(x => x.tagId === st.tagId ? { ...x, position: e.target.value } : x))}
+                      className={inputCls + " w-32 text-xs py-1.5"}
+                    >
+                      <option value="top-left">Sol Üst</option>
+                      <option value="bottom-left">Sol Alt</option>
+                      <option value="bottom-right">Sağ Alt</option>
+                    </select>
+                    <button type="button"
+                      onClick={() => setSelectedTags(s => s.filter(x => x.tagId !== st.tagId))}
+                      className="text-red-400 hover:text-red-600 text-xs font-semibold px-2">
+                      Kaldır
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {allTags.length > 0 && (
+            <div className="flex gap-2 items-center flex-wrap">
+              <select
+                value={tagSelect}
+                onChange={e => setTagSelect(e.target.value)}
+                className={inputCls + " flex-1 min-w-32"}
+              >
+                <option value="">Etiket seç</option>
+                {allTags.map(t => (
+                  <option key={t.id} value={t.id} disabled={selectedTags.some(s => s.tagId === t.id)}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={tagPosition}
+                onChange={e => setTagPosition(e.target.value)}
+                className={inputCls + " w-36"}
+              >
+                <option value="top-left">Sol Üst</option>
+                <option value="bottom-left">Sol Alt</option>
+                <option value="bottom-right">Sağ Alt</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!tagSelect || selectedTags.some(s => s.tagId === tagSelect)) return;
+                  setSelectedTags(s => [...s, { tagId: tagSelect, position: tagPosition }]);
+                  setTagSelect("");
+                }}
+                className="px-4 py-2 border border-border text-sm font-semibold rounded-lg hover:border-primary hover:text-primary transition-colors"
+              >
+                + Ekle
+              </button>
+            </div>
+          )}
         </div>
 
         {error && <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-lg px-4 py-2.5">{error}</p>}

@@ -54,7 +54,7 @@ export default async function KategoriPage({ params }: Props) {
 
   const { data: products } = await adminDb
     .from("products")
-    .select("id, name, slug, description, basePrice, images, categoryId")
+    .select("id, name, slug, description, basePrice, images, categoryId, productTags:product_tags(tagId, position, tag:tags(name, color))")
     .in("categoryId", allCategoryIds)
     .eq("isActive", true)
     .order("createdAt", { ascending: false });
@@ -161,6 +161,24 @@ export default async function KategoriPage({ params }: Props) {
                         <span className="text-xs">Görsel yok</span>
                       </div>
                     )}
+                    {(["top-left","bottom-left","bottom-right"] as const).map((pos) => {
+                      const tags = (product.productTags as unknown as { tagId: string; position: string; tag: { name: string; color: string } }[] | null)?.filter(pt => pt.position === pos) ?? [];
+                      if (!tags.length) return null;
+                      const cls: Record<string, string> = {
+                        "top-left":    "absolute top-3 left-3 z-10 flex flex-col gap-1.5",
+                        "bottom-left": "absolute bottom-3 left-3 z-10 flex flex-col gap-1.5",
+                        "bottom-right":"absolute bottom-3 right-3 z-10 flex flex-col items-end gap-1.5",
+                      };
+                      return (
+                        <div key={pos} className={cls[pos]}>
+                          {tags.map(pt => (
+                            <span key={pt.tagId} className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-md" style={{ backgroundColor: pt.tag.color }}>
+                              {pt.tag.name}
+                            </span>
+                          ))}
+                        </div>
+                      );
+                    })}
                   </div>
                   <div className="p-5">
                     <h2 className="font-serif text-base text-text group-hover:text-primary transition-colors line-clamp-2 leading-snug mb-3">

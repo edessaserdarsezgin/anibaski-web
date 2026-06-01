@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import OrderStatusSelect from "./OrderStatusSelect";
 import CancelRequestButton from "./CancelRequestButton";
 
@@ -41,14 +41,16 @@ export default async function SiparisDetayPage({ params }: Props) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect(`/giris?redirect=/siparisler/${id}`);
 
-  const { data: order } = await supabase
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  const isAdmin = profile?.role === "ADMIN";
+
+  const adminClient = createAdminClient();
+  const { data: order } = await adminClient
     .from("orders")
     .select("*, items:order_items(*, product:products(name, images, slug)), address:addresses!orders_addressId_fkey(*), billingAddress:addresses!orders_billingAddressId_fkey(*)")
     .eq("id", id)
     .single();
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  const isAdmin = profile?.role === "ADMIN";
   if (!order || (!isAdmin && order.userId !== user.id)) notFound();
   // Kredi kartıyla oluşturulmuş ama ödeme tamamlanmamış siparişleri gizle
   if (!isAdmin && order.paymentMethod === "credit_card" && order.paymentStatus === "pending") notFound();

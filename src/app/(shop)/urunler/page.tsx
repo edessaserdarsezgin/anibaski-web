@@ -14,7 +14,7 @@ export default async function UrunlerPage() {
   const adminDb = createAdminClient();
 
   const [{ data: products }, { data: categories }] = await Promise.all([
-    adminDb.from("products").select("id, name, slug, description, basePrice, images, category:categories(name, slug)").eq("isActive", true).order("createdAt", { ascending: false }),
+    adminDb.from("products").select("id, name, slug, description, basePrice, images, category:categories(name, slug), productTags:product_tags(tagId, position, tag:tags(name, color))").eq("isActive", true).order("createdAt", { ascending: false }),
     adminDb.from("categories").select("id, name, slug, parentId").order("name"),
   ]);
 
@@ -96,10 +96,11 @@ export default async function UrunlerPage() {
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-5">
             {products.map((product, idx) => {
               const category = product.category as unknown as { name: string; slug: string } | null;
+              const productTags = product.productTags as unknown as { tagId: string; position: string; tag: { name: string; color: string } }[] | null;
               return (
                 <ProductCard
                   key={product.id}
-                  product={{ ...product, basePrice: Number(product.basePrice), category }}
+                  product={{ ...product, basePrice: Number(product.basePrice), category, productTags }}
                   initialFavorited={favoriteIds.has(product.id)}
                   priority={idx < 3}
                 />

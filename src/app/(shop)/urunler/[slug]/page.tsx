@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { unstable_noStore as noStore } from "next/cache";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import AddToCartButton from "./AddToCartButton";
 import ProductGallery from "./ProductGallery";
@@ -31,11 +32,12 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function UrunDetayPage({ params }: Props) {
+  noStore();
   const { slug } = await params;
   const supabase = await createClient();
 
   const [{ data: product }, { data: { user } }] = await Promise.all([
-    supabase.from("products").select("*, category:categories(id, name, slug)").eq("slug", slug).eq("isActive", true).single(),
+    supabase.from("products").select("*, category:categories(id, name, slug), productTags:product_tags(tagId, position, tag:tags(name, color))").eq("slug", slug).eq("isActive", true).single(),
     supabase.auth.getUser(),
   ]);
 
@@ -114,6 +116,19 @@ export default async function UrunDetayPage({ params }: Props) {
             {/* Başlık */}
             <div>
               <h1 className="font-serif text-4xl text-text leading-snug">{product.name}</h1>
+              {(product.productTags as { tagId: string; tag: { name: string; color: string } }[] | null)?.length ? (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {(product.productTags as { tagId: string; tag: { name: string; color: string } }[]).map((pt) => (
+                    <span
+                      key={pt.tagId}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm"
+                      style={{ backgroundColor: pt.tag.color }}
+                    >
+                      {pt.tag.name}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
 
             {/* Fiyat ve aksiyon */}

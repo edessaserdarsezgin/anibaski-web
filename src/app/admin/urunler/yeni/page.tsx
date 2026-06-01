@@ -6,6 +6,8 @@ import { useState, useRef, useEffect, KeyboardEvent } from "react";
 type Category = { id: string; name: string; slug: string; parentId: string | null };
 type VariantOption = { label: string; priceAddon: number };
 type VariantGroup = { type: string; options: VariantOption[] };
+type Tag = { id: string; name: string; color: string };
+type SelectedTag = { tagId: string; position: string };
 
 const TR_MAP: Record<string, string> = {
   ç: "c", ğ: "g", ı: "i", İ: "i", ö: "o", ş: "s", ü: "u",
@@ -33,8 +35,11 @@ export default function YeniUrunPage() {
   const [photoCount, setPhotoCount] = useState(1);
   const [groups, setGroups] = useState<VariantGroup[]>([]);
   const [newGroupType, setNewGroupType] = useState("");
-  // Her grup için bekleyen seçenek inputları
   const [pending, setPending] = useState<Record<string, { label: string; priceAddon: number }>>({});
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<SelectedTag[]>([]);
+  const [tagSelect, setTagSelect] = useState("");
+  const [tagPosition, setTagPosition] = useState("bottom-left");
 
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -42,6 +47,9 @@ export default function YeniUrunPage() {
     fetch("/api/admin/categories")
       .then(res => res.json())
       .then(data => setCategories(Array.isArray(data) ? data : []));
+    fetch("/api/admin/tags")
+      .then(res => res.json())
+      .then(data => setAllTags(Array.isArray(data) ? data : []));
   }, []);
 
   async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -138,6 +146,15 @@ export default function YeniUrunPage() {
       setError(data.error ?? "Ürün oluşturulurken hata oluştu.");
       setLoading(false);
       return;
+    }
+
+    const product = await res.json();
+    if (selectedTags.length > 0) {
+      await fetch(`/api/admin/products/${product.id}/tags`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tags: selectedTags }),
+      });
     }
 
     router.push("/admin/urunler");
@@ -334,6 +351,77 @@ export default function YeniUrunPage() {
               + Tip Ekle
             </button>
           </div>
+        </div>
+
+        {/* Etiketler */}
+        <div className="flex flex-col gap-3 pt-2 border-t border-border">
+          <p className="text-sm font-semibold text-text">Etiketler</p>
+          {selectedTags.length > 0 && (
+            <div className="flex flex-col gap-2">
+              {selectedTags.map(st => {
+                const tag = allTags.find(t => t.id === st.tagId);
+                if (!tag) return null;
+                return (
+                  <div key={st.tagId} className="flex items-center gap-2">
+                    <span className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold text-white"
+                      style={{ backgroundColor: tag.color }}>
+                      {tag.name}
+                    </span>
+                    <select
+                      value={st.position}
+                      onChange={e => setSelectedTags(s => s.map(x => x.tagId === st.tagId ? { ...x, position: e.target.value } : x))}
+                      className={inputCls + " w-32 text-xs py-1.5"}
+                    >
+                      <option value="top-left">Sol Üst</option>
+                      <option value="bottom-left">Sol Alt</option>
+                      <option value="bottom-right">Sağ Alt</option>
+                    </select>
+                    <button type="button"
+                      onClick={() => setSelectedTags(s => s.filter(x => x.tagId !== st.tagId))}
+                      className="text-red-400 hover:text-red-600 text-xs font-semibold px-2">
+                      Kaldır
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {allTags.length > 0 && (
+            <div className="flex gap-2 items-center flex-wrap">
+              <select
+                value={tagSelect}
+                onChange={e => setTagSelect(e.target.value)}
+                className={inputCls + " flex-1 min-w-32"}
+              >
+                <option value="">Etiket seç</option>
+                {allTags.map(t => (
+                  <option key={t.id} value={t.id} disabled={selectedTags.some(s => s.tagId === t.id)}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={tagPosition}
+                onChange={e => setTagPosition(e.target.value)}
+                className={inputCls + " w-36"}
+              >
+                <option value="top-left">Sol Üst</option>
+                <option value="bottom-left">Sol Alt</option>
+                <option value="bottom-right">Sağ Alt</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!tagSelect || selectedTags.some(s => s.tagId === tagSelect)) return;
+                  setSelectedTags(s => [...s, { tagId: tagSelect, position: tagPosition }]);
+                  setTagSelect("");
+                }}
+                className="px-4 py-2 border border-border text-sm font-semibold rounded-lg hover:border-primary hover:text-primary transition-colors"
+              >
+                + Ekle
+              </button>
+            </div>
+          )}
         </div>
 
         {error && (
