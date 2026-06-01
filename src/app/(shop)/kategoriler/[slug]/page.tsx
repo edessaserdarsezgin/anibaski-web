@@ -113,21 +113,28 @@ export default async function KategoriPage({ params, searchParams }: Props) {
         {/* ── Alt Kategori Filtreleri (sadece ana kategoride göster) ── */}
         {(subCategories?.length ?? 0) > 0 && (
           <div className="flex gap-2 flex-wrap mb-10">
-            <Link
-              href={`/kategoriler/${category.slug}`}
-              className="px-5 py-2 rounded-full text-sm font-semibold border bg-text text-white border-text transition-all"
-            >
-              Tümü
-            </Link>
-            {subCategories!.map((sub) => (
-              <Link
-                key={sub.id}
-                href={`/kategoriler/${sub.slug}`}
-                className="px-5 py-2 rounded-full text-sm font-semibold border border-border text-text-light hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
-              >
-                {sub.name}
-              </Link>
-            ))}
+            {(() => {
+              const sortQuery = sort !== "newest" ? `?sort=${sort}` : "";
+              return (
+                <>
+                  <Link
+                    href={`/kategoriler/${category.slug}${sortQuery}`}
+                    className="px-5 py-2 rounded-full text-sm font-semibold border bg-text text-white border-text transition-all"
+                  >
+                    Tümü
+                  </Link>
+                  {subCategories!.map((sub) => (
+                    <Link
+                      key={sub.id}
+                      href={`/kategoriler/${sub.slug}${sortQuery}`}
+                      className="px-5 py-2 rounded-full text-sm font-semibold border border-border text-text-light hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
+                    >
+                      {sub.name}
+                    </Link>
+                  ))}
+                </>
+              );
+            })()}
           </div>
         )}
 

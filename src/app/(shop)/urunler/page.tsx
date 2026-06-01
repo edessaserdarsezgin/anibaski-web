@@ -64,34 +64,41 @@ export default async function UrunlerPage({ searchParams }: Props) {
 
         {/* ── Kategori Filtreleri ──────────────────────── */}
         <div className="flex gap-2 flex-wrap mb-12">
-          <Link
-            href="/urunler"
-            className="px-5 py-2 rounded-full text-sm font-semibold border bg-text text-white border-text transition-all"
-          >
-            Tümü
-          </Link>
-          {categories?.filter(c => !c.parentId).map((parent) => {
-            const children = categories.filter(c => c.parentId === parent.id);
+          {(() => {
+            const sortQuery = sort !== "newest" ? `?sort=${sort}` : "";
             return (
-              <div key={parent.id} className="flex items-center gap-1 flex-wrap">
+              <>
                 <Link
-                  href={`/kategoriler/${parent.slug}`}
-                  className="px-5 py-2 rounded-full text-sm font-semibold border border-border text-text-light hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
+                  href={`/urunler${sortQuery}`}
+                  className="px-5 py-2 rounded-full text-sm font-semibold border bg-text text-white border-text transition-all"
                 >
-                  {parent.name}
+                  Tümü
                 </Link>
-                {children.map(sub => (
-                  <Link
-                    key={sub.id}
-                    href={`/kategoriler/${sub.slug}`}
-                    className="px-3 py-1.5 rounded-full text-xs font-semibold border border-border/60 text-text-light hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
-                  >
-                    {sub.name}
-                  </Link>
-                ))}
-              </div>
+                {categories?.filter(c => !c.parentId).map((parent) => {
+                  const children = categories.filter(c => c.parentId === parent.id);
+                  return (
+                    <div key={parent.id} className="flex items-center gap-1 flex-wrap">
+                      <Link
+                        href={`/kategoriler/${parent.slug}${sortQuery}`}
+                        className="px-5 py-2 rounded-full text-sm font-semibold border border-border text-text-light hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
+                      >
+                        {parent.name}
+                      </Link>
+                      {children.map(sub => (
+                        <Link
+                          key={sub.id}
+                          href={`/kategoriler/${sub.slug}${sortQuery}`}
+                          className="px-3 py-1.5 rounded-full text-xs font-semibold border border-border/60 text-text-light hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
+                        >
+                          {sub.name}
+                        </Link>
+                      ))}
+                    </div>
+                  );
+                })}
+              </>
             );
-          })}
+          })()}
         </div>
 
         {/* ── Ürün Grid ───────────────────────────────── */}
