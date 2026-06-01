@@ -1,5 +1,6 @@
 import { LegalDocProps } from "./types";
 import { SELLER } from "./sellerInfo";
+import { CaymaIstisnaListesi } from "./shared";
 
 export default function OnBilgilendirmeDoc({
   buyer, items, subtotal, shippingFee, discountCode, discountAmount, total, date, orderNumber,
@@ -11,7 +12,7 @@ export default function OnBilgilendirmeDoc({
         Tarih: {date}{orderNumber ? ` · Sipariş No: ${orderNumber}` : ""}
       </p>
 
-      <h3 className="font-semibold border-b border-border pb-1">SATICI BİLGİLERİ</h3>
+      <h3 className="font-semibold border-b border-border pb-1">1. SATICI BİLGİLERİ</h3>
       <table className="w-full text-sm">
         <tbody>
           {[
@@ -31,7 +32,7 @@ export default function OnBilgilendirmeDoc({
         </tbody>
       </table>
 
-      <h3 className="font-semibold border-b border-border pb-1">ALICI BİLGİLERİ</h3>
+      <h3 className="font-semibold border-b border-border pb-1">2. ALICI BİLGİLERİ</h3>
       <table className="w-full text-sm">
         <tbody>
           {[
@@ -48,7 +49,15 @@ export default function OnBilgilendirmeDoc({
         </tbody>
       </table>
 
-      <h3 className="font-semibold border-b border-border pb-1">SİPARİŞ İÇERİĞİ</h3>
+      <h3 className="font-semibold border-b border-border pb-1">3. KONU</h3>
+      <p>
+        İşbu Ön Bilgilendirme Formu, aşağıda nitelik ve satış fiyatı belirtilen ürünlerin satışı
+        ve teslimi ile ilgili olarak 6502 Sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli
+        Sözleşmeler Yönetmeliği hükümleri gereğince alıcının bilgilendirilmesine ilişkindir ve
+        tüketici ile akdedilecek Mesafeli Satış Sözleşmesi&apos;nin ayrılmaz parçasıdır.
+      </p>
+
+      <h3 className="font-semibold border-b border-border pb-1">4. ÜRÜNÜN TEMEL NİTELİKLERİ VE SATIŞ FİYATI</h3>
       <table className="w-full text-sm border border-border rounded-lg overflow-hidden">
         <thead className="bg-bg">
           <tr>
@@ -98,23 +107,65 @@ export default function OnBilgilendirmeDoc({
         </div>
       </div>
 
-      <h3 className="font-semibold border-b border-border pb-1">TESLİMAT BİLGİLERİ</h3>
-      <p>
-        Siparişiniz ödeme teyidinin ardından en geç 5 (beş) iş günü içinde kargoya verilecektir.
-        Kargo süreci 1–3 iş günü alabilir. Kargo takip bilgisi SMS ve e-posta ile iletilecektir.
-      </p>
+      <h3 className="font-semibold border-b border-border pb-1">5. ÖDEME VE TESLİMAT</h3>
+      <ul className="list-disc pl-5 space-y-1.5 text-xs">
+        <li>
+          Sipariş özeti sayfasında, kredi kartı ile ödemede bankanıza iletilecek sipariş
+          toplamının kaç taksitle ödeneceği bilgisi yer alır. Banka, seçtiğiniz taksit adedinin
+          üstünde taksit veya taksit öteleme gibi kampanyalar uygulayabilir; bu kampanyalar
+          bankanızın inisiyatifindedir.
+        </li>
+        <li>
+          Kapıda ödeme servisi kargo şirketi tarafından sağlanan bir ödeme seçeneğidir. Bu servis
+          için kargo şirketi ek ücret tahsil eder; bu bedel kargo şirketine aittir ve kapıda ödeme
+          seçildiğinde ALICI tarafından karşılanır.
+        </li>
+        <li>
+          Sözleşme konusu ürün, yasal 30 günlük süreyi aşmamak koşuluyla, ödemenin onaylanmasının
+          ardından en geç 5 (beş) iş günü içinde kargoya verilir. Kargo süreci 1–3 iş günüdür.
+          Kargo takip bilgisi SMS ve e-posta ile iletilir.
+        </li>
+        <li>Kargo ücreti, ücretsiz kargo eşiği altındaki siparişlerde sipariş toplamına eklenir.</li>
+      </ul>
 
-      <h3 className="font-semibold border-b border-border pb-1">CAYMA HAKKI</h3>
+      <h3 className="font-semibold border-b border-border pb-1">6. CAYMA HAKKI</h3>
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800 text-xs">
         Mesafeli Sözleşmeler Yönetmeliği Madde 15/1-(ç) uyarınca; sipariş edilen ürünler
         tüketicinin özel isteği doğrultusunda kişiye özel üretildiğinden cayma hakkı
-        uygulanmamaktadır.
+        uygulanmamaktadır. Cayma hakkının genel koşulları ve diğer istisnalar aşağıdaki gibidir.
       </div>
+      <p className="text-xs">
+        Mesafeli sözleşmelerde tüketici, malı teslim aldığı günden itibaren on dört (14) gün
+        içinde herhangi bir gerekçe göstermeksizin ve cezai şart ödemeksizin cayma hakkına
+        sahiptir. Aşağıdaki hallerde ise cayma hakkı kullanılamaz:
+      </p>
+      <CaymaIstisnaListesi />
 
-      <h3 className="font-semibold border-b border-border pb-1">ŞİKAYET MERCİİ</h3>
-      <p>
-        Uyuşmazlıklarda Tüketici Hakem Heyeti (tuketicihakemheyeti.gov.tr) veya
-        Tüketici Mahkemesi&apos;ne başvurabilirsiniz.
+      <h3 className="font-semibold border-b border-border pb-1">7. GENEL HÜKÜMLER</h3>
+      <ul className="list-disc pl-5 space-y-1.5 text-xs">
+        <li>
+          Alıcı, işbu Form&apos;da satışa konu ürünün temel nitelikleri, satış fiyatı, ödeme
+          şekli ve teslimata ilişkin ön bilgileri okuyup bilgi sahibi olduğunu ve elektronik
+          ortamda gerekli teyidi verdiğini beyan eder.
+        </li>
+        <li>
+          Sözleşme konusu ürünün teslimatı için bedelin, alıcının tercih ettiği ödeme şekliyle
+          ödenmiş olması şarttır. Ürün bedeli herhangi bir nedenle ödenmez veya banka kayıtlarında
+          iptal edilirse, satıcı ürünü teslim yükümlülüğünden kurtulmuş sayılır.
+        </li>
+      </ul>
+
+      <h3 className="font-semibold border-b border-border pb-1">8. ŞİKAYET VE İTİRAZLAR</h3>
+      <p className="text-xs">
+        İşbu bilgilendirmenin uygulanmasında, Ticaret Bakanlığı&apos;nca ilan edilen parasal
+        sınırlar dahilinde, alıcının mal veya hizmeti satın aldığı ve ikametgâhının bulunduğu
+        yerdeki Tüketici Hakem Heyetleri ile Tüketici Mahkemeleri yetkilidir
+        (tuketicihakemheyeti.gov.tr).
+      </p>
+
+      <p className="text-xs text-text-light border-t border-border pt-4">
+        İşbu Ön Bilgilendirme Formu, Alıcı tarafından elektronik ortamda okunup kabul edildikten
+        sonra Mesafeli Satış Sözleşmesi kurulması aşamasına geçilir.
       </p>
     </div>
   );

@@ -1,5 +1,6 @@
 import { LegalDocProps } from "./types";
 import { SELLER } from "./sellerInfo";
+import { CaymaIstisnaListesi } from "./shared";
 
 export default function MesafeliSatisDoc({
   buyer, items, subtotal, shippingFee, discountCode, discountAmount, total, date, orderNumber,
@@ -9,6 +10,13 @@ export default function MesafeliSatisDoc({
       <p className="text-center font-semibold text-base">MESAFELİ SATIŞ SÖZLEŞMESİ</p>
       <p className="text-xs text-text-light text-center">
         Tarih: {date}{orderNumber ? ` · Sipariş No: ${orderNumber}` : ""}
+      </p>
+
+      <p className="text-xs">
+        ALICI, {SELLER.web} internet sitesinde sözleşme konusu ürünün temel niteliklerini, satış
+        fiyatını, ödeme şeklini ve teslimata ilişkin ön bilgileri okuyup bilgi sahibi olduğunu;
+        bu sözleşmenin hükümlerini kabul ettiğini ve elektronik ortamda gerekli onayı verdiğini
+        kabul ve beyan eder.
       </p>
 
       <h3 className="font-semibold border-b border-border pb-1">MADDE 1 — TARAFLAR</h3>
@@ -33,12 +41,16 @@ export default function MesafeliSatisDoc({
         </tbody>
       </table>
 
-      <h3 className="font-semibold border-b border-border pb-1">MADDE 2 — SÖZLEŞME KONUSU VE ÜRÜNLER</h3>
+      <h3 className="font-semibold border-b border-border pb-1">MADDE 2 — KONU</h3>
       <p>
-        İşbu sözleşme; SATICI&apos;nın {SELLER.web} adresi üzerinden sunduğu aşağıdaki
-        ürünlerin ALICI tarafından satın alınmasına ilişkin olup 6502 SK ve Mesafeli
-        Sözleşmeler Yönetmeliği çerçevesinde tarafların hak ve yükümlülüklerini düzenler.
+        İşbu sözleşmenin konusu; ALICI&apos;nın, SATICI&apos;ya ait {SELLER.web} alan adlı web
+        sitesinden elektronik ortamda sipariş verdiği, özellikleri ve satış fiyatı aşağıda
+        belirtilen ürünün satışı, teslimi ve bedelinin ödenmesine ilişkin olarak 6502 Sayılı
+        Kanun ve Mesafeli Sözleşmeler Yönetmeliği gereği tarafların hak ve yükümlülüklerinin
+        belirlenmesidir.
       </p>
+
+      <h3 className="font-semibold border-b border-border pb-1">MADDE 3 — SÖZLEŞME KONUSU ÜRÜN VE ÖDEME</h3>
       <table className="w-full text-sm border border-border rounded-lg overflow-hidden">
         <thead className="bg-bg">
           <tr>
@@ -86,21 +98,21 @@ export default function MesafeliSatisDoc({
           <span className="text-primary">{total.toLocaleString("tr-TR")} ₺</span>
         </div>
       </div>
-
-      <h3 className="font-semibold border-b border-border pb-1">MADDE 3 — ÖDEME</h3>
-      <p>
-        Sözleşme bedeli olan <strong>{total.toLocaleString("tr-TR")} ₺</strong>, ALICI&apos;nın
-        seçtiği ödeme yöntemiyle tahsil edilir. Kredi/banka kartı ödemesinde bedel sipariş anında,
-        kapıda ödemede teslim sırasında alınır.
+      <p className="text-xs">
+        Sözleşme bedeli ALICI&apos;nın seçtiği ödeme yöntemiyle tahsil edilir. Kredi/banka kartı
+        ödemesinde bedel sipariş anında, kapıda ödemede teslim sırasında alınır. Kredi kartınızın
+        hesap kesim tarihinden itibaren sipariş toplamı, seçilen taksit adedine bölünerek banka
+        tarafından kart özetinize yansıtılır; taksit dağıtımı bankanın inisiyatifindedir.
       </p>
 
       <h3 className="font-semibold border-b border-border pb-1">MADDE 4 — TESLİMAT</h3>
-      <p>
-        Ürünler, ödeme teyidinin ardından en geç 5 (beş) iş günü içinde kargoya teslim edilir;
-        kargo süreci 1–3 iş günüdür. Teslimat adresi:{" "}
-        <strong>
-          {buyer.address}, {buyer.district}, {buyer.city}{buyer.zip ? ` ${buyer.zip}` : ""}
-        </strong>
+      <p className="text-xs">
+        Ürünler, yasal 30 günlük süreyi aşmamak koşuluyla, ödemenin onaylanmasının ardından en
+        geç 5 (beş) iş günü içinde kargoya teslim edilir; kargo süreci 1–3 iş günüdür. Teslimat
+        adresi: <strong>{buyer.address}, {buyer.district}, {buyer.city}{buyer.zip ? ` ${buyer.zip}` : ""}</strong>.
+        Teslimat anında ALICI&apos;nın adresinde bulunmaması durumunda SATICI edimini tam ve
+        eksiksiz yerine getirmiş sayılır. SATICI, ürünün sağlam, eksiksiz ve siparişte belirtilen
+        niteliklere uygun teslim edilmesinden sorumludur.
       </p>
 
       <h3 className="font-semibold border-b border-border pb-1">MADDE 5 — CAYMA HAKKI</h3>
@@ -109,23 +121,63 @@ export default function MesafeliSatisDoc({
         tüketicinin özel isteği doğrultusunda kişiye özel üretilen ürünlerde cayma hakkı
         kullanılamaz. Şirketimiz ürünlerinin tamamı bu istisna kapsamındadır.
       </div>
-
-      <h3 className="font-semibold border-b border-border pb-1">MADDE 6 — GİZLİLİK</h3>
-      <p>
-        ALICI&apos;nın kişisel verileri, 6698 Sayılı KVKK ve {SELLER.web} Gizlilik
-        Politikası kapsamında; sipariş ve kargo işlemleri dışında üçüncü taraflarla paylaşılmaz.
+      <p className="text-xs">
+        Genel olarak tüketici, malı teslim aldığı günden itibaren on dört (14) gün içinde cayma
+        hakkına sahiptir. Aşağıdaki hallerde ise cayma hakkı kullanılamaz:
+      </p>
+      <CaymaIstisnaListesi />
+      <p className="text-xs">
+        Cayma hakkının kullanılabildiği hallerde, cayma bildiriminin SATICI&apos;ya ulaştığı
+        tarihten itibaren 14 gün içinde tahsil edilen tüm ödemeler iade edilir; ALICI da bildirimi
+        takip eden 10 gün içinde ürünü iade etmekle yükümlüdür. Cayma bildirimi {SELLER.email}
+        {" "}adresine yapılabilir.
       </p>
 
-      <h3 className="font-semibold border-b border-border pb-1">MADDE 7 — UYUŞMAZLIK ÇÖZÜMÜ</h3>
-      <p>
-        Uyuşmazlıklarda önce {SELLER.email} adresine başvurulması önerilir.
-        Çözümsüz kalan uyuşmazlıklar için Tüketici Hakem Heyeti veya Tüketici
-        Mahkemesi yetkilidir.
+      <h3 className="font-semibold border-b border-border pb-1">MADDE 6 — İADE PROSEDÜRÜ</h3>
+      <p className="text-xs">
+        Kredi kartı ile taksitli yapılan alışverişlerde iade, ALICI&apos;nın ürünü kaç taksitle
+        aldıysa banka tarafından aynı sayıda taksitle gerçekleştirilir. SATICI, banka ile yaptığı
+        sözleşme gereği kartla yapılan ödemelerde ALICI&apos;ya nakit iade yapamaz; iade işlemi
+        ilgili yazılım aracılığıyla kart üzerinden yapılır. Kapıda ödeme servis bedeli kargo
+        şirketine ait olup, ürün iadesi halinde SATICI tarafından ALICI&apos;ya iade edilir.
+      </p>
+
+      <h3 className="font-semibold border-b border-border pb-1">MADDE 7 — TEMERRÜT HÜKÜMLERİ</h3>
+      <p className="text-xs">
+        Tarafların işbu sözleşmeden kaynaklanan edimlerini yerine getirmemesi durumunda 6098
+        Sayılı Türk Borçlar Kanunu&apos;ndaki temerrüt hükümleri uygulanır. Edimini süresi içinde
+        haklı bir sebep olmaksızın yerine getirmeyen tarafa, diğer tarafça 7 (yedi) günlük süre
+        verilir. Edimin bu süre içinde de yerine getirilmemesi halinde, edimini yerine getirmeyen
+        taraf temerrüde düşmüş sayılır ve alacaklı, edimin ifasını veya sözleşmeden dönerek bedel
+        iadesini talep etme hakkına sahiptir.
+      </p>
+
+      <h3 className="font-semibold border-b border-border pb-1">MADDE 8 — MÜCBİR SEBEP</h3>
+      <p className="text-xs">
+        SATICI&apos;nın yükümlülüğünü yerine getirmesini engelleyen mücbir sebepler (nakliyeyi
+        engelleyen hava muhalefeti, ulaşımın kesilmesi, yangın, deprem, sel gibi olağanüstü
+        olaylar) nedeniyle ürün süresinde teslim edilemezse, ALICI siparişin iptalini veya
+        engelleyici durum ortadan kalkana kadar ertelenmesini talep edebilir. Siparişin iptali
+        halinde ödenen tutar 14 gün içinde ALICI&apos;ya iade edilir.
+      </p>
+
+      <h3 className="font-semibold border-b border-border pb-1">MADDE 9 — GİZLİLİK</h3>
+      <p className="text-xs">
+        ALICI&apos;nın kişisel verileri, 6698 Sayılı KVKK ve {SELLER.web} Gizlilik Politikası
+        kapsamında; sipariş ve kargo işlemleri dışında üçüncü taraflarla paylaşılmaz.
+      </p>
+
+      <h3 className="font-semibold border-b border-border pb-1">MADDE 10 — UYUŞMAZLIK ÇÖZÜMÜ</h3>
+      <p className="text-xs">
+        Bu sözleşmenin uygulanmasında, Ticaret Bakanlığı&apos;nca ilan edilen parasal sınırlar
+        dahilinde, ALICI&apos;nın mal veya hizmeti satın aldığı yerdeki veya yerleşim yerindeki
+        Tüketici Hakem Heyetleri ile Tüketici Mahkemeleri yetkilidir. Uyuşmazlıklarda önce
+        {" "}{SELLER.email} adresine başvurulması önerilir.
       </p>
 
       <p className="text-xs text-text-light border-t border-border pt-4">
-        Bu sözleşme, ALICI&apos;nın ödeme işlemini tamamlamasıyla elektronik ortamda
-        kurulmuş ve her iki tarafça kabul edilmiş sayılır.
+        Bu sözleşme, ALICI&apos;nın ödeme işlemini tamamlamasıyla elektronik ortamda kurulmuş ve
+        her iki tarafça kabul edilmiş sayılır.
       </p>
     </div>
   );
