@@ -47,7 +47,7 @@ export default function LegalAccordion({ order, buyer }: Props) {
   if (!order.address) return null;
 
   const legalBuyer: LegalDocBuyer = {
-    fullName: order.address.fullName,
+    fullName: buyer?.fullName || order.address.fullName,
     email: buyer?.email ?? "",
     phone: order.address.phone,
     address: order.address.address,

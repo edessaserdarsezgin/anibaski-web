@@ -190,7 +190,7 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
 
   const shippingAddress = addresses.find(a => a.id === shippingId) ?? null;
   const legalBuyer: LegalDocBuyer | null = shippingAddress ? {
-    fullName: shippingAddress.fullName,
+    fullName: userFullName || shippingAddress.fullName,
     email: userEmail,
     phone: shippingAddress.phone,
     address: shippingAddress.address,
