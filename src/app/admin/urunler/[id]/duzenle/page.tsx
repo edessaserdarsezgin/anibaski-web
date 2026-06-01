@@ -19,6 +19,13 @@ function slugify(text: string) {
     .toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+function move<T>(arr: T[], from: number, to: number): T[] {
+  const next = [...arr];
+  const [item] = next.splice(from, 1);
+  next.splice(to, 0, item);
+  return next;
+}
+
 export default function UrunDuzenle() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
@@ -47,6 +54,14 @@ export default function UrunDuzenle() {
   const [tagPosition, setTagPosition] = useState("bottom-left");
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const dragIndex = useRef<number | null>(null);
+
+  function reorderImages(to: number) {
+    const from = dragIndex.current;
+    dragIndex.current = null;
+    if (from === null || from === to) return;
+    setImages(prev => move(prev, from, to));
+  }
 
   useEffect(() => {
     async function load() {
@@ -208,9 +223,14 @@ export default function UrunDuzenle() {
         <div className="flex flex-col gap-2">
           <label className="text-sm font-semibold text-text">Görseller</label>
           <div className="flex flex-wrap gap-3">
-            {images.map((url) => (
-              <div key={url} className="relative w-24 h-24 rounded-xl overflow-hidden border border-border">
-                <Image src={url} alt="" fill className="object-cover" sizes="96px" />
+            {images.map((url, i) => (
+              <div key={url}
+                draggable
+                onDragStart={() => { dragIndex.current = i; }}
+                onDragOver={e => e.preventDefault()}
+                onDrop={() => reorderImages(i)}
+                className="relative w-24 h-24 rounded-xl overflow-hidden border border-border cursor-move active:opacity-50">
+                <Image src={url} alt="" fill className="object-cover pointer-events-none" sizes="96px" />
                 <button type="button" onClick={() => removeImage(url)}
                   className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600">
                   ×

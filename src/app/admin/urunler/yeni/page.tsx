@@ -18,6 +18,13 @@ function slugify(text: string) {
     .toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+function move<T>(arr: T[], from: number, to: number): T[] {
+  const next = [...arr];
+  const [item] = next.splice(from, 1);
+  next.splice(to, 0, item);
+  return next;
+}
+
 export default function YeniUrunPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -42,6 +49,15 @@ export default function YeniUrunPage() {
   const [tagPosition, setTagPosition] = useState("bottom-left");
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const dragIndex = useRef<number | null>(null);
+
+  function reorderImages(to: number) {
+    const from = dragIndex.current;
+    dragIndex.current = null;
+    if (from === null || from === to) return;
+    setImagePreviews(prev => move(prev, from, to));
+    setImageUrls(prev => move(prev, from, to));
+  }
 
   useEffect(() => {
     fetch("/api/admin/categories")
@@ -174,8 +190,13 @@ export default function YeniUrunPage() {
           <label className="text-sm font-semibold text-text">Görseller</label>
           <div className="grid grid-cols-4 gap-2">
             {imagePreviews.map((src, i) => (
-              <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-border group">
-                <img src={src} alt={`Görsel ${i + 1}`} className="w-full h-full object-cover" />
+              <div key={src}
+                draggable
+                onDragStart={() => { dragIndex.current = i; }}
+                onDragOver={e => e.preventDefault()}
+                onDrop={() => reorderImages(i)}
+                className="relative aspect-square rounded-lg overflow-hidden border border-border group cursor-move active:opacity-50">
+                <img src={src} alt={`Görsel ${i + 1}`} className="w-full h-full object-cover pointer-events-none" />
                 <button type="button"
                   onClick={() => { setImagePreviews(p => p.filter((_, idx) => idx !== i)); setImageUrls(p => p.filter((_, idx) => idx !== i)); }}
                   className="absolute top-1 right-1 w-5 h-5 rounded-full bg-white/90 text-xs font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-500">
