@@ -42,22 +42,33 @@ type PendingItem = {
   mockupTemplateUrl?: string | null;
 };
 
-// Varyant etiketlerinde NxN / N×N deseni arar (örn. "10x15 cm" → 1.5).
-// Tip adı admin-tanımlı olduğundan anahtara güvenmeyiz, desen ararız.
-function parsePrintRatio(variantSelections: Record<string, unknown>): { ratio: number; label: string } | null {
-  for (const v of Object.values(variantSelections)) {
-    const label = (v as { label?: string })?.label;
-    if (!label) continue;
-    const m = label.match(/(\d+)\s*[x×]\s*(\d+)/i);
-    if (m) {
-      const a = Number(m[1]), b = Number(m[2]);
-      if (a > 0 && b > 0) {
-        const lo = Math.min(a, b), hi = Math.max(a, b);
-        return { ratio: hi / lo, label: `${lo}×${hi}` };
-      }
+// Bir metinde NxN / N×N deseni arar (örn. "10x15 cm" → oran 1.5, etiket "10×15").
+function findRatioInText(text: string): { ratio: number; label: string } | null {
+  const m = text.match(/(\d+)\s*[x×]\s*(\d+)/i);
+  if (m) {
+    const a = Number(m[1]), b = Number(m[2]);
+    if (a > 0 && b > 0) {
+      const lo = Math.min(a, b), hi = Math.max(a, b);
+      return { ratio: hi / lo, label: `${lo}×${hi}` };
     }
   }
   return null;
+}
+
+// Baskı oranını önce varyant etiketlerinden, yoksa ürün adından çıkarır.
+// (Çoğu üründe Boyut varyantı yok; ölçü ürün adında kodlu: "10x15 Klasik Fotoğraf Baskısı".)
+function parsePrintRatio(
+  variantSelections: Record<string, unknown>,
+  productName: string,
+): { ratio: number; label: string } | null {
+  for (const v of Object.values(variantSelections)) {
+    const label = (v as { label?: string })?.label;
+    if (label) {
+      const r = findRatioInText(label);
+      if (r) return r;
+    }
+  }
+  return findRatioInText(productName);
 }
 
 function getQuality(w: number, h: number) {
@@ -118,7 +129,7 @@ export default function FotografYuklePage() {
   const [croppingPhoto, setCroppingPhoto] = useState(false);
 
   // Sipariş edilen baskı oranı (varsa) — crop kutusunu buna kilitlemek için
-  const printRatio = item ? parsePrintRatio(item.variantSelections) : null;
+  const printRatio = item ? parsePrintRatio(item.variantSelections, item.productName) : null;
 
   useEffect(() => {
     const raw = sessionStorage.getItem("pendingPhotoUpload");
