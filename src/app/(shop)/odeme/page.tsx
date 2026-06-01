@@ -13,7 +13,7 @@ export default async function OdemePage() {
 
   const [{ data: addresses }, { data: profile }, shippingSettings] = await Promise.all([
     supabase.from("addresses").select("*").eq("userId", user.id).order("title", { ascending: true }),
-    supabase.from("profiles").select("phone").eq("id", user.id).single(),
+    supabase.from("profiles").select("fullName, phone").eq("id", user.id).single(),
     getShippingSettings(),
   ]);
 
@@ -37,5 +37,12 @@ export default async function OdemePage() {
     );
   }
 
-  return <CheckoutClient initialAddresses={addresses ?? []} shippingFee={shippingSettings.shippingFee} freeShippingThreshold={shippingSettings.freeShippingThreshold} codFee={shippingSettings.codFee} />;
+  return <CheckoutClient
+    initialAddresses={addresses ?? []}
+    shippingFee={shippingSettings.shippingFee}
+    freeShippingThreshold={shippingSettings.freeShippingThreshold}
+    codFee={shippingSettings.codFee}
+    userEmail={user.email ?? ""}
+    userFullName={(profile as { fullName?: string | null })?.fullName ?? ""}
+  />;
 }

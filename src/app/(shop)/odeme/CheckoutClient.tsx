@@ -3,6 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
+import LegalModal from "@/components/legal/LegalModal";
+import CaymaHakkiDoc from "@/components/legal/CaymaHakkiDoc";
+import OnBilgilendirmeDoc from "@/components/legal/OnBilgilendirmeDoc";
+import MesafeliSatisDoc from "@/components/legal/MesafeliSatisDoc";
+import type { LegalDocBuyer, LegalDocItem } from "@/components/legal/types";
 
 type Address = {
   id: string; title: string; fullName: string; phone: string;
@@ -120,7 +125,7 @@ function AddressPicker({
   );
 }
 
-export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING_FEE, freeShippingThreshold: FREE_SHIPPING_THRESHOLD, codFee: COD_FEE }: { initialAddresses: Address[]; shippingFee: number; freeShippingThreshold: number; codFee: number }) {
+export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING_FEE, freeShippingThreshold: FREE_SHIPPING_THRESHOLD, codFee: COD_FEE, userEmail, userFullName }: { initialAddresses: Address[]; shippingFee: number; freeShippingThreshold: number; codFee: number; userEmail: string; userFullName: string }) {
   const router = useRouter();
   const { items, total, clearCart } = useCart();
 
@@ -134,6 +139,7 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
   const [paytrToken, setPaytrToken] = useState<string | null>(null);
   const [mssAccepted, setMssAccepted] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [legalModal, setLegalModal] = useState<"cayma" | "on-bilgilendirme" | "mesafeli" | null>(null);
 
   useEffect(() => {
     const saved = sessionStorage.getItem("appliedCoupon");
@@ -182,6 +188,34 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
   const discountAmount = appliedCoupon?.discountAmount ?? 0;
   const grandTotal = total + shippingFee + codFee - discountAmount;
 
+  const shippingAddress = addresses.find(a => a.id === shippingId) ?? null;
+  const legalBuyer: LegalDocBuyer | null = shippingAddress ? {
+    fullName: shippingAddress.fullName,
+    email: userEmail,
+    phone: shippingAddress.phone,
+    address: shippingAddress.address,
+    district: shippingAddress.district,
+    city: shippingAddress.city,
+    zip: shippingAddress.zip,
+  } : null;
+  const legalItems: LegalDocItem[] = items.map(item => ({
+    name: item.productName,
+    quantity: item.quantity,
+    unitPrice: item.unitPrice,
+    variantLabel: Object.values(item.variantSelections).map(v => v.label).join(", ") || undefined,
+  }));
+  const today = new Date().toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const legalDocProps = legalBuyer ? {
+    buyer: legalBuyer,
+    items: legalItems,
+    subtotal: total,
+    shippingFee: shippingFee + codFee,
+    discountCode: appliedCoupon?.code,
+    discountAmount,
+    total: grandTotal,
+    date: today,
+  } : null;
+
   // AddressPicker'dan yeni adres eklenince listeyi güncelle
   function handleShippingSelect(id: string) {
     setShippingId(id);
@@ -194,7 +228,7 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
     e.preventDefault();
     if (!shippingId) { setError("Lütfen bir teslimat adresi seçin."); return; }
     if (!billingSame && !billingId) { setError("Lütfen bir fatura adresi seçin."); return; }
-    if (!mssAccepted) { setError("Devam edebilmek için Mesafeli Satış Sözleşmesi'ni onaylamanız gerekiyor."); return; }
+    if (!mssAccepted) { setError("Devam edebilmek için Ön Bilgilendirme Formu ve Mesafeli Satış Sözleşmesi'ni onaylamanız gerekiyor."); return; }
 
     setError("");
     setLoading(true);
@@ -412,7 +446,32 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
                   {grandTotal.toLocaleString("tr-TR")} ₺
                 </span>
               </div>
-              {/* MSS onay */}
+              {/* Sözleşme ve Formlar */}
+              <div className="border border-border rounded-xl overflow-hidden mb-4">
+                <p className="text-xs font-semibold text-text-light px-4 py-2.5 bg-bg border-b border-border uppercase tracking-wide">
+                  Sözleşme ve Formlar
+                </p>
+                {(["cayma", "on-bilgilendirme", "mesafeli"] as const).map(key => {
+                  const labels: Record<string, string> = {
+                    "cayma": "Cayma Hakkı",
+                    "on-bilgilendirme": "Ön Bilgilendirme Formu",
+                    "mesafeli": "Mesafeli Satış Sözleşmesi",
+                  };
+                  return (
+                    <div key={key} className="flex items-center justify-between px-4 py-3 border-b border-border last:border-0">
+                      <span className="text-sm text-text">{labels[key]}</span>
+                      <button
+                        type="button"
+                        onClick={() => setLegalModal(key)}
+                        className="text-xs text-primary font-semibold hover:underline"
+                      >
+                        Oku →
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Onay checkbox */}
               <label className="flex items-start gap-3 cursor-pointer mb-4">
                 <input
                   type="checkbox"
@@ -421,16 +480,16 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
                   className="mt-0.5 w-4 h-4 accent-primary flex-shrink-0"
                 />
                 <span className="text-xs text-text-light leading-relaxed">
-                  <a href="/politikalar/mesafeli-satis-sozlesmesi" target="_blank"
+                  <button type="button" onClick={() => setLegalModal("on-bilgilendirme")}
+                    className="text-primary underline hover:no-underline">
+                    Ön Bilgilendirme Formu
+                  </button>
+                  {" "}ve{" "}
+                  <button type="button" onClick={() => setLegalModal("mesafeli")}
                     className="text-primary underline hover:no-underline">
                     Mesafeli Satış Sözleşmesi
-                  </a>
-                  &apos;ni ve{" "}
-                  <a href="/politikalar/iptal-iade" target="_blank"
-                    className="text-primary underline hover:no-underline">
-                    İptal & İade Politikası
-                  </a>
-                  &apos;nı okudum, kabul ediyorum.
+                  </button>
+                  &apos;ni okudum, onaylıyorum.
                 </span>
               </label>
               {error && (
@@ -446,6 +505,20 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
           </div>
         </div>
       </form>
+      {legalModal && legalDocProps && (
+        <LegalModal
+          title={
+            legalModal === "cayma" ? "Cayma Hakkı" :
+            legalModal === "on-bilgilendirme" ? "Ön Bilgilendirme Formu" :
+            "Mesafeli Satış Sözleşmesi"
+          }
+          onClose={() => setLegalModal(null)}
+        >
+          {legalModal === "cayma" && <CaymaHakkiDoc {...legalDocProps} />}
+          {legalModal === "on-bilgilendirme" && <OnBilgilendirmeDoc {...legalDocProps} />}
+          {legalModal === "mesafeli" && <MesafeliSatisDoc {...legalDocProps} />}
+        </LegalModal>
+      )}
     </div>
   );
 }

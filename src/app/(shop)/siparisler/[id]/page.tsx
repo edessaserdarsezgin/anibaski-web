@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import LegalAccordion from "@/components/legal/LegalAccordion";
 import OrderStatusSelect from "./OrderStatusSelect";
 import CancelRequestButton from "./CancelRequestButton";
 
@@ -52,6 +53,12 @@ export default async function SiparisDetayPage({ params }: Props) {
     .single();
 
   if (!order || (!isAdmin && order.userId !== user.id)) notFound();
+
+  const { data: buyerProfile } = await adminClient
+    .from("profiles")
+    .select("email, fullName, phone")
+    .eq("id", order.userId)
+    .single();
   // Kredi kartıyla oluşturulmuş ama ödeme tamamlanmamış siparişleri gizle
   if (!isAdmin && order.paymentMethod === "credit_card" && order.paymentStatus === "pending") notFound();
 
@@ -329,6 +336,33 @@ export default async function SiparisDetayPage({ params }: Props) {
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Sözleşmelerim */}
+          <div className="bg-white rounded-2xl border border-border p-5">
+            <h2 className="font-serif text-lg text-text mb-1">Sözleşmelerim</h2>
+            <p className="text-xs text-text-light mb-4">
+              Bu siparişe ait hukuki belgeler aşağıda yer almaktadır.
+            </p>
+            <LegalAccordion
+              order={{
+                id: order.id,
+                createdAt: order.createdAt,
+                subtotal: order.subtotal,
+                shippingFee: order.shippingFee,
+                total: order.total,
+                discount_code: (order as unknown as { discount_code?: string | null }).discount_code ?? null,
+                discount_amount: (order as unknown as { discount_amount?: number | null }).discount_amount ?? null,
+                items: items.map(item => ({
+                  quantity: item.quantity,
+                  unitPrice: Number(item.unitPrice),
+                  variantSelections: item.variantSelections as Record<string, { label: string }> | null,
+                  product: item.product ? { name: item.product.name } : null,
+                })),
+                address: order.address as unknown as { fullName: string; phone: string; address: string; district: string; city: string; zip?: string | null } | null,
+              }}
+              buyer={buyerProfile}
+            />
           </div>
 
         </div>
