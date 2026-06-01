@@ -1,8 +1,7 @@
 import { LegalDocProps } from "./types";
-import { SELLER } from "./sellerInfo";
 import { CaymaIstisnaListesi } from "./shared";
 
-export default function CaymaHakkiDoc({ buyer, date }: LegalDocProps) {
+export default function CaymaHakkiDoc({ buyer, date, seller }: LegalDocProps) {
   return (
     <div className="text-sm text-text leading-relaxed space-y-4">
       <p className="text-xs text-text-light">Tarih: {date}</p>
@@ -29,7 +28,7 @@ export default function CaymaHakkiDoc({ buyer, date }: LegalDocProps) {
         </p>
       </div>
       <p>
-        <strong>{SELLER.name}</strong> bünyesinde sunulan tüm ürünler (fotoğraf baskısı,
+        <strong>{seller.name}</strong> bünyesinde sunulan tüm ürünler (fotoğraf baskısı,
         fotokitap, tablo, polaroid vb.) müşterinin yüklediği özel fotoğraflar esas alınarak
         <em> yalnızca sipariş sonrasında kişiye özel olarak üretilmektedir.</em> Bu nedenle
         söz konusu ürünler için cayma hakkı kullanılamaz.
@@ -71,15 +70,15 @@ export default function CaymaHakkiDoc({ buyer, date }: LegalDocProps) {
         <tbody>
           <tr>
             <td className="py-1 pr-4 text-text-light align-top w-24">Adres</td>
-            <td className="py-1">{SELLER.address}</td>
+            <td className="py-1">{seller.address}</td>
           </tr>
           <tr>
             <td className="py-1 pr-4 text-text-light align-top">E-posta</td>
-            <td className="py-1">{SELLER.email}</td>
+            <td className="py-1">{seller.email}</td>
           </tr>
           <tr>
             <td className="py-1 pr-4 text-text-light align-top">Telefon</td>
-            <td className="py-1">{SELLER.phone}</td>
+            <td className="py-1">{seller.phone}</td>
           </tr>
         </tbody>
       </table>

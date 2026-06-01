@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import CheckoutClient from "./CheckoutClient";
 import { getShippingSettings } from "@/lib/shipping";
+import { getCompanyInfo } from "@/lib/company";
 
 export const metadata = { title: "Ödeme", robots: { index: false, follow: false } };
 
@@ -11,10 +12,11 @@ export default async function OdemePage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/giris?redirect=/odeme");
 
-  const [{ data: addresses }, { data: profile }, shippingSettings] = await Promise.all([
+  const [{ data: addresses }, { data: profile }, shippingSettings, company] = await Promise.all([
     supabase.from("addresses").select("*").eq("userId", user.id).order("title", { ascending: true }),
     supabase.from("profiles").select("fullName, phone").eq("id", user.id).single(),
     getShippingSettings(),
+    getCompanyInfo(),
   ]);
 
   if (!profile?.phone) {
@@ -44,5 +46,6 @@ export default async function OdemePage() {
     codFee={shippingSettings.codFee}
     userEmail={user.email ?? ""}
     userFullName={(profile as { fullName?: string | null })?.fullName ?? ""}
+    seller={company}
   />;
 }

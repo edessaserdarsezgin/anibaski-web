@@ -1,9 +1,8 @@
 import { LegalDocProps } from "./types";
-import { SELLER } from "./sellerInfo";
 import { CaymaIstisnaListesi } from "./shared";
 
 export default function OnBilgilendirmeDoc({
-  buyer, items, subtotal, shippingFee, discountCode, discountAmount, total, date, orderNumber,
+  buyer, items, subtotal, shippingFee, discountCode, discountAmount, total, date, orderNumber, seller,
 }: LegalDocProps) {
   return (
     <div className="text-sm text-text leading-relaxed space-y-4">
@@ -16,13 +15,15 @@ export default function OnBilgilendirmeDoc({
       <table className="w-full text-sm">
         <tbody>
           {[
-            ["Ünvan", SELLER.name],
-            ["Adres", SELLER.address],
-            ["E-posta", SELLER.email],
-            ["Telefon", SELLER.phone],
-            ["Vergi No", SELLER.taxNo],
-            ["MERSİS No", SELLER.mersisNo],
-            ["Web", SELLER.web],
+            ["Ünvan", seller.name],
+            ["Adres", seller.address],
+            ["E-posta", seller.email],
+            ["Telefon", seller.phone],
+            ["Vergi Dairesi", seller.taxOffice],
+            ["Vergi No", seller.taxNo],
+            ["Ticaret Sicil No", seller.tradeRegistryNo],
+            ["MERSİS No", seller.mersisNo],
+            ["Web", seller.web],
           ].map(([label, value]) => (
             <tr key={label}>
               <td className="py-1 pr-4 text-text-light align-top w-32">{label}</td>

@@ -1,9 +1,8 @@
 import { LegalDocProps } from "./types";
-import { SELLER } from "./sellerInfo";
 import { CaymaIstisnaListesi } from "./shared";
 
 export default function MesafeliSatisDoc({
-  buyer, items, subtotal, shippingFee, discountCode, discountAmount, total, date, orderNumber,
+  buyer, items, subtotal, shippingFee, discountCode, discountAmount, total, date, orderNumber, seller,
 }: LegalDocProps) {
   return (
     <div className="text-sm text-text leading-relaxed space-y-4">
@@ -13,7 +12,7 @@ export default function MesafeliSatisDoc({
       </p>
 
       <p className="text-xs">
-        ALICI, {SELLER.web} internet sitesinde sözleşme konusu ürünün temel niteliklerini, satış
+        ALICI, {seller.web} internet sitesinde sözleşme konusu ürünün temel niteliklerini, satış
         fiyatını, ödeme şeklini ve teslimata ilişkin ön bilgileri okuyup bilgi sahibi olduğunu;
         bu sözleşmenin hükümlerini kabul ettiğini ve elektronik ortamda gerekli onayı verdiğini
         kabul ve beyan eder.
@@ -25,9 +24,10 @@ export default function MesafeliSatisDoc({
           <tr className="border-b border-border bg-bg">
             <td className="px-3 py-2 font-semibold w-20">SATICI</td>
             <td className="px-3 py-2">
-              {SELLER.name} · {SELLER.address}<br />
-              {SELLER.email} · {SELLER.phone}<br />
-              Vergi No: {SELLER.taxNo} · MERSİS: {SELLER.mersisNo}
+              {seller.name} · {seller.address}<br />
+              {seller.email} · {seller.phone}<br />
+              Vergi Dairesi: {seller.taxOffice} · Vergi No: {seller.taxNo}<br />
+              Ticaret Sicil No: {seller.tradeRegistryNo} · MERSİS: {seller.mersisNo}
             </td>
           </tr>
           <tr>
@@ -43,7 +43,7 @@ export default function MesafeliSatisDoc({
 
       <h3 className="font-semibold border-b border-border pb-1">MADDE 2 — KONU</h3>
       <p>
-        İşbu sözleşmenin konusu; ALICI&apos;nın, SATICI&apos;ya ait {SELLER.web} alan adlı web
+        İşbu sözleşmenin konusu; ALICI&apos;nın, SATICI&apos;ya ait {seller.web} alan adlı web
         sitesinden elektronik ortamda sipariş verdiği, özellikleri ve satış fiyatı aşağıda
         belirtilen ürünün satışı, teslimi ve bedelinin ödenmesine ilişkin olarak 6502 Sayılı
         Kanun ve Mesafeli Sözleşmeler Yönetmeliği gereği tarafların hak ve yükümlülüklerinin
@@ -129,7 +129,7 @@ export default function MesafeliSatisDoc({
       <p className="text-xs">
         Cayma hakkının kullanılabildiği hallerde, cayma bildiriminin SATICI&apos;ya ulaştığı
         tarihten itibaren 14 gün içinde tahsil edilen tüm ödemeler iade edilir; ALICI da bildirimi
-        takip eden 10 gün içinde ürünü iade etmekle yükümlüdür. Cayma bildirimi {SELLER.email}
+        takip eden 10 gün içinde ürünü iade etmekle yükümlüdür. Cayma bildirimi {seller.email}
         {" "}adresine yapılabilir.
       </p>
 
@@ -163,7 +163,7 @@ export default function MesafeliSatisDoc({
 
       <h3 className="font-semibold border-b border-border pb-1">MADDE 9 — GİZLİLİK</h3>
       <p className="text-xs">
-        ALICI&apos;nın kişisel verileri, 6698 Sayılı KVKK ve {SELLER.web} Gizlilik Politikası
+        ALICI&apos;nın kişisel verileri, 6698 Sayılı KVKK ve {seller.web} Gizlilik Politikası
         kapsamında; sipariş ve kargo işlemleri dışında üçüncü taraflarla paylaşılmaz.
       </p>
 
@@ -172,7 +172,7 @@ export default function MesafeliSatisDoc({
         Bu sözleşmenin uygulanmasında, Ticaret Bakanlığı&apos;nca ilan edilen parasal sınırlar
         dahilinde, ALICI&apos;nın mal veya hizmeti satın aldığı yerdeki veya yerleşim yerindeki
         Tüketici Hakem Heyetleri ile Tüketici Mahkemeleri yetkilidir. Uyuşmazlıklarda önce
-        {" "}{SELLER.email} adresine başvurulması önerilir.
+        {" "}{seller.email} adresine başvurulması önerilir.
       </p>
 
       <p className="text-xs text-text-light border-t border-border pt-4">

@@ -8,6 +8,7 @@ import CaymaHakkiDoc from "@/components/legal/CaymaHakkiDoc";
 import OnBilgilendirmeDoc from "@/components/legal/OnBilgilendirmeDoc";
 import MesafeliSatisDoc from "@/components/legal/MesafeliSatisDoc";
 import type { LegalDocBuyer, LegalDocItem } from "@/components/legal/types";
+import type { CompanyInfo } from "@/lib/company";
 
 type Address = {
   id: string; title: string; fullName: string; phone: string;
@@ -125,7 +126,7 @@ function AddressPicker({
   );
 }
 
-export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING_FEE, freeShippingThreshold: FREE_SHIPPING_THRESHOLD, codFee: COD_FEE, userEmail, userFullName }: { initialAddresses: Address[]; shippingFee: number; freeShippingThreshold: number; codFee: number; userEmail: string; userFullName: string }) {
+export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING_FEE, freeShippingThreshold: FREE_SHIPPING_THRESHOLD, codFee: COD_FEE, userEmail, userFullName, seller }: { initialAddresses: Address[]; shippingFee: number; freeShippingThreshold: number; codFee: number; userEmail: string; userFullName: string; seller: CompanyInfo }) {
   const router = useRouter();
   const { items, total, clearCart } = useCart();
 
@@ -214,6 +215,7 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
     discountAmount,
     total: grandTotal,
     date: today,
+    seller,
   } : null;
 
   // AddressPicker'dan yeni adres eklenince listeyi güncelle

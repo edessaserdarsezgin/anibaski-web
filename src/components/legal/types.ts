@@ -1,3 +1,5 @@
+import type { CompanyInfo } from "@/lib/company";
+
 export type LegalDocBuyer = {
   fullName: string;
   email: string;
@@ -25,4 +27,5 @@ export type LegalDocProps = {
   total: number;
   date: string;
   orderNumber?: string;
+  seller: CompanyInfo;
 };

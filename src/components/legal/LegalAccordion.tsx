@@ -6,6 +6,7 @@ import CaymaHakkiDoc from "./CaymaHakkiDoc";
 import OnBilgilendirmeDoc from "./OnBilgilendirmeDoc";
 import MesafeliSatisDoc from "./MesafeliSatisDoc";
 import type { LegalDocProps, LegalDocBuyer, LegalDocItem } from "./types";
+import type { CompanyInfo } from "@/lib/company";
 
 type OrderAddress = {
   fullName: string; phone: string; address: string;
@@ -31,6 +32,7 @@ type Props = {
     address: OrderAddress | null;
   };
   buyer: { email: string; fullName?: string | null; phone?: string | null } | null;
+  seller: CompanyInfo;
 };
 
 type ModalKey = "cayma" | "on-bilgilendirme" | "mesafeli";
@@ -41,7 +43,7 @@ const MODAL_LABELS: Record<ModalKey, string> = {
   "mesafeli": "Mesafeli Satış Sözleşmesi",
 };
 
-export default function LegalAccordion({ order, buyer }: Props) {
+export default function LegalAccordion({ order, buyer, seller }: Props) {
   const [modal, setModal] = useState<ModalKey | null>(null);
 
   if (!order.address) return null;
@@ -79,6 +81,7 @@ export default function LegalAccordion({ order, buyer }: Props) {
     total: Number(order.total),
     date: docDate,
     orderNumber: order.id.slice(0, 8).toUpperCase(),
+    seller,
   };
 
   return (
