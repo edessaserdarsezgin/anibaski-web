@@ -141,7 +141,6 @@ export default function FotografYuklePage() {
     if (errs.length) { setError(errs[0]); if (!validFiles.length) return; } else setError("");
 
     setUploading(true);
-    const results: Photo[] = [];
 
     for (const file of validFiles) {
       const preview = URL.createObjectURL(file);
@@ -153,14 +152,15 @@ export default function FotografYuklePage() {
         let data: { url?: string; path?: string; error?: string } = {};
         try { data = await res.json(); } catch { /* ignore */ }
         if (res.ok && data.url && data.path) {
-          results.push({ url: data.url, path: data.path, preview, name: file.name, width, height, optimizing: false, optimized: false, cropped: false });
+          // Her fotoğraf yüklenir yüklenmez ekrana ekle — toplu beklemeyi önler
+          const photo: Photo = { url: data.url, path: data.path, preview, name: file.name, width, height, optimizing: false, optimized: false, cropped: false };
+          setPhotos(prev => [...prev, photo]);
         } else {
           setError(data.error ?? "Fotoğraf yüklenemedi.");
         }
       } catch { setError("Sunucuya bağlanılamadı."); }
     }
 
-    setPhotos(prev => [...prev, ...results]);
     setUploading(false);
     if (fileRef.current) fileRef.current.value = "";
   }
