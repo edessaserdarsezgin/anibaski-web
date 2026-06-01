@@ -499,25 +499,35 @@ export default function FotografYuklePage() {
               İptal
             </button>
 
-            {/* Oran seçici: Baskı oranı (kilitli) ↔ Serbest */}
+            {/* Oran seçici: Baskı oranı — Yatay / Dikey ↔ Serbest */}
             <div className="flex gap-1.5">
-              {printRatio && (
-                <button
-                  onClick={() => setCropModal(s => {
-                    if (!s) return s;
-                    const photo = photos[s.photoIndex];
-                    const aspect = photo.width >= photo.height ? printRatio.ratio : 1 / printRatio.ratio;
-                    return { ...s, aspect, locked: true };
-                  })}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
-                    cropModal.locked
-                      ? "bg-primary border-primary text-white"
-                      : "border-white/20 text-white/60 hover:border-white/50 hover:text-white"
-                  }`}
-                >
-                  Baskı {printRatio.label}
-                </button>
-              )}
+              {printRatio && (() => {
+                const landscape = printRatio.ratio;       // örn. 1.5  (10×15 yatay)
+                const portrait = 1 / printRatio.ratio;    // örn. 0.66 (10×15 dikey)
+                const isLandscape = cropModal.locked && cropModal.aspect != null && cropModal.aspect >= 1;
+                const isPortrait = cropModal.locked && cropModal.aspect != null && cropModal.aspect < 1;
+                const btn = (active: boolean) =>
+                  `px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                    active ? "bg-primary border-primary text-white"
+                           : "border-white/20 text-white/60 hover:border-white/50 hover:text-white"
+                  }`;
+                return (
+                  <>
+                    <button
+                      onClick={() => setCropModal(s => s ? { ...s, aspect: landscape, locked: true } : s)}
+                      className={btn(isLandscape)}
+                    >
+                      Yatay {printRatio.label}
+                    </button>
+                    <button
+                      onClick={() => setCropModal(s => s ? { ...s, aspect: portrait, locked: true } : s)}
+                      className={btn(isPortrait)}
+                    >
+                      Dikey {printRatio.label}
+                    </button>
+                  </>
+                );
+              })()}
               <button
                 onClick={() => setCropModal(s => s ? { ...s, aspect: undefined, locked: false } : s)}
                 className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
