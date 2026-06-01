@@ -1,9 +1,24 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { Suspense } from "react";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import SortSelect from "@/components/product/SortSelect";
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ sort?: string }>;
+};
+
+function getSortOrder(sort: string): { column: string; ascending: boolean } {
+  switch (sort) {
+    case "price_asc":  return { column: "basePrice", ascending: true };
+    case "price_desc": return { column: "basePrice", ascending: false };
+    case "name_asc":   return { column: "name",      ascending: true };
+    case "popular":    return { column: "orderCount", ascending: false };
+    default:           return { column: "createdAt", ascending: false };
+  }
+}
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
@@ -24,8 +39,9 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
-export default async function KategoriPage({ params }: Props) {
-  const { slug } = await params;
+export default async function KategoriPage({ params, searchParams }: Props) {
+  const [{ slug }, { sort = "newest" }] = await Promise.all([params, searchParams]);
+  const { column, ascending } = getSortOrder(sort);
   const adminDb = createAdminClient();
 
   const { data: category } = await adminDb
@@ -53,11 +69,11 @@ export default async function KategoriPage({ params }: Props) {
   const allCategoryIds = [category.id, ...subCategoryIds];
 
   const { data: products } = await adminDb
-    .from("products")
+    .from("products_with_order_count")
     .select("id, name, slug, description, basePrice, images, categoryId, productTags:product_tags(tagId, position, tag:tags(name, color))")
     .in("categoryId", allCategoryIds)
     .eq("isActive", true)
-    .order("createdAt", { ascending: false });
+    .order(column, { ascending });
 
   return (
     <>
@@ -137,6 +153,12 @@ export default async function KategoriPage({ params }: Props) {
           </div>
         ) : (
           <>
+            <div className="flex items-center justify-between mb-5">
+              <p className="text-sm text-text-light">{products?.length ?? 0} ürün</p>
+              <Suspense fallback={<div className="w-40 h-9 rounded-lg border border-border bg-bg" />}>
+                <SortSelect current={sort} />
+              </Suspense>
+            </div>
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-5">
               {products.map((product) => (
                 <Link

@@ -1,20 +1,36 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import ProductCard from "@/components/product/ProductCard";
+import SortSelect from "@/components/product/SortSelect";
+
+type Props = { searchParams: Promise<{ sort?: string }> };
+
+function getSortOrder(sort: string): { column: string; ascending: boolean } {
+  switch (sort) {
+    case "price_asc":  return { column: "basePrice", ascending: true };
+    case "price_desc": return { column: "basePrice", ascending: false };
+    case "name_asc":   return { column: "name",      ascending: true };
+    case "popular":    return { column: "orderCount", ascending: false };
+    default:           return { column: "createdAt", ascending: false };
+  }
+}
 
 export const metadata = {
   title: "Tüm Ürünler | AnıBaskı",
   description: "Fotoğraf baskısı, fotokitap, tablo, polaroid ve daha fazlası. Tüm ürünleri keşfedin, anılarınızı kalıcı hediyelere dönüştürün.",
 };
 
-export default async function UrunlerPage() {
+export default async function UrunlerPage({ searchParams }: Props) {
+  const { sort = "newest" } = await searchParams;
+  const { column, ascending } = getSortOrder(sort);
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   const adminDb = createAdminClient();
 
   const [{ data: products }, { data: categories }] = await Promise.all([
-    adminDb.from("products").select("id, name, slug, description, basePrice, images, category:categories(name, slug), productTags:product_tags(tagId, position, tag:tags(name, color))").eq("isActive", true).order("createdAt", { ascending: false }),
+    adminDb.from("products_with_order_count").select("id, name, slug, description, basePrice, images, category:categories(name, slug), productTags:product_tags(tagId, position, tag:tags(name, color))").eq("isActive", true).order(column, { ascending }),
     adminDb.from("categories").select("id, name, slug, parentId").order("name"),
   ]);
 
@@ -93,6 +109,13 @@ export default async function UrunlerPage() {
             </Link>
           </div>
         ) : (
+          <>
+          <div className="flex items-center justify-between mb-5">
+            <p className="text-sm text-text-light">{products?.length ?? 0} ürün</p>
+            <Suspense fallback={<div className="w-40 h-9 rounded-lg border border-border bg-bg" />}>
+              <SortSelect current={sort} />
+            </Suspense>
+          </div>
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-5">
             {products.map((product, idx) => {
               const category = product.category as unknown as { name: string; slug: string } | null;
@@ -107,6 +130,7 @@ export default async function UrunlerPage() {
               );
             })}
           </div>
+          </>
         )}
 
         {/* ── Alt CTA ─────────────────────────────────── */}
