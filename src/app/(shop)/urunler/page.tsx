@@ -3,8 +3,9 @@ import { Suspense } from "react";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import ProductCard from "@/components/product/ProductCard";
 import SortSelect from "@/components/product/SortSelect";
+import TagFilter from "@/components/product/TagFilter";
 
-type Props = { searchParams: Promise<{ sort?: string }> };
+type Props = { searchParams: Promise<{ sort?: string; tag?: string }> };
 
 function getSortOrder(sort: string): { column: string; ascending: boolean } {
   switch (sort) {
@@ -22,17 +23,32 @@ export const metadata = {
 };
 
 export default async function UrunlerPage({ searchParams }: Props) {
-  const { sort = "newest" } = await searchParams;
+  const { sort = "newest", tag } = await searchParams;
   const { column, ascending } = getSortOrder(sort);
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   const adminDb = createAdminClient();
 
-  const [{ data: products }, { data: categories }] = await Promise.all([
-    adminDb.from("products_with_order_count").select("id, name, slug, description, basePrice, images, category:categories(name, slug), productTags:product_tags(tagId, position, tag:tags(name, color))").eq("isActive", true).order(column, { ascending }),
+  const [{ data: categories }, { data: allTags }, tagIdsResult] = await Promise.all([
     adminDb.from("categories").select("id, name, slug, parentId").order("name"),
+    adminDb.from("tags").select("id, name, color").order("name"),
+    tag
+      ? adminDb.from("product_tags").select("productId").eq("tagId", tag)
+      : Promise.resolve({ data: null }),
   ]);
+
+  const tagProductIds = (tagIdsResult.data as { productId: string }[] | null)?.map(r => r.productId) ?? null;
+  const baseQuery = adminDb
+    .from("products_with_order_count")
+    .select("id, name, slug, description, basePrice, images, category:categories(name, slug), productTags:product_tags(tagId, position, tag:tags(name, color))")
+    .eq("isActive", true)
+    .order(column, { ascending });
+  const { data: products } = tag
+    ? (tagProductIds && tagProductIds.length > 0
+        ? await baseQuery.in("id", tagProductIds)
+        : { data: [] })
+    : await baseQuery;
 
   const { data: favoritesData } = user
     ? await adminDb.from("favorites").select("productId").eq("userId", user.id)
@@ -65,11 +81,15 @@ export default async function UrunlerPage({ searchParams }: Props) {
         {/* ── Kategori Filtreleri ──────────────────────── */}
         <div className="flex gap-2 flex-wrap mb-12">
           {(() => {
-            const sortQuery = sort !== "newest" ? `?sort=${sort}` : "";
+            const queryParts = [
+              sort !== "newest" ? `sort=${sort}` : "",
+              tag ? `tag=${tag}` : "",
+            ].filter(Boolean);
+            const queryString = queryParts.length ? `?${queryParts.join("&")}` : "";
             return (
               <>
                 <Link
-                  href={`/urunler${sortQuery}`}
+                  href={`/urunler${queryString}`}
                   className="px-5 py-2 rounded-full text-sm font-semibold border bg-text text-white border-text transition-all"
                 >
                   Tümü
@@ -79,7 +99,7 @@ export default async function UrunlerPage({ searchParams }: Props) {
                   return (
                     <div key={parent.id} className="flex items-center gap-1 flex-wrap">
                       <Link
-                        href={`/kategoriler/${parent.slug}${sortQuery}`}
+                        href={`/kategoriler/${parent.slug}${queryString}`}
                         className="px-5 py-2 rounded-full text-sm font-semibold border border-border text-text-light hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
                       >
                         {parent.name}
@@ -87,7 +107,7 @@ export default async function UrunlerPage({ searchParams }: Props) {
                       {children.map(sub => (
                         <Link
                           key={sub.id}
-                          href={`/kategoriler/${sub.slug}${sortQuery}`}
+                          href={`/kategoriler/${sub.slug}${queryString}`}
                           className="px-3 py-1.5 rounded-full text-xs font-semibold border border-border/60 text-text-light hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
                         >
                           {sub.name}
@@ -118,7 +138,9 @@ export default async function UrunlerPage({ searchParams }: Props) {
         ) : (
           <>
           <div className="flex items-center justify-between mb-5">
-            <p className="text-sm text-text-light">{products?.length ?? 0} ürün</p>
+            <Suspense fallback={<div className="h-9" />}>
+              <TagFilter tags={allTags ?? []} current={tag} />
+            </Suspense>
             <Suspense fallback={<div className="w-40 h-9 rounded-lg border border-border bg-bg" />}>
               <SortSelect current={sort} />
             </Suspense>

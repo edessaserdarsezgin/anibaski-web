@@ -4,10 +4,11 @@ import Image from "next/image";
 import { Suspense } from "react";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import SortSelect from "@/components/product/SortSelect";
+import TagFilter from "@/components/product/TagFilter";
 
 type Props = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ sort?: string }>;
+  searchParams: Promise<{ sort?: string; tag?: string }>;
 };
 
 function getSortOrder(sort: string): { column: string; ascending: boolean } {
@@ -40,7 +41,7 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function KategoriPage({ params, searchParams }: Props) {
-  const [{ slug }, { sort = "newest" }] = await Promise.all([params, searchParams]);
+  const [{ slug }, { sort = "newest", tag }] = await Promise.all([params, searchParams]);
   const { column, ascending } = getSortOrder(sort);
   const adminDb = createAdminClient();
 
@@ -68,12 +69,25 @@ export default async function KategoriPage({ params, searchParams }: Props) {
   const subCategoryIds = (subCategories ?? []).map(s => s.id);
   const allCategoryIds = [category.id, ...subCategoryIds];
 
-  const { data: products } = await adminDb
+  const [{ data: allTags }, tagIdsResult] = await Promise.all([
+    adminDb.from("tags").select("id, name, color").order("name"),
+    tag
+      ? adminDb.from("product_tags").select("productId").eq("tagId", tag)
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const tagProductIds = (tagIdsResult.data as { productId: string }[] | null)?.map(r => r.productId) ?? null;
+  const baseQuery = adminDb
     .from("products_with_order_count")
     .select("id, name, slug, description, basePrice, images, categoryId, productTags:product_tags(tagId, position, tag:tags(name, color))")
     .in("categoryId", allCategoryIds)
     .eq("isActive", true)
     .order(column, { ascending });
+  const { data: products } = tag
+    ? (tagProductIds && tagProductIds.length > 0
+        ? await baseQuery.in("id", tagProductIds)
+        : { data: [] })
+    : await baseQuery;
 
   return (
     <>
@@ -114,11 +128,15 @@ export default async function KategoriPage({ params, searchParams }: Props) {
         {(subCategories?.length ?? 0) > 0 && (
           <div className="flex gap-2 flex-wrap mb-10">
             {(() => {
-              const sortQuery = sort !== "newest" ? `?sort=${sort}` : "";
+              const queryParts = [
+                sort !== "newest" ? `sort=${sort}` : "",
+                tag ? `tag=${tag}` : "",
+              ].filter(Boolean);
+              const queryString = queryParts.length ? `?${queryParts.join("&")}` : "";
               return (
                 <>
                   <Link
-                    href={`/kategoriler/${category.slug}${sortQuery}`}
+                    href={`/kategoriler/${category.slug}${queryString}`}
                     className="px-5 py-2 rounded-full text-sm font-semibold border bg-text text-white border-text transition-all"
                   >
                     Tümü
@@ -126,7 +144,7 @@ export default async function KategoriPage({ params, searchParams }: Props) {
                   {subCategories!.map((sub) => (
                     <Link
                       key={sub.id}
-                      href={`/kategoriler/${sub.slug}${sortQuery}`}
+                      href={`/kategoriler/${sub.slug}${queryString}`}
                       className="px-5 py-2 rounded-full text-sm font-semibold border border-border text-text-light hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
                     >
                       {sub.name}
@@ -161,7 +179,9 @@ export default async function KategoriPage({ params, searchParams }: Props) {
         ) : (
           <>
             <div className="flex items-center justify-between mb-5">
-              <p className="text-sm text-text-light">{products?.length ?? 0} ürün</p>
+              <Suspense fallback={<div className="h-9" />}>
+                <TagFilter tags={allTags ?? []} current={tag} />
+              </Suspense>
               <Suspense fallback={<div className="w-40 h-9 rounded-lg border border-border bg-bg" />}>
                 <SortSelect current={sort} />
               </Suspense>
