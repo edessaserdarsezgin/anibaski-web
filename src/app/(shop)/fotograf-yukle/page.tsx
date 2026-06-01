@@ -26,6 +26,7 @@ type CropModal = {
   crop: Point;
   zoom: number;
   aspect: number | undefined;
+  locked: boolean;
   croppedAreaPixels: Area | null;
 };
 
@@ -41,12 +42,23 @@ type PendingItem = {
   mockupTemplateUrl?: string | null;
 };
 
-const ASPECT_RATIOS: { label: string; value: number | undefined }[] = [
-  { label: "Serbest", value: undefined },
-  { label: "1:1",     value: 1 },
-  { label: "4:3",     value: 4 / 3 },
-  { label: "3:2",     value: 3 / 2 },
-];
+// Varyant etiketlerinde NxN / N×N deseni arar (örn. "10x15 cm" → 1.5).
+// Tip adı admin-tanımlı olduğundan anahtara güvenmeyiz, desen ararız.
+function parsePrintRatio(variantSelections: Record<string, unknown>): { ratio: number; label: string } | null {
+  for (const v of Object.values(variantSelections)) {
+    const label = (v as { label?: string })?.label;
+    if (!label) continue;
+    const m = label.match(/(\d+)\s*[x×]\s*(\d+)/i);
+    if (m) {
+      const a = Number(m[1]), b = Number(m[2]);
+      if (a > 0 && b > 0) {
+        const lo = Math.min(a, b), hi = Math.max(a, b);
+        return { ratio: hi / lo, label: `${lo}×${hi}` };
+      }
+    }
+  }
+  return null;
+}
 
 function getQuality(w: number, h: number) {
   if (!w || !h) return null;
@@ -67,21 +79,29 @@ async function readDimensions(src: string): Promise<{ width: number; height: num
 }
 
 async function getCroppedBlob(previewUrl: string, pixelCrop: Area): Promise<Blob> {
-  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-    const i = new window.Image();
-    i.crossOrigin = "anonymous";
-    i.onload = () => resolve(i);
-    i.onerror = reject;
-    i.src = previewUrl;
-  });
-  const canvas = document.createElement("canvas");
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(img, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, pixelCrop.width, pixelCrop.height);
-  return new Promise((resolve, reject) =>
-    canvas.toBlob(b => (b ? resolve(b) : reject(new Error("canvas boş"))), "image/jpeg", 0.95)
-  );
+  // Görüntüyü fetch→blob ile yükle: blob: ve https: kaynaklarda CORS taint olmadan çalışır.
+  // (crossOrigin ile uzak Supabase URL'si canvas'ı taint edip toBlob'u çökertiyordu.)
+  const resp = await fetch(previewUrl);
+  const srcBlob = await resp.blob();
+  const objUrl = URL.createObjectURL(srcBlob);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new window.Image();
+      i.onload = () => resolve(i);
+      i.onerror = reject;
+      i.src = objUrl;
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = pixelCrop.width;
+    canvas.height = pixelCrop.height;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(img, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, pixelCrop.width, pixelCrop.height);
+    return await new Promise<Blob>((resolve, reject) =>
+      canvas.toBlob(b => (b ? resolve(b) : reject(new Error("canvas boş"))), "image/jpeg", 0.95)
+    );
+  } finally {
+    URL.revokeObjectURL(objUrl);
+  }
 }
 
 export default function FotografYuklePage() {
@@ -96,6 +116,9 @@ export default function FotografYuklePage() {
 
   const [cropModal, setCropModal] = useState<CropModal | null>(null);
   const [croppingPhoto, setCroppingPhoto] = useState(false);
+
+  // Sipariş edilen baskı oranı (varsa) — crop kutusunu buna kilitlemek için
+  const printRatio = item ? parsePrintRatio(item.variantSelections) : null;
 
   useEffect(() => {
     const raw = sessionStorage.getItem("pendingPhotoUpload");
@@ -197,7 +220,12 @@ export default function FotografYuklePage() {
 
   /* ── Kırp: modal aç ───────────────────────────── */
   function openCrop(i: number) {
-    setCropModal({ photoIndex: i, crop: { x: 0, y: 0 }, zoom: 1, aspect: undefined, croppedAreaPixels: null });
+    const photo = photos[i];
+    // Baskı oranı varsa fotoğrafın yönüne göre aspect hesapla, kilitli başlat
+    const aspect = printRatio
+      ? (photo.width >= photo.height ? printRatio.ratio : 1 / printRatio.ratio)
+      : undefined;
+    setCropModal({ photoIndex: i, crop: { x: 0, y: 0 }, zoom: 1, aspect, locked: !!printRatio, croppedAreaPixels: null });
   }
 
   /* ── Kırp: uygula ─────────────────────────────── */
@@ -471,21 +499,35 @@ export default function FotografYuklePage() {
               İptal
             </button>
 
-            {/* Aspect ratio seçici */}
+            {/* Oran seçici: Baskı oranı (kilitli) ↔ Serbest */}
             <div className="flex gap-1.5">
-              {ASPECT_RATIOS.map(a => (
+              {printRatio && (
                 <button
-                  key={a.label}
-                  onClick={() => setCropModal(s => s ? { ...s, aspect: a.value } : s)}
+                  onClick={() => setCropModal(s => {
+                    if (!s) return s;
+                    const photo = photos[s.photoIndex];
+                    const aspect = photo.width >= photo.height ? printRatio.ratio : 1 / printRatio.ratio;
+                    return { ...s, aspect, locked: true };
+                  })}
                   className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
-                    cropModal.aspect === a.value
+                    cropModal.locked
                       ? "bg-primary border-primary text-white"
                       : "border-white/20 text-white/60 hover:border-white/50 hover:text-white"
                   }`}
                 >
-                  {a.label}
+                  Baskı {printRatio.label}
                 </button>
-              ))}
+              )}
+              <button
+                onClick={() => setCropModal(s => s ? { ...s, aspect: undefined, locked: false } : s)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                  !cropModal.locked
+                    ? "bg-primary border-primary text-white"
+                    : "border-white/20 text-white/60 hover:border-white/50 hover:text-white"
+                }`}
+              >
+                Serbest
+              </button>
             </div>
 
             <button
@@ -515,6 +557,19 @@ export default function FotografYuklePage() {
               style={{ containerStyle: { background: "#111" } }}
             />
           </div>
+
+          {/* Kalite uyarısı — seçili kırpma alanı çözünürlüğü düşükse */}
+          {cropModal.croppedAreaPixels && (() => {
+            const q = getQuality(cropModal.croppedAreaPixels.width, cropModal.croppedAreaPixels.height);
+            if (q && (q.label === "Düşük" || q.label === "Orta")) {
+              return (
+                <p className="text-xs text-amber-300 px-6 pt-3 text-center bg-black/70 shrink-0">
+                  ⚠ Bu kırpma baskı kalitesini düşürebilir ({q.label} çözünürlük)
+                </p>
+              );
+            }
+            return null;
+          })()}
 
           {/* Zoom slider */}
           <div className="flex items-center gap-3 px-6 py-4 bg-black/70 backdrop-blur border-t border-white/10 shrink-0">
