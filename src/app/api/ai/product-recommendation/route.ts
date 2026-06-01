@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { getReadyMadeCategoryIds } from "@/lib/readyMade";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -28,10 +29,15 @@ export async function POST(req: NextRequest) {
 
   const adminDb = createAdminClient();
 
-  const { data: activeProducts } = await adminDb
+  const readyMadeIds = await getReadyMadeCategoryIds();
+  let productsQuery = adminDb
     .from("products")
     .select("name")
     .eq("isActive", true);
+  if (readyMadeIds.length > 0) {
+    productsQuery = productsQuery.not("categoryId", "in", `(${readyMadeIds.join(",")})`);
+  }
+  const { data: activeProducts } = await productsQuery;
 
   const productList = (activeProducts ?? []).map((p: { name: string }) => p.name);
 

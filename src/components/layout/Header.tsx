@@ -26,6 +26,9 @@ export default async function Header() {
           <Link href="/urunler" className="hover:text-text transition-colors">
             Ürünler
           </Link>
+          <Link href="/kategoriler/hazir-urunler" className="hover:text-text transition-colors">
+            Hazır Ürünler
+          </Link>
           <Link href="/kampanyalar" className="hover:text-text transition-colors">
             Kampanyalar
           </Link>

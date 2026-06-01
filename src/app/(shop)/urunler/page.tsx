@@ -4,6 +4,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import ProductCard from "@/components/product/ProductCard";
 import SortSelect from "@/components/product/SortSelect";
 import TagFilter from "@/components/product/TagFilter";
+import { getReadyMadeCategoryIds } from "@/lib/readyMade";
 
 type Props = { searchParams: Promise<{ sort?: string; tag?: string }> };
 
@@ -30,20 +31,24 @@ export default async function UrunlerPage({ searchParams }: Props) {
   const { data: { user } } = await supabase.auth.getUser();
   const adminDb = createAdminClient();
 
-  const [{ data: categories }, { data: allTags }, tagIdsResult] = await Promise.all([
+  const [{ data: categories }, { data: allTags }, tagIdsResult, readyMadeIds] = await Promise.all([
     adminDb.from("categories").select("id, name, slug, parentId").order("name"),
     adminDb.from("tags").select("id, name, color").order("name"),
     tag
       ? adminDb.from("product_tags").select("productId").eq("tagId", tag)
       : Promise.resolve({ data: null }),
+    getReadyMadeCategoryIds(),
   ]);
 
   const tagProductIds = (tagIdsResult.data as { productId: string }[] | null)?.map(r => r.productId) ?? null;
-  const baseQuery = adminDb
+  let baseQuery = adminDb
     .from("products_with_order_count")
     .select("id, name, slug, description, basePrice, images, category:categories(name, slug), productTags:product_tags(tagId, position, tag:tags(name, color))")
     .eq("isActive", true)
     .order(column, { ascending });
+  if (readyMadeIds.length > 0) {
+    baseQuery = baseQuery.not("categoryId", "in", `(${readyMadeIds.join(",")})`);
+  }
   const { data: products } = tag
     ? (tagProductIds && tagProductIds.length > 0
         ? await baseQuery.in("id", tagProductIds)
@@ -94,7 +99,7 @@ export default async function UrunlerPage({ searchParams }: Props) {
                 >
                   Tümü
                 </Link>
-                {categories?.filter(c => !c.parentId).map((parent) => {
+                {categories?.filter(c => !c.parentId && !readyMadeIds.includes(c.id)).map((parent) => {
                   const children = categories.filter(c => c.parentId === parent.id);
                   return (
                     <div key={parent.id} className="flex items-center gap-1 flex-wrap">
