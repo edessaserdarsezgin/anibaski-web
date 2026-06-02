@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { STUDIO_TOOLS } from "@/lib/studio";
-import { upscaleInBrowser } from "@/lib/upscaleClient";
+import { upscaleViaServer, UpscaleError } from "@/lib/upscaleClient";
 import BeforeAfterSlider from "@/components/studio/BeforeAfterSlider";
 
 type Step = "gallery" | "upload" | "processing" | "result";
@@ -30,17 +30,15 @@ export default function StudyoPage() {
     setStep("processing");
     try {
       const before = URL.createObjectURL(file);
-      const after = await upscaleInBrowser(file);
-      // kullanımı ölç (fire-and-forget)
-      fetch("/api/ai/studio/log", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tool: "upscale" }),
-      }).catch(() => {});
+      const after = await upscaleViaServer(file);
       setBeforeUrl(before);
       setAfterUrl(after);
       setStep("result");
     } catch (err) {
+      if (err instanceof UpscaleError && err.code === 401) {
+        router.push("/giris?next=/studyo");
+        return;
+      }
       setError(err instanceof Error ? err.message : "İşlem başarısız");
       setStep("upload");
     }
@@ -104,6 +102,9 @@ export default function StudyoPage() {
             </button>
           ))}
         </div>
+        <p className="text-center text-xs text-secondary/70 mt-8">
+          Fotoğrafın yalnızca işlem için kullanılır, sunucularımızda saklanmaz.
+        </p>
       </div>
     );
   }
@@ -113,7 +114,7 @@ export default function StudyoPage() {
       <div className="max-w-2xl mx-auto px-8 py-24 flex flex-col items-center gap-6 text-center">
         <div className="w-16 h-16 rounded-full border-4 border-border border-t-primary animate-spin" />
         <h2 className="font-serif text-2xl text-text">Fotoğrafın işleniyor...</h2>
-        <p className="text-secondary text-sm">İlk kullanımda yapay zeka modeli indirilirken biraz uzun sürebilir.</p>
+        <p className="text-secondary text-sm">Yapay zeka fotoğrafını büyütüyor, birkaç saniye sürebilir.</p>
       </div>
     );
   }
