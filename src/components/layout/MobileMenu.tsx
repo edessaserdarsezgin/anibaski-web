@@ -62,6 +62,13 @@ export default function MobileMenu({ email, isAdmin }: Props) {
               >
                 Ürün Rehberi
               </Link>
+              <Link
+                href="/studyo"
+                onClick={() => setOpen(false)}
+                className="py-3 text-sm font-semibold text-primary hover:text-primary/80 transition-colors border-b border-border"
+              >
+                AI Stüdyo
+              </Link>
 
               {isAdmin && (
                 <Link

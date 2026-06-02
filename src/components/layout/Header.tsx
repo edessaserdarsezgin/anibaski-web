@@ -35,6 +35,9 @@ export default async function Header() {
           <Link href="/urun-rehberi" className="hover:text-text transition-colors">
             Rehber
           </Link>
+          <Link href="/studyo" className="hover:text-text transition-colors text-primary">
+            AI Stüdyo
+          </Link>
           {isAdmin && (
             <Link href="/admin" className="hover:text-text transition-colors text-primary">
               Admin
