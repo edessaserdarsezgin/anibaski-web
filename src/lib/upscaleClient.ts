@@ -1,7 +1,7 @@
 // Motor izolasyon noktası. Faz 1: UpscalerJS (TensorFlow.js, ESRGAN) — tarayıcıda.
 // Sağlayıcı/motor değiştirmek = yalnız bu dosyayı değiştirmek.
 
-const MAX_INPUT_EDGE = 1500; // bellek guard'ı: çok büyük girdiyi önce küçült
+const MAX_INPUT_EDGE = 1000; // bellek guard'ı: çok büyük girdiyi önce küçült (4x → maks ~4000px)
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -23,6 +23,7 @@ export async function upscaleInBrowser(file: File): Promise<string> {
   ]);
 
   const srcUrl = URL.createObjectURL(file);
+  const upscaler = new Upscaler({ model });
   try {
     const img = await loadImage(srcUrl);
     const maxEdge = Math.max(img.naturalWidth, img.naturalHeight);
@@ -39,10 +40,11 @@ export async function upscaleInBrowser(file: File): Promise<string> {
       inputSrc = canvas.toDataURL("image/jpeg", 0.95);
     }
 
-    const upscaler = new Upscaler({ model });
     // patchSize: büyük görsellerde UI'yi kilitlemez
     return await upscaler.upscale(inputSrc, { patchSize: 64, padding: 5 });
   } finally {
     URL.revokeObjectURL(srcUrl);
+    // modeli + tensörleri GPU'dan serbest bırak (bellek birikmesini önler)
+    await upscaler.dispose();
   }
 }
