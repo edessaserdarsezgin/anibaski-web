@@ -28,7 +28,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const result = (items ?? [])
     .filter(item => item.uploadedImages?.length > 0)
     .map(item => ({
-      productName: (item.product as { name: string } | null)?.name ?? "Ürün",
+      productName: (item.product as unknown as { name: string } | null)?.name ?? "Ürün",
       photos: item.uploadedImages as string[],
     }));
 

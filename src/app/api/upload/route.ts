@@ -36,9 +36,11 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const { data: { signedUrl } } = await supabase.storage
+  const { data: signed, error: signError } = await supabase.storage
     .from("uploads")
     .createSignedUrl(path, 60 * 60 * 24 * 7); // 7 gün geçerli
 
-  return NextResponse.json({ url: signedUrl, path });
+  if (signError || !signed) return NextResponse.json({ error: "İmzalı URL oluşturulamadı" }, { status: 500 });
+
+  return NextResponse.json({ url: signed.signedUrl, path });
 }

@@ -117,7 +117,7 @@ export default async function ProfilPage() {
                       {new Date(order.createdAt).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}
                     </p>
                     <p className="text-xs text-text-light mt-0.5">
-                      {(order.items as { quantity: number; product: { name: string } | null }[])
+                      {(order.items as unknown as { quantity: number; product: { name: string } | null }[])
                         ?.slice(0, 2)
                         .map(i => i.product?.name)
                         .join(", ")}

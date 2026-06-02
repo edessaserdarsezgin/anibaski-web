@@ -26,7 +26,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   let fileIndex = 1;
 
   for (const item of items ?? []) {
-    const productName = ((item.product as { name: string } | null)?.name ?? "urun")
+    const productName = ((item.product as unknown as { name: string } | null)?.name ?? "urun")
       .replace(/[^a-zA-Z0-9ğüşıöçĞÜŞİÖÇ\s]/g, "").trim().replace(/\s+/g, "_");
 
     const images: string[] = item.uploadedImages ?? [];
@@ -47,7 +47,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
   const shortId = id.slice(0, 8).toUpperCase();
 
-  return new NextResponse(zipBuffer, {
+  return new NextResponse(new Uint8Array(zipBuffer), {
     headers: {
       "Content-Type": "application/zip",
       "Content-Disposition": `attachment; filename="siparis-${shortId}-fotograflar.zip"`,
