@@ -194,3 +194,11 @@ enum OrderStatus {
   CANCELLED
   CANCEL_REQUESTED
 }
+
+model StudioJob {
+  id        String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  userId    String?
+  tool      String   @default("upscale")
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@map("studio_jobs")
+}
