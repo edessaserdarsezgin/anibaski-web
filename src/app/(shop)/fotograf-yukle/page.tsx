@@ -135,6 +135,27 @@ export default function FotografYuklePage() {
     const raw = sessionStorage.getItem("pendingPhotoUpload");
     if (!raw) { router.replace("/urunler"); return; }
     try { setItem(JSON.parse(raw)); } catch { router.replace("/urunler"); }
+
+    // AI Stüdyo'dan "Baskıya Geç" ile gelen gelişmiş görseli ön-yükle
+    const studioImg = sessionStorage.getItem("studioEnhancedImage");
+    if (studioImg) {
+      sessionStorage.removeItem("studioEnhancedImage");
+      const sImg = new window.Image();
+      sImg.onload = () => {
+        setPhotos([{
+          url: studioImg,
+          path: "",
+          preview: studioImg,
+          name: "stüdyo-fotoğrafı",
+          width: sImg.naturalWidth,
+          height: sImg.naturalHeight,
+          optimizing: false,
+          optimized: true,
+          cropped: false,
+        }]);
+      };
+      sImg.src = studioImg;
+    }
   }, [router]);
 
   const onCropComplete = useCallback((_: Area, pixels: Area) => {
