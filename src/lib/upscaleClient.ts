@@ -1,50 +1,36 @@
-// Motor izolasyon noktası. Faz 1: UpscalerJS (TensorFlow.js, ESRGAN) — tarayıcıda.
-// Sağlayıcı/motor değiştirmek = yalnız bu dosyayı değiştirmek.
+// Motor izolasyon noktası. Faz A: sunucu route'u (/api/ai/studio/upscale) → AuraSR.
+// Eski tarayıcı UpscalerJS motoru kaldırıldı.
 
-const MAX_INPUT_EDGE = 1000; // bellek guard'ı: çok büyük girdiyi önce küçült (4x → maks ~4000px)
-
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("Görsel yüklenemedi"));
-    img.src = src;
-  });
+/** Hata kodu taşıyan upscale hatası (sayfa 401/429 ayrımı için). */
+export class UpscaleError extends Error {
+  constructor(message: string, public code?: number) {
+    super(message);
+  }
 }
 
 /**
- * Verilen fotoğrafı tarayıcıda büyütür. base64 data URL döndürür.
- * upscaler + model yalnız ilk çağrıda lazy yüklenir.
+ * Fotoğrafı sunucuya gönderip 4x upscale sonucunu object URL olarak döndürür.
+ * 401 → giriş gerekli, 429 → günlük kota doldu.
  */
-export async function upscaleInBrowser(file: File): Promise<string> {
-  const [{ default: Upscaler }, { default: model }] = await Promise.all([
-    import("upscaler"),
-    import("@upscalerjs/esrgan-medium/4x"),
-  ]);
+export async function upscaleViaServer(file: File): Promise<string> {
+  const fd = new FormData();
+  fd.append("file", file);
 
-  const srcUrl = URL.createObjectURL(file);
-  const upscaler = new Upscaler({ model });
-  try {
-    const img = await loadImage(srcUrl);
-    const maxEdge = Math.max(img.naturalWidth, img.naturalHeight);
+  const res = await fetch("/api/ai/studio/upscale", { method: "POST", body: fd });
 
-    let inputSrc = srcUrl;
-    if (maxEdge > MAX_INPUT_EDGE) {
-      const scale = MAX_INPUT_EDGE / maxEdge;
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.round(img.naturalWidth * scale);
-      canvas.height = Math.round(img.naturalHeight * scale);
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Canvas desteklenmiyor");
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      inputSrc = canvas.toDataURL("image/jpeg", 0.95);
+  if (!res.ok) {
+    if (res.status === 401) throw new UpscaleError("Giriş gerekli", 401);
+    if (res.status === 429) throw new UpscaleError("Günlük 5 ücretsiz hakkın doldu", 429);
+    let msg = "İşlem başarısız";
+    try {
+      const d = await res.json();
+      if (typeof d?.error === "string") msg = d.error;
+    } catch {
+      // gövde JSON değilse varsayılan mesaj
     }
-
-    // patchSize: büyük görsellerde UI'yi kilitlemez
-    return await upscaler.upscale(inputSrc, { patchSize: 64, padding: 5 });
-  } finally {
-    URL.revokeObjectURL(srcUrl);
-    // modeli + tensörleri GPU'dan serbest bırak (bellek birikmesini önler)
-    await upscaler.dispose();
+    throw new UpscaleError(msg);
   }
+
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
 }
