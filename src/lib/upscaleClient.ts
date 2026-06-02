@@ -19,7 +19,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 export async function upscaleInBrowser(file: File): Promise<string> {
   const [{ default: Upscaler }, { default: model }] = await Promise.all([
     import("upscaler"),
-    import("@upscalerjs/esrgan-slim/4x"),
+    import("@upscalerjs/esrgan-medium/4x"),
   ]);
 
   const srcUrl = URL.createObjectURL(file);
