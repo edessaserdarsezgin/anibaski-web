@@ -199,6 +199,7 @@ model StudioJob {
   id        String   @id @default(dbgenerated("(gen_random_uuid())::text"))
   userId    String?
   tool      String   @default("upscale")
+  status    String   @default("success")
   createdAt DateTime @default(now()) @db.Timestamptz(6)
   @@map("studio_jobs")
 }
