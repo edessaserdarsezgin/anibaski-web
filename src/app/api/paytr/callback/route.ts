@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { sendOrderNotification } from "@/lib/email/orderNotification";
 import { notifyOrderCreated } from "@/lib/whatsapp/notify";
+import { grantOrderCredits } from "@/lib/studioCredits";
 import crypto from "crypto";
 
 // PayTR callback URL'si — session/auth koruması olmadan erişilebilir olmalı
@@ -54,6 +55,13 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (order) {
+      // Baskı bonusu: eşik aşılırsa AI kredisi ver (callback'i bozmasın diye try/catch)
+      try {
+        await grantOrderCredits(order.userId, Number(order.total), orderId);
+      } catch (err) {
+        console.error("[PayTR callback] grantOrderCredits:", err);
+      }
+
       const [{ data: address }, { data: orderItems }, { data: profile }] = await Promise.all([
         adminClient.from("addresses").select("fullName, phone, address, district, city").eq("id", order.addressId).single(),
         adminClient.from("order_items").select("quantity, unitPrice, uploadedImages, variantSelections, product:products(name)").eq("orderId", orderId),
