@@ -4,6 +4,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
+  // ngrok/Vercel gibi proxy arkasında request.url localhost'a (hatta https://localhost'a)
+  // çözülebiliyor; dönüş adresi için forwarded header'ları tercih et, yoksa origin'e düş.
+  const fwdHost = request.headers.get("x-forwarded-host");
+  const fwdProto = request.headers.get("x-forwarded-proto") ?? "https";
+  const baseUrl = fwdHost ? `${fwdProto}://${fwdHost}` : origin;
   const code = searchParams.get("code");
   const type = searchParams.get("type");
   const errorParam = searchParams.get("error");
@@ -13,12 +18,12 @@ export async function GET(request: NextRequest) {
   // Supabase OAuth hatası (ör. signup kapalı, erişim reddedildi)
   if (errorParam) {
     const msg = encodeURIComponent(errorDesc ?? errorParam);
-    return NextResponse.redirect(`${origin}/giris?error=${msg}`);
+    return NextResponse.redirect(`${baseUrl}/giris?error=${msg}`);
   }
 
   const tokenHash = searchParams.get("token_hash");
   if (!code && !tokenHash) {
-    return NextResponse.redirect(`${origin}/giris?error=Kod+bulunamadi`);
+    return NextResponse.redirect(`${baseUrl}/giris?error=Kod+bulunamadi`);
   }
 
   const cookieStore = await cookies();
@@ -46,14 +51,14 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       const msg = encodeURIComponent(error.message);
-      return NextResponse.redirect(`${origin}/giris?error=${msg}`);
+      return NextResponse.redirect(`${baseUrl}/giris?error=${msg}`);
     }
 
     if (type === "recovery") {
-      return NextResponse.redirect(`${origin}/sifremi-sifirla`);
+      return NextResponse.redirect(`${baseUrl}/sifremi-sifirla`);
     }
 
-    return NextResponse.redirect(`${origin}${redirect}`);
+    return NextResponse.redirect(`${baseUrl}${redirect}`);
   }
 
   const { error } = await supabase.auth.exchangeCodeForSession(code!);
@@ -61,12 +66,12 @@ export async function GET(request: NextRequest) {
   if (error) {
     console.error("[auth/callback] exchangeCodeForSession error:", error.message);
     const msg = encodeURIComponent(error.message);
-    return NextResponse.redirect(`${origin}/giris?error=${msg}`);
+    return NextResponse.redirect(`${baseUrl}/giris?error=${msg}`);
   }
 
   if (type === "recovery") {
-    return NextResponse.redirect(`${origin}/sifremi-sifirla`);
+    return NextResponse.redirect(`${baseUrl}/sifremi-sifirla`);
   }
 
-  return NextResponse.redirect(`${origin}${redirect}`);
+  return NextResponse.redirect(`${baseUrl}${redirect}`);
 }
