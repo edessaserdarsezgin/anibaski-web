@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 
 export default function BeforeAfterSlider({ before, after }: { before: string; after: string }) {
   const [pos, setPos] = useState(50);
+  const [ratio, setRatio] = useState<number | null>(null); // sonuç görselinin en/boy oranı
   const ref = useRef<HTMLDivElement>(null);
 
   function move(clientX: number) {
@@ -17,24 +18,31 @@ export default function BeforeAfterSlider({ before, after }: { before: string; a
   return (
     <div
       ref={ref}
-      className="relative w-full aspect-square rounded-2xl overflow-hidden select-none bg-bg border border-border cursor-ew-resize"
+      className="relative w-full overflow-hidden rounded-2xl select-none bg-bg border border-border cursor-ew-resize"
+      style={{ aspectRatio: ratio ?? 1 }}
       onMouseMove={(e) => e.buttons === 1 && move(e.clientX)}
       onTouchMove={(e) => move(e.touches[0].clientX)}
       onClick={(e) => move(e.clientX)}
     >
-      {/* Sonra (alt katman, tam) */}
+      {/* Sonra (alt katman) — kutu en/boy oranı bu görselden alınır, iki katman da aynı kutuyu doldurur */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={after} alt="Sonra" className="absolute inset-0 w-full h-full object-contain" />
-      {/* Önce (üst katman, kırpılmış) */}
-      <div className="absolute inset-0 overflow-hidden" style={{ width: `${pos}%` }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={before}
-          alt="Önce"
-          className="absolute inset-0 h-full max-w-none object-contain"
-          style={{ width: ref.current?.clientWidth ?? 0 }}
-        />
-      </div>
+      <img
+        src={after}
+        alt="Sonra"
+        onLoad={(e) => {
+          const t = e.currentTarget;
+          if (t.naturalHeight) setRatio(t.naturalWidth / t.naturalHeight);
+        }}
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      {/* Önce (üst katman) — clip-path ile kırpılır; aynı kutuyu doldurduğu için hizalı kalır */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={before}
+        alt="Önce"
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
+      />
       {/* Tutamak */}
       <div className="absolute top-0 bottom-0 w-0.5 bg-white shadow" style={{ left: `${pos}%` }}>
         <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white shadow flex items-center justify-center text-text text-xs">⇄</div>

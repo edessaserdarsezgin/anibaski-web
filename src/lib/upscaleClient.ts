@@ -20,7 +20,7 @@ export async function upscaleViaServer(file: File): Promise<string> {
 
   if (!res.ok) {
     if (res.status === 401) throw new UpscaleError("Giriş gerekli", 401);
-    if (res.status === 429) throw new UpscaleError("Günlük 5 ücretsiz hakkın doldu", 429);
+    if (res.status === 429) throw new UpscaleError("Kredin doldu", 429);
     let msg = "İşlem başarısız";
     try {
       const d = await res.json();
@@ -36,19 +36,19 @@ export async function upscaleViaServer(file: File): Promise<string> {
 }
 
 /**
- * Fotoğrafı seçilen efekt preset'iyle düzenler (Qwen-Image-Edit), sonucu object URL döndürür.
- * 401 → giriş gerekli, 429 → günlük kota doldu.
+ * Fotoğrafı seçilen efektle (slug) düzenler (Qwen-Image-Edit), sonucu object URL döndürür.
+ * 401 → giriş gerekli, 429 → kredi doldu.
  */
-export async function editViaServer(file: File, preset: string): Promise<string> {
+export async function editViaServer(file: File, slug: string): Promise<string> {
   const fd = new FormData();
   fd.append("file", file);
-  fd.append("preset", preset);
+  fd.append("slug", slug);
 
   const res = await fetch("/api/ai/studio/edit", { method: "POST", body: fd });
 
   if (!res.ok) {
     if (res.status === 401) throw new UpscaleError("Giriş gerekli", 401);
-    if (res.status === 429) throw new UpscaleError("Günlük 5 ücretsiz hakkın doldu", 429);
+    if (res.status === 429) throw new UpscaleError("Kredin doldu", 429);
     let msg = "İşlem başarısız";
     try {
       const d = await res.json();

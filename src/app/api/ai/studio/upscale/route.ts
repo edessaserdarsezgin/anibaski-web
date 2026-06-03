@@ -27,12 +27,13 @@ export async function POST(req: NextRequest) {
   }
   const inputBuf = Buffer.from(await file.arrayBuffer());
 
-  // 4. Büyük girdiyi 2000px'e indir
+  // 4. EXIF yönünü uygula (.rotate) + büyük girdiyi 2000px'e indir.
+  //    .rotate() olmadan dönmüş fotoğraf sonuçta yan/ters çıkıyordu.
   const meta = await sharp(inputBuf).metadata();
   const maxEdge = Math.max(meta.width ?? 0, meta.height ?? 0);
-  const normalized = maxEdge > MAX_EDGE
-    ? await sharp(inputBuf).resize({ width: MAX_EDGE, height: MAX_EDGE, fit: "inside" }).toBuffer()
-    : inputBuf;
+  let pipeline = sharp(inputBuf).rotate();
+  if (maxEdge > MAX_EDGE) pipeline = pipeline.resize({ width: MAX_EDGE, height: MAX_EDGE, fit: "inside" });
+  const normalized = await pipeline.toBuffer();
 
   // 5. Upscale + kredi/job kaydı
   try {

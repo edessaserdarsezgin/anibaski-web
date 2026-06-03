@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type Form = { dailyFree: number; orderThreshold: number; orderCreditAmount: number; expiryDays: number; maxEarnedBalance: number };
+type Form = { dailyFree: number; trialCredits: number; orderThreshold: number; orderCreditAmount: number; expiryDays: number; maxEarnedBalance: number };
 
 export default function AiKrediPage() {
   const [form, setForm] = useState<Form | null>(null);
@@ -12,7 +12,7 @@ export default function AiKrediPage() {
   useEffect(() => {
     fetch("/api/admin/studio-settings").then((r) => r.json()).then((d) =>
       setForm({
-        dailyFree: d.daily_free, orderThreshold: Number(d.order_threshold),
+        dailyFree: d.daily_free, trialCredits: d.trial_credits ?? 1, orderThreshold: Number(d.order_threshold),
         orderCreditAmount: d.order_credit_amount, expiryDays: d.expiry_days, maxEarnedBalance: d.max_earned_balance,
       }));
   }, []);
@@ -30,7 +30,8 @@ export default function AiKrediPage() {
   if (!form) return <div className="text-secondary">Yükleniyor...</div>;
 
   const fields: { key: keyof Form; label: string; hint: string }[] = [
-    { key: "dailyFree", label: "Günlük ücretsiz kredi", hint: "Her kullanıcıya her gün, devretmez" },
+    { key: "dailyFree", label: "Günlük ücretsiz kredi", hint: "Baskı yapmış üyeye her gün, devretmez" },
+    { key: "trialCredits", label: "Deneme hakkı (baskısız üye)", hint: "Hiç baskı yapmamış üyeye ömür boyu; bitince baskı şart" },
     { key: "orderThreshold", label: "Bonus eşiği (₺)", hint: "Bu tutarın üstündeki siparişe kredi" },
     { key: "orderCreditAmount", label: "Sipariş bonusu (kredi)", hint: "Eşik aşılınca verilen kredi" },
     { key: "expiryDays", label: "Kazanılmış kredi süresi (gün)", hint: "Bu süre sonunda kazanılmış kredi silinir" },

@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 
 export type StudioSettings = {
   dailyFree: number;
+  trialCredits: number;
   orderThreshold: number;
   orderCreditAmount: number;
   expiryDays: number;
@@ -11,7 +12,7 @@ export type StudioSettings = {
 };
 
 const DEFAULTS: StudioSettings = {
-  dailyFree: 3, orderThreshold: 1000, orderCreditAmount: 10, expiryDays: 30, maxEarnedBalance: 50,
+  dailyFree: 3, trialCredits: 1, orderThreshold: 1000, orderCreditAmount: 10, expiryDays: 30, maxEarnedBalance: 50,
 };
 
 export async function getSettings(): Promise<StudioSettings> {
@@ -20,11 +21,33 @@ export async function getSettings(): Promise<StudioSettings> {
   if (!data) return DEFAULTS;
   return {
     dailyFree: data.daily_free,
+    trialCredits: data.trial_credits ?? DEFAULTS.trialCredits,
     orderThreshold: Number(data.order_threshold),
     orderCreditAmount: data.order_credit_amount,
     expiryDays: data.expiry_days,
     maxEarnedBalance: data.max_earned_balance,
   };
+}
+
+/** Üyenin geçerli (ödenmiş kart veya kapıda) baskı siparişi var mı? Günlük ücretsiz krediyi bu açar. */
+async function hasQualifyingOrder(userId: string): Promise<boolean> {
+  const db = createAdminClient();
+  const { count } = await db
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("userId", userId)
+    .or("paymentStatus.eq.paid,paymentMethod.eq.cod");
+  return (count ?? 0) > 0;
+}
+
+/** Tüm zamanların başarılı işlem sayısı — baskı yapmamış üyenin deneme hakkı buradan ölçülür. */
+async function lifetimeSuccessCount(userId: string): Promise<number> {
+  const db = createAdminClient();
+  const { count } = await db
+    .from("studio_jobs")
+    .select("id", { count: "exact", head: true })
+    .eq("userId", userId).eq("status", "success");
+  return count ?? 0;
 }
 
 function startOfTodayIso(): string {
@@ -50,14 +73,66 @@ async function earnedAvailable(userId: string): Promise<number> {
   return (data ?? []).reduce((a, g) => a + g.remaining, 0);
 }
 
-export type CreditStatus = { dailyFreeRemaining: number; earnedAvailable: number; total: number };
+// trial=true → üye henüz baskı yapmamış; dailyFreeRemaining "ömür boyu deneme" hakkıdır.
+// trial=false → en az bir baskı var; dailyFreeRemaining günlük ücretsiz haktır.
+export type CreditStatus = { dailyFreeRemaining: number; earnedAvailable: number; total: number; trial: boolean };
 
 export async function getCreditStatus(userId: string): Promise<CreditStatus> {
   const s = await getSettings();
-  const used = await todaySuccessCount(userId);
-  const dailyFreeRemaining = Math.max(0, s.dailyFree - used);
+  const ordered = await hasQualifyingOrder(userId);
+
+  let dailyFreeRemaining: number;
+  if (ordered) {
+    const usedToday = await todaySuccessCount(userId);
+    dailyFreeRemaining = Math.max(0, s.dailyFree - usedToday);
+  } else {
+    const usedEver = await lifetimeSuccessCount(userId);
+    dailyFreeRemaining = Math.max(0, s.trialCredits - usedEver);
+  }
+
   const earned = await earnedAvailable(userId);
-  return { dailyFreeRemaining, earnedAvailable: earned, total: dailyFreeRemaining + earned };
+  return { dailyFreeRemaining, earnedAvailable: earned, total: dailyFreeRemaining + earned, trial: !ordered };
+}
+
+export type CreditStats = {
+  usedToday: number;
+  usedWeek: number;
+  usedMonth: number;
+  usedTotal: number;
+  grants: { remaining: number; expiresAt: string; source: string }[];
+};
+
+/** Kullanım istatistikleri: başarılı işlem sayıları (gün/hafta/ay/toplam) + aktif grant'ların geçerlilik takibi. */
+export async function getCreditStats(userId: string): Promise<CreditStats> {
+  const db = createAdminClient();
+  const now = Date.now();
+  const sinceIso = (ms: number) => new Date(now - ms).toISOString();
+
+  async function successCount(fromIso?: string): Promise<number> {
+    let q = db
+      .from("studio_jobs")
+      .select("id", { count: "exact", head: true })
+      .eq("userId", userId).eq("status", "success");
+    if (fromIso) q = q.gte("createdAt", fromIso);
+    const { count } = await q;
+    return count ?? 0;
+  }
+
+  const [usedToday, usedWeek, usedMonth, usedTotal, grantsRes] = await Promise.all([
+    successCount(startOfTodayIso()),
+    successCount(sinceIso(7 * 86_400_000)),
+    successCount(sinceIso(30 * 86_400_000)),
+    successCount(),
+    db.from("studio_credit_grants")
+      .select("remaining, expiresAt, source")
+      .eq("userId", userId).gt("remaining", 0).gt("expiresAt", new Date().toISOString())
+      .order("expiresAt", { ascending: true }),
+  ]);
+
+  return {
+    usedToday, usedWeek, usedMonth, usedTotal,
+    grants: (grantsRes.data ?? []) as CreditStats["grants"],
+  };
 }
 
 /** İşlemden ÖNCE kontrol: kullanıcının harcayacak kredisi var mı? */
@@ -66,12 +141,15 @@ export async function hasCredit(userId: string): Promise<boolean> {
   return total > 0;
 }
 
-/** Başarılı işlemi kaydet. Günlük ücretsiz dolmuşsa en yakın expiry'li grant'tan 1 düş. */
+/** Başarılı işlemi kaydet. Ücretsiz hak (günlük veya deneme) dolmuşsa en yakın expiry'li grant'tan 1 düş. */
 export async function recordSuccess(userId: string, tool: string): Promise<void> {
   const db = createAdminClient();
   const s = await getSettings();
-  const used = await todaySuccessCount(userId); // bu insert'ten ÖNCE
-  if (used >= s.dailyFree) {
+  const ordered = await hasQualifyingOrder(userId);
+  // Ücretsiz limit: baskı yapan için günlük, yapmayan için ömür boyu deneme.
+  const freeLimit = ordered ? s.dailyFree : s.trialCredits;
+  const used = ordered ? await todaySuccessCount(userId) : await lifetimeSuccessCount(userId); // insert'ten ÖNCE
+  if (used >= freeLimit) {
     const { data: grant } = await db
       .from("studio_credit_grants")
       .select("id, remaining")

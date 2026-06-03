@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { STUDIO_TOOLS, type StudioTool } from "@/lib/studio";
+import Link from "next/link";
+import { type StudioTool } from "@/lib/studio";
 import { upscaleViaServer, editViaServer, UpscaleError } from "@/lib/upscaleClient";
 import BeforeAfterSlider from "@/components/studio/BeforeAfterSlider";
 
@@ -19,7 +20,9 @@ export default function StudyoPage() {
   const [afterUrl, setAfterUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [credits, setCredits] = useState<{ dailyFreeRemaining: number; earnedAvailable: number; total: number } | null>(null);
+  const [credits, setCredits] = useState<{ dailyFreeRemaining: number; earnedAvailable: number; total: number; trial: boolean } | null>(null);
+  const [blocked, setBlocked] = useState(false);
+  const [tools, setTools] = useState<StudioTool[] | null>(null);
 
   useEffect(() => {
     fetch("/api/ai/studio/credits")
@@ -27,6 +30,22 @@ export default function StudyoPage() {
       .then((d) => d && setCredits(d))
       .catch(() => {});
   }, [step]);
+
+  useEffect(() => {
+    fetch("/api/ai/studio/tools")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => setTools(d))
+      .catch(() => setTools([]));
+  }, []);
+
+  // Araç seçimi: kredi yoksa içeri hiç girme, uyarı göster (krediyi yüklemeden önce kontrol et)
+  function selectTool(t: StudioTool) {
+    if (!t.active) return;
+    if (credits && credits.total <= 0) { setBlocked(true); return; }
+    setBlocked(false);
+    setTool(t);
+    setStep("upload");
+  }
 
   function pickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -45,6 +64,8 @@ export default function StudyoPage() {
       setBeforeUrl(before);
       setAfterUrl(after);
       setStep("result");
+      // Header rozeti + diğer dinleyiciler anında tazelensin (sayfa yenilemeden)
+      window.dispatchEvent(new Event("studio-credits-updated"));
     } catch (err) {
       if (err instanceof UpscaleError && err.code === 401) {
         router.push("/giris?next=/studyo");
@@ -94,18 +115,33 @@ export default function StudyoPage() {
           {credits && (
             <p className="mt-4 inline-block text-sm bg-white border border-border rounded-full px-4 py-1.5 text-text">
               {credits.total > 0
-                ? <>Bugün <b className="text-primary">{credits.dailyFreeRemaining}</b> ücretsiz
-                    {credits.earnedAvailable > 0 && <> + <b className="text-primary">{credits.earnedAvailable}</b> kazanılmış</>} hakkın var</>
-                : <>Hakkın doldu — her 1000 ₺&apos;lik baskıda yeni kredi kazan 🎁</>}
+                ? credits.trial
+                  ? <>Ücretsiz deneme hakkın: <b className="text-primary">{credits.dailyFreeRemaining}</b> — beğenirsen baskıya geç, sonra her gün ücretsiz kredi 🎁</>
+                  : <>Bugün <b className="text-primary">{credits.dailyFreeRemaining}</b> ücretsiz
+                      {credits.earnedAvailable > 0 && <> + <b className="text-primary">{credits.earnedAvailable}</b> kazanılmış</>} hakkın var</>
+                : credits.trial
+                  ? <>Deneme hakkın doldu — bir baskı siparişi ver, her gün ücretsiz kredi kazan 🎁</>
+                  : <>Hakkın doldu — her 1000 ₺&apos;lik baskıda yeni kredi kazan 🎁</>}
+            </p>
+          )}
+          {blocked && (
+            <p className="mt-3 text-sm text-red-700">
+              {credits?.trial
+                ? <>Deneme hakkın doldu — bir baskı siparişi verince her gün ücretsiz kredi kazanırsın.{" "}</>
+                : <>Krediniz doldu — her 1000 ₺&apos;lik baskıda yeni kredi kazanırsınız.{" "}</>}
+              <Link href="/urunler" className="font-semibold underline">Baskıya göz at →</Link>
             </p>
           )}
         </div>
+        {tools === null && (
+          <p className="text-center text-secondary text-sm py-12">Araçlar yükleniyor...</p>
+        )}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {STUDIO_TOOLS.map((t) => (
+          {(tools ?? []).map((t) => (
             <button
               key={t.slug}
               disabled={!t.active}
-              onClick={() => { if (t.active) { setTool(t); setStep("upload"); } }}
+              onClick={() => selectTool(t)}
               className={`text-left p-6 rounded-3xl border transition-all ${
                 t.active
                   ? "bg-white border-border hover:border-primary hover:-translate-y-0.5 cursor-pointer"

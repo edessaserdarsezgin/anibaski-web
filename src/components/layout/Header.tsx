@@ -4,6 +4,7 @@ import CartCount from "./CartCount";
 import UserMenu from "./UserMenu";
 import MobileMenu from "./MobileMenu";
 import SearchBar from "./SearchBar";
+import StudioCreditBadge from "./StudioCreditBadge";
 
 export default async function Header() {
   const supabase = await createClient();
@@ -69,6 +70,8 @@ export default async function Header() {
             </svg>
             <CartCount />
           </Link>
+
+          {user && <StudioCreditBadge />}
 
           <div className="hidden md:flex items-center gap-2 ml-2">
             {user ? (

@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import type { CreditStats } from "@/lib/studioCredits";
+import CreditStatsView from "@/components/studio/CreditStatsView";
 
-type Status = { dailyFreeRemaining: number; earnedAvailable: number; total: number };
+type Status = { dailyFreeRemaining: number; earnedAvailable: number; total: number; trial?: boolean; stats?: CreditStats };
 
 export default function CreditManager({ userId }: { userId: string }) {
   const [status, setStatus] = useState<Status | null>(null);
@@ -31,11 +33,19 @@ export default function CreditManager({ userId }: { userId: string }) {
       <h2 className="font-serif text-xl text-text mb-4">AI Kredi</h2>
       {status ? (
         <p className="text-sm text-text-light mb-5">
-          Günlük kalan: <b className="text-text">{status.dailyFreeRemaining}</b> ·
+          {status.trial ? "Deneme hakkı kalan" : "Günlük kalan"}: <b className="text-text">{status.dailyFreeRemaining}</b> ·
           Kazanılmış: <b className="text-text">{status.earnedAvailable}</b> ·
           Toplam: <b className="text-primary">{status.total}</b>
+          {status.trial && <span className="ml-2 text-xs text-orange-600">(henüz baskı yok — deneme modunda)</span>}
         </p>
       ) : <p className="text-sm text-text-light mb-5">Yükleniyor...</p>}
+
+      {status?.stats && (
+        <div className="mb-6">
+          <CreditStatsView stats={status.stats} />
+        </div>
+      )}
+
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1">
           <span className="text-xs text-text-light">Miktar (+/−)</span>
