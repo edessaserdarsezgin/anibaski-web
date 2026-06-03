@@ -3,6 +3,7 @@ import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import UserEditForm from "./UserEditForm";
+import CreditManager from "./CreditManager";
 
 export const metadata = { title: "Üye Detay | Admin", robots: { index: false, follow: false } };
 
@@ -102,6 +103,8 @@ export default async function AdminUyeDetayPage({ params }: Props) {
           )}
         </section>
       </div>
+
+      <CreditManager userId={id} />
 
       <section className="bg-white rounded-2xl border border-border overflow-hidden">
         <h2 className="font-serif text-xl text-text px-6 pt-6 pb-4">Sipariş Geçmişi</h2>
