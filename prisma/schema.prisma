@@ -203,3 +203,26 @@ model StudioJob {
   createdAt DateTime @default(now()) @db.Timestamptz(6)
   @@map("studio_jobs")
 }
+
+model StudioSettings {
+  id                Int     @id @default(1)
+  dailyFree         Int     @default(3)    @map("daily_free")
+  orderThreshold    Decimal @default(1000) @map("order_threshold") @db.Decimal(10, 2)
+  orderCreditAmount Int     @default(10)   @map("order_credit_amount")
+  expiryDays        Int     @default(30)   @map("expiry_days")
+  maxEarnedBalance  Int     @default(50)   @map("max_earned_balance")
+  @@map("studio_settings")
+}
+
+model StudioCreditGrant {
+  id        String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  userId    String
+  amount    Int
+  remaining Int
+  expiresAt DateTime @db.Timestamptz(6)
+  source    String   @default("order")
+  orderId   String?
+  note      String?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@map("studio_credit_grants")
+}
