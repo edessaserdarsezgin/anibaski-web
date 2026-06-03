@@ -13,9 +13,9 @@ export async function callAuraSpace(input: Buffer): Promise<Buffer> {
   const blob = new Blob([new Uint8Array(input)], { type: "image/jpeg" });
   const result = await client.predict("/process_image", { input_image: blob });
 
-  // AuraSR-v2 çıktısı: [before, after] (Imageslider). after = data[1], FileData(url).
-  const data = result.data as Array<{ url?: string } | null>;
-  const after = data?.[1];
+  // AuraSR-v2 çıktısı: ImageSlider → iç içe [[before, after]]. after = data[0][1], FileData(url).
+  const data = result.data as Array<Array<{ url?: string } | null>>;
+  const after = data?.[0]?.[1];
   if (!after?.url) throw new Error("Upscale sonucu alınamadı");
 
   const res = await fetch(after.url);
