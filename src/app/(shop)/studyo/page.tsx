@@ -2,8 +2,8 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { STUDIO_TOOLS } from "@/lib/studio";
-import { upscaleViaServer, UpscaleError } from "@/lib/upscaleClient";
+import { STUDIO_TOOLS, type StudioTool } from "@/lib/studio";
+import { upscaleViaServer, editViaServer, UpscaleError } from "@/lib/upscaleClient";
 import BeforeAfterSlider from "@/components/studio/BeforeAfterSlider";
 
 type Step = "gallery" | "upload" | "processing" | "result";
@@ -13,6 +13,7 @@ export default function StudyoPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<Step>("gallery");
+  const [tool, setTool] = useState<StudioTool | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [beforeUrl, setBeforeUrl] = useState<string | null>(null);
   const [afterUrl, setAfterUrl] = useState<string | null>(null);
@@ -24,13 +25,15 @@ export default function StudyoPage() {
     if (f) { setFile(f); setError(null); }
   }
 
-  async function handleUpscale() {
-    if (!file) return;
+  async function handleProcess() {
+    if (!file || !tool) return;
     setError(null);
     setStep("processing");
     try {
       const before = URL.createObjectURL(file);
-      const after = await upscaleViaServer(file);
+      const after = tool.engine === "edit"
+        ? await editViaServer(file, tool.slug)
+        : await upscaleViaServer(file);
       setBeforeUrl(before);
       setAfterUrl(after);
       setStep("result");
@@ -50,7 +53,7 @@ export default function StudyoPage() {
     setError(null);
     try {
       const blob = await (await fetch(afterUrl)).blob();
-      const f = new File([blob], "studio-upscaled.png", { type: blob.type || "image/png" });
+      const f = new File([blob], "studio-result.png", { type: blob.type || "image/png" });
       const fd = new FormData();
       fd.append("file", f);
       const res = await fetch("/api/upload", { method: "POST", body: fd });
@@ -70,7 +73,7 @@ export default function StudyoPage() {
   }
 
   function reset() {
-    setFile(null); setBeforeUrl(null); setAfterUrl(null); setError(null); setStep("gallery");
+    setFile(null); setBeforeUrl(null); setAfterUrl(null); setError(null); setTool(null); setStep("gallery");
   }
 
   if (step === "gallery") {
@@ -86,7 +89,7 @@ export default function StudyoPage() {
             <button
               key={t.slug}
               disabled={!t.active}
-              onClick={() => t.active && setStep("upload")}
+              onClick={() => { if (t.active) { setTool(t); setStep("upload"); } }}
               className={`text-left p-6 rounded-3xl border transition-all ${
                 t.active
                   ? "bg-white border-border hover:border-primary hover:-translate-y-0.5 cursor-pointer"
@@ -114,7 +117,7 @@ export default function StudyoPage() {
       <div className="max-w-2xl mx-auto px-8 py-24 flex flex-col items-center gap-6 text-center">
         <div className="w-16 h-16 rounded-full border-4 border-border border-t-primary animate-spin" />
         <h2 className="font-serif text-2xl text-text">Fotoğrafın işleniyor...</h2>
-        <p className="text-secondary text-sm">Yapay zeka fotoğrafını büyütüyor, birkaç saniye sürebilir.</p>
+        <p className="text-secondary text-sm">Yapay zeka çalışıyor, birkaç saniye sürebilir.</p>
       </div>
     );
   }
@@ -128,7 +131,7 @@ export default function StudyoPage() {
         <div className="flex flex-col sm:flex-row gap-3">
           <a
             href={afterUrl}
-            download="anibaski-netlestirilmis.png"
+            download="anibaski-studyo.png"
             className="flex-1 py-3.5 text-center bg-white border border-border text-text font-semibold rounded-full hover:border-primary transition-colors"
           >
             İndir
@@ -151,8 +154,8 @@ export default function StudyoPage() {
   return (
     <div className="max-w-2xl mx-auto px-8 py-16 flex flex-col gap-8">
       <div className="text-center">
-        <h1 className="font-serif text-4xl text-text mb-3">Netleştir & Büyüt</h1>
-        <p className="text-secondary">Düşük çözünürlüklü fotoğrafını yükle, baskıya uygun hale getirelim.</p>
+        <h1 className="font-serif text-4xl text-text mb-3">{tool?.name ?? "Stüdyo"}</h1>
+        <p className="text-secondary">{tool?.description}</p>
       </div>
 
       {error && (
@@ -172,12 +175,18 @@ export default function StudyoPage() {
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={pickFile} />
       </div>
 
+      {tool?.generative && (
+        <p className="text-xs text-secondary text-center -mt-4">
+          ⚠️ Bu yapay zeka efekti fotoğrafı yeniden yorumlar; sonuç orijinalden farklı olabilir. Beğenmezsen basmak zorunda değilsin.
+        </p>
+      )}
+
       <button
-        onClick={handleUpscale}
+        onClick={handleProcess}
         disabled={!file}
         className="py-4 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        Netleştir
+        Uygula
       </button>
 
       <button onClick={reset} className="text-sm text-secondary hover:text-primary transition-colors text-center">
