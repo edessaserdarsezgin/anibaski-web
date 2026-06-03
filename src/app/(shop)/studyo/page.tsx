@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { STUDIO_TOOLS, type StudioTool } from "@/lib/studio";
 import { upscaleViaServer, editViaServer, UpscaleError } from "@/lib/upscaleClient";
@@ -19,6 +19,14 @@ export default function StudyoPage() {
   const [afterUrl, setAfterUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [credits, setCredits] = useState<{ dailyFreeRemaining: number; earnedAvailable: number; total: number } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/ai/studio/credits")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setCredits(d))
+      .catch(() => {});
+  }, [step]);
 
   function pickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -83,6 +91,14 @@ export default function StudyoPage() {
           <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase mb-3">AnıBaskı AI Stüdyo</p>
           <h1 className="font-serif text-4xl md:text-5xl text-text mb-3">Fotoğraflarını mükemmelleştir</h1>
           <p className="text-secondary">Photoshop gerekmez — yapay zeka senin için yapsın.</p>
+          {credits && (
+            <p className="mt-4 inline-block text-sm bg-white border border-border rounded-full px-4 py-1.5 text-text">
+              {credits.total > 0
+                ? <>Bugün <b className="text-primary">{credits.dailyFreeRemaining}</b> ücretsiz
+                    {credits.earnedAvailable > 0 && <> + <b className="text-primary">{credits.earnedAvailable}</b> kazanılmış</>} hakkın var</>
+                : <>Hakkın doldu — her 1000 ₺&apos;lik baskıda yeni kredi kazan 🎁</>}
+            </p>
+          )}
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {STUDIO_TOOLS.map((t) => (
