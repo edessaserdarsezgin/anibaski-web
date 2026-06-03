@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useCart } from "@/hooks/useCart";
 import LegalModal from "@/components/legal/LegalModal";
 import CaymaHakkiDoc from "@/components/legal/CaymaHakkiDoc";
@@ -291,7 +292,7 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
     return (
       <div className="max-w-6xl mx-auto px-8 py-24 text-center">
         <h1 className="font-serif text-2xl text-text mb-4">Sepetiniz boş</h1>
-        <a href="/urunler" className="text-primary hover:underline font-semibold">Ürünlere git</a>
+        <Link href="/urunler" className="text-primary hover:underline font-semibold">Ürünlere git</Link>
       </div>
     );
   }

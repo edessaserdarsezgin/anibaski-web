@@ -173,7 +173,7 @@ export default async function UrunDetayPage({ params }: Props) {
                 ))}
               </div>
               <p className="text-[11px] text-text-light border-t border-border pt-2.5">
-                Siparişler haftaiçi <span className="font-semibold text-text">14:00</span>'a kadar verilirse aynı gün üretime alınır.
+                Siparişler haftaiçi <span className="font-semibold text-text">14:00</span>&apos;a kadar verilirse aynı gün üretime alınır.
               </p>
             </div>
 

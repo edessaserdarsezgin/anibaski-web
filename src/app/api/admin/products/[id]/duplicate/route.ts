@@ -26,7 +26,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   if (fetchError || !original) return NextResponse.json({ error: "Ürün bulunamadı" }, { status: 404 });
 
   // Slug çakışmalarını önle
-  let baseSlug = `${original.slug}-kopya`;
+  const baseSlug = `${original.slug}-kopya`;
   let slug = baseSlug;
   let attempt = 1;
   while (true) {

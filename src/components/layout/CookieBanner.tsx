@@ -30,7 +30,7 @@ export default function CookieBanner() {
           <Link href="/kvkk" className="text-white underline underline-offset-2 hover:text-white/70 transition-colors">
             Gizlilik Politikası
           </Link>
-          'nı okuyabilirsiniz.
+          &apos;nı okuyabilirsiniz.
         </p>
         <div className="flex gap-2 shrink-0">
           <button
