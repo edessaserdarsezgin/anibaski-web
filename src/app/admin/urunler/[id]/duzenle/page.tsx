@@ -39,6 +39,7 @@ export default function UrunDuzenle() {
     name: "", slug: "", basePrice: 0, categoryId: "", description: "",
     details: "",
     discountPercent: "", discountStartsAt: "", discountEndsAt: "",
+    isFeatured: false,
   });
   const [requiresPhotoUpload, setRequiresPhotoUpload] = useState(false);
   const [photoCount, setPhotoCount] = useState(1);
@@ -90,6 +91,7 @@ export default function UrunDuzenle() {
           discountPercent: product.discount_percent != null ? String(product.discount_percent) : "",
           discountStartsAt: isoToLocalInput(product.discount_starts_at ?? null),
           discountEndsAt: isoToLocalInput(product.discount_ends_at ?? null),
+          isFeatured: product.is_featured ?? false,
         });
         setImages(product.images ?? []);
         setRequiresPhotoUpload(!!product.requiresPhotoUpload);
@@ -190,7 +192,7 @@ export default function UrunDuzenle() {
     const res = await fetch(`/api/admin/products/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: form.name, slug: form.slug, basePrice: form.basePrice, categoryId: form.categoryId, description: form.description, images, specs: form.details.trim() ? { details: form.details.trim() } : null, requiresPhotoUpload, photoCount: requiresPhotoUpload ? photoCount : 1, mockupTemplateUrl: mockupTemplateUrl || null, discount_percent: form.discountPercent || null, discount_starts_at: localInputToIso(form.discountStartsAt), discount_ends_at: localInputToIso(form.discountEndsAt) }),
+      body: JSON.stringify({ name: form.name, slug: form.slug, basePrice: form.basePrice, categoryId: form.categoryId, description: form.description, images, specs: form.details.trim() ? { details: form.details.trim() } : null, requiresPhotoUpload, photoCount: requiresPhotoUpload ? photoCount : 1, mockupTemplateUrl: mockupTemplateUrl || null, discount_percent: form.discountPercent || null, discount_starts_at: localInputToIso(form.discountStartsAt), discount_ends_at: localInputToIso(form.discountEndsAt), is_featured: form.isFeatured }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -323,6 +325,14 @@ export default function UrunDuzenle() {
                 );
               })}
             </div>
+          </div>
+          <div className="flex flex-col gap-1.5 col-span-2">
+            <label className="flex items-center gap-2 text-sm font-semibold text-text">
+              <input type="checkbox" checked={form.isFeatured}
+                onChange={e => setForm(f => ({ ...f, isFeatured: e.target.checked }))}
+                className="w-4 h-4 accent-primary" />
+              Ana sayfada öne çıkar
+            </label>
           </div>
           <div className="flex flex-col gap-1.5 col-span-2">
             <label className="text-sm font-semibold text-text">Açıklama</label>

@@ -154,6 +154,7 @@ export default function YeniUrunPage() {
       discount_percent: form.get("discount_percent") || null,
       discount_starts_at: localInputToIso(form.get("discount_starts_at") as string),
       discount_ends_at: localInputToIso(form.get("discount_ends_at") as string),
+      is_featured: form.get("is_featured") === "on",
     };
 
     const res = await fetch("/api/admin/products", {
@@ -295,6 +296,10 @@ export default function YeniUrunPage() {
             </div>
           </div>
         </div>
+        <label className="flex items-center gap-2 text-sm font-semibold text-text">
+          <input type="checkbox" name="is_featured" className="w-4 h-4 accent-primary" />
+          Ana sayfada öne çıkar
+        </label>
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text">Açıklama</label>
           <textarea name="description" rows={3} className={`${inputCls} resize-none`} placeholder="Ürün açıklaması..." />
