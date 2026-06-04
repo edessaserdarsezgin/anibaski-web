@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type Category = { id: string; name: string; slug: string; description: string | null; parentId: string | null };
+type Category = { id: string; name: string; slug: string; description: string | null; parentId: string | null; show_on_home?: boolean; home_position?: number };
 
 const TR_MAP: Record<string, string> = {
   ç: "c", ğ: "g", ı: "i", İ: "i", ö: "o", ş: "s", ü: "u",
@@ -21,7 +21,7 @@ export default function AdminKategorilerPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", slug: "", description: "", parentId: "" });
+  const [editForm, setEditForm] = useState({ name: "", slug: "", description: "", parentId: "", show_on_home: false, home_position: 0 });
 
   async function load() {
     const res = await fetch("/api/admin/categories");
@@ -52,14 +52,14 @@ export default function AdminKategorilerPage() {
 
   function startEdit(cat: Category) {
     setEditingId(cat.id);
-    setEditForm({ name: cat.name, slug: cat.slug, description: cat.description ?? "", parentId: cat.parentId ?? "" });
+    setEditForm({ name: cat.name, slug: cat.slug, description: cat.description ?? "", parentId: cat.parentId ?? "", show_on_home: cat.show_on_home ?? false, home_position: cat.home_position ?? 0 });
   }
 
   async function handleUpdate(id: string) {
     await fetch("/api/admin/categories", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, name: editForm.name, slug: editForm.slug, description: editForm.description, parentId: editForm.parentId || null }),
+      body: JSON.stringify({ id, name: editForm.name, slug: editForm.slug, description: editForm.description, parentId: editForm.parentId || null, show_on_home: editForm.show_on_home, home_position: editForm.home_position }),
     });
     setEditingId(null);
     await load();
@@ -157,6 +157,17 @@ export default function AdminKategorilerPage() {
                             <option key={p.id} value={p.id}>{p.name}</option>
                           ))}
                         </select>
+                        <label className="flex items-center gap-2 text-sm text-text">
+                          <input type="checkbox" checked={editForm.show_on_home}
+                            onChange={e => setEditForm(f => ({ ...f, show_on_home: e.target.checked }))}
+                            className="w-4 h-4 accent-primary" />
+                          Ana sayfada göster
+                        </label>
+                        {editForm.show_on_home && (
+                          <input type="number" value={editForm.home_position}
+                            onChange={e => setEditForm(f => ({ ...f, home_position: Number(e.target.value) }))}
+                            className={inputCls + " w-full"} placeholder="Sıra (0 = en üst)" />
+                        )}
                         <div className="flex gap-2">
                           <button onClick={() => handleUpdate(cat.id)} className="px-4 py-1.5 bg-primary text-white text-xs font-semibold rounded-full">Kaydet</button>
                           <button onClick={() => setEditingId(null)} className="px-4 py-1.5 border border-border text-xs font-semibold rounded-full">İptal</button>
@@ -170,6 +181,7 @@ export default function AdminKategorilerPage() {
                             <p className="text-sm font-semibold text-text">{cat.name}</p>
                           </div>
                           <p className="text-xs text-text-light">{cat.slug}</p>
+                          {cat.show_on_home && <p className="text-[10px] text-primary font-semibold">🏠 Ana sayfada (sıra {cat.home_position ?? 0})</p>}
                         </div>
                         <div className="flex gap-3">
                           <button onClick={() => startEdit(cat)} className="text-xs text-primary hover:underline font-semibold">Düzenle</button>
