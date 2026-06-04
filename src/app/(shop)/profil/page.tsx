@@ -114,6 +114,7 @@ export default async function ProfilPage() {
             email={user.email!}
             fullName={profile?.fullName ?? null}
             phone={profile?.phone ?? null}
+            landline={profile?.landline ?? null}
             notifyDeliveryContact={profile?.notify_delivery_contact ?? false}
             marketingConsent={profile?.marketing_consent ?? false}
           />
