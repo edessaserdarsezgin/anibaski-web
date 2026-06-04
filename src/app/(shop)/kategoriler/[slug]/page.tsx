@@ -78,12 +78,21 @@ export default async function KategoriPage({ params, searchParams }: Props) {
   ]);
 
   const tagProductIds = (tagIdsResult.data as { productId: string }[] | null)?.map(r => r.productId) ?? null;
-  const baseQuery = adminDb
+  const { data: pcRows } = await adminDb
+    .from("product_categories")
+    .select("productId")
+    .in("categoryId", allCategoryIds);
+  const joinProductIds = Array.from(new Set((pcRows ?? []).map((r) => r.productId)));
+
+  let baseQuery = adminDb
     .from("products_with_order_count")
     .select("id, name, slug, description, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color))")
-    .in("categoryId", allCategoryIds)
     .eq("isActive", true)
     .order(column, { ascending });
+
+  baseQuery = joinProductIds.length
+    ? baseQuery.or(`categoryId.in.(${allCategoryIds.join(",")}),id.in.(${joinProductIds.join(",")})`)
+    : baseQuery.in("categoryId", allCategoryIds);
   const { data: products } = tag
     ? (tagProductIds && tagProductIds.length > 0
         ? await baseQuery.in("id", tagProductIds)
