@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import SortSelect from "@/components/product/SortSelect";
 import TagFilter from "@/components/product/TagFilter";
+import PriceTag from "@/components/product/PriceTag";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -79,7 +80,7 @@ export default async function KategoriPage({ params, searchParams }: Props) {
   const tagProductIds = (tagIdsResult.data as { productId: string }[] | null)?.map(r => r.productId) ?? null;
   const baseQuery = adminDb
     .from("products_with_order_count")
-    .select("id, name, slug, description, basePrice, images, categoryId, productTags:product_tags(tagId, position, tag:tags(name, color))")
+    .select("id, name, slug, description, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color))")
     .in("categoryId", allCategoryIds)
     .eq("isActive", true)
     .order(column, { ascending });
@@ -239,10 +240,15 @@ export default async function KategoriPage({ params, searchParams }: Props) {
                       </p>
                     )}
                     <div className="flex items-center justify-between">
-                      <p className="font-serif text-lg font-semibold text-primary">
-                        {Number(product.basePrice).toLocaleString("tr-TR")} ₺
-                        <span className="text-xs font-sans font-normal text-text-light ml-1">den itibaren</span>
-                      </p>
+                      <PriceTag
+                        basePrice={Number(product.basePrice)}
+                        discount={{
+                          discount_percent: (product as { discount_percent?: number | null }).discount_percent ?? null,
+                          discount_starts_at: (product as { discount_starts_at?: string | null }).discount_starts_at ?? null,
+                          discount_ends_at: (product as { discount_ends_at?: string | null }).discount_ends_at ?? null,
+                        }}
+                        suffix="den itibaren"
+                      />
                       <span className="w-8 h-8 rounded-full border border-border group-hover:border-primary group-hover:bg-primary flex items-center justify-center text-text-light group-hover:text-white transition-all text-sm">
                         →
                       </span>

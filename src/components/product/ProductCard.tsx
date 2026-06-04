@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import PriceTag from "@/components/product/PriceTag";
 
 type ProductTagItem = {
   tagId: string;
@@ -20,6 +21,9 @@ type Props = {
     images?: string[] | null;
     category?: { name: string; slug: string } | null;
     productTags?: ProductTagItem[] | null;
+    discount_percent?: number | null;
+    discount_starts_at?: string | null;
+    discount_ends_at?: string | null;
   };
   initialFavorited?: boolean;
   priority?: boolean;
@@ -141,10 +145,15 @@ export default function ProductCard({ product, initialFavorited = false, priorit
             </p>
           )}
           <div className="flex items-center justify-between">
-            <p className="font-serif text-lg font-semibold text-primary">
-              {Number(product.basePrice).toLocaleString("tr-TR")} ₺
-              <span className="text-xs font-sans font-normal text-text-light ml-1">den itibaren</span>
-            </p>
+            <PriceTag
+              basePrice={Number(product.basePrice)}
+              discount={{
+                discount_percent: product.discount_percent ?? null,
+                discount_starts_at: product.discount_starts_at ?? null,
+                discount_ends_at: product.discount_ends_at ?? null,
+              }}
+              suffix="den itibaren"
+            />
             <span className="w-8 h-8 rounded-full border border-border group-hover:border-primary group-hover:bg-primary flex items-center justify-center text-text-light group-hover:text-white transition-all text-sm">
               →
             </span>

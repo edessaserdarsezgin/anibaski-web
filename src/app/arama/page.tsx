@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { createAdminClient } from "@/lib/supabase/server";
+import PriceTag from "@/components/product/PriceTag";
 
 export const metadata = {
   title: "Arama Sonuçları",
@@ -17,6 +18,9 @@ type Product = {
   images: string[] | null;
   description: string | null;
   category: { name: string; slug: string } | { name: string; slug: string }[] | null;
+  discount_percent?: number | null;
+  discount_starts_at?: string | null;
+  discount_ends_at?: string | null;
 };
 
 export default async function AramaPage({ searchParams }: Props) {
@@ -28,7 +32,7 @@ export default async function AramaPage({ searchParams }: Props) {
     const supabase = createAdminClient();
     const { data } = await supabase
       .from("products")
-      .select("id, name, slug, basePrice, images, description, category:categories(name, slug)")
+      .select("id, name, slug, basePrice, images, description, discount_percent, discount_starts_at, discount_ends_at, category:categories(name, slug)")
       .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
       .eq("isActive", true)
       .order("name", { ascending: true });
@@ -82,7 +86,7 @@ export default async function AramaPage({ searchParams }: Props) {
                 <div className="p-5">
                   {cat && <p className="text-xs text-text-light mb-1">{cat.name}</p>}
                   <h2 className="font-serif text-lg text-text mb-2">{p.name}</h2>
-                  <p className="font-semibold text-primary">{Number(p.basePrice).toLocaleString("tr-TR")} ₺</p>
+                  <PriceTag basePrice={Number(p.basePrice)} discount={{ discount_percent: p.discount_percent ?? null, discount_starts_at: p.discount_starts_at ?? null, discount_ends_at: p.discount_ends_at ?? null }} />
                 </div>
               </Link>
             );
