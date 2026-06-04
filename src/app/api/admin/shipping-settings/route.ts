@@ -22,13 +22,20 @@ export async function GET() {
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ shippingFee: 49, freeShippingThreshold: 500, codFee: 30 });
+    return NextResponse.json({
+      shippingFee: 49, freeShippingThreshold: 500, codFee: 30,
+      productionTime: "2–3 iş günü", shippingTime: "1–3 iş günü",
+      orderCutoffNote: "Siparişler hafta içi 14:00'a kadar verilirse aynı gün üretime alınır.",
+    });
   }
 
   return NextResponse.json({
     shippingFee: Number(data.shipping_fee),
     freeShippingThreshold: Number(data.free_shipping_threshold),
     codFee: Number(data.cod_fee),
+    productionTime: data.production_time?.trim() || "2–3 iş günü",
+    shippingTime: data.shipping_time?.trim() || "1–3 iş günü",
+    orderCutoffNote: data.order_cutoff_note?.trim() || "Siparişler hafta içi 14:00'a kadar verilirse aynı gün üretime alınır.",
   });
 }
 
@@ -37,7 +44,7 @@ export async function PATCH(req: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { shippingFee, freeShippingThreshold, codFee } = body;
+  const { shippingFee, freeShippingThreshold, codFee, productionTime, shippingTime, orderCutoffNote } = body;
 
   const supabase = await createAdminClient();
   const { error } = await supabase
@@ -47,6 +54,9 @@ export async function PATCH(req: Request) {
       shipping_fee: shippingFee,
       free_shipping_threshold: freeShippingThreshold,
       cod_fee: codFee,
+      production_time: (typeof productionTime === "string" && productionTime.trim()) ? productionTime.trim() : null,
+      shipping_time: (typeof shippingTime === "string" && shippingTime.trim()) ? shippingTime.trim() : null,
+      order_cutoff_note: (typeof orderCutoffNote === "string" && orderCutoffNote.trim()) ? orderCutoffNote.trim() : null,
     });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
