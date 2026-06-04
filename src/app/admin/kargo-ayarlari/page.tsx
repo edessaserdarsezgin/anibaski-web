@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/ToastProvider";
 
-type Settings = { shippingFee: number; freeShippingThreshold: number; codFee: number };
+type Settings = { shippingFee: number; freeShippingThreshold: number; codFee: number; productionTime: string; shippingTime: string; orderCutoffNote: string };
 
 export default function KargoAyarlariPage() {
-  const [form, setForm] = useState<Settings>({ shippingFee: 49, freeShippingThreshold: 500, codFee: 30 });
+  const [form, setForm] = useState<Settings>({ shippingFee: 49, freeShippingThreshold: 500, codFee: 30, productionTime: "", shippingTime: "", orderCutoffNote: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -74,6 +74,30 @@ export default function KargoAyarlariPage() {
             className={inputCls}
           />
           <p className="text-xs text-text-light">Kapıda ödeme seçildiğinde sipariş toplamına eklenir.</p>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text">Üretim Süresi</label>
+          <input type="text" value={form.productionTime}
+            onChange={e => setForm(f => ({ ...f, productionTime: e.target.value }))}
+            className={inputCls} placeholder="2–3 iş günü" />
+          <p className="text-xs text-text-light">Ürün detayında &quot;Üretim&quot; değeri. Boş = varsayılan.</p>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text">Kargo Süresi</label>
+          <input type="text" value={form.shippingTime}
+            onChange={e => setForm(f => ({ ...f, shippingTime: e.target.value }))}
+            className={inputCls} placeholder="1–3 iş günü" />
+          <p className="text-xs text-text-light">Ürün detayında &quot;Kargo&quot; değeri. Boş = varsayılan.</p>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text">Sipariş Cutoff Notu</label>
+          <textarea value={form.orderCutoffNote}
+            onChange={e => setForm(f => ({ ...f, orderCutoffNote: e.target.value }))}
+            rows={2} className={`${inputCls} resize-none`} placeholder="Siparişler hafta içi 14:00'a kadar verilirse aynı gün üretime alınır." />
+          <p className="text-xs text-text-light">Ürün detayı kargo kutusunun altındaki not. Boş = varsayılan.</p>
         </div>
 
         <div className="pt-2 border-t border-border">
