@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
+import { localInputToIso } from "@/lib/pricing";
 
 type Category = { id: string; name: string; slug: string; parentId: string | null };
 type VariantOption = { label: string; priceAddon: number };
@@ -149,6 +150,9 @@ export default function YeniUrunPage() {
       requiresPhotoUpload,
       photoCount: requiresPhotoUpload ? photoCount : 1,
       specs: details.trim() ? { details: details.trim() } : null,
+      discount_percent: form.get("discount_percent") || null,
+      discount_starts_at: localInputToIso(form.get("discount_starts_at") as string),
+      discount_ends_at: localInputToIso(form.get("discount_ends_at") as string),
     };
 
     const res = await fetch("/api/admin/products", {
@@ -251,6 +255,20 @@ export default function YeniUrunPage() {
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text">Fiyat (₺)</label>
           <input name="basePrice" type="number" min="0" step="0.01" required className={inputCls} placeholder="349" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text">İndirim (%) — opsiyonel</label>
+          <input name="discount_percent" type="number" min="0" max="100" className={inputCls} placeholder="örn. 20" />
+          <div className="grid grid-cols-2 gap-2 mt-1">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-text-light">Başlangıç</label>
+              <input name="discount_starts_at" type="datetime-local" className={inputCls} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-text-light">Bitiş</label>
+              <input name="discount_ends_at" type="datetime-local" className={inputCls} />
+            </div>
+          </div>
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text">Açıklama</label>

@@ -2,6 +2,7 @@
 
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
+import { isoToLocalInput, localInputToIso } from "@/lib/pricing";
 import Image from "next/image";
 
 type Category = { id: string; name: string; slug: string; parentId?: string | null };
@@ -36,6 +37,7 @@ export default function UrunDuzenle() {
   const [form, setForm] = useState({
     name: "", slug: "", basePrice: 0, categoryId: "", description: "",
     details: "",
+    discountPercent: "", discountStartsAt: "", discountEndsAt: "",
   });
   const [requiresPhotoUpload, setRequiresPhotoUpload] = useState(false);
   const [photoCount, setPhotoCount] = useState(1);
@@ -84,6 +86,9 @@ export default function UrunDuzenle() {
           name: product.name, slug: product.slug, basePrice: Number(product.basePrice),
           categoryId: product.categoryId, description: product.description ?? "",
           details: s.details ?? "",
+          discountPercent: product.discount_percent != null ? String(product.discount_percent) : "",
+          discountStartsAt: isoToLocalInput(product.discount_starts_at ?? null),
+          discountEndsAt: isoToLocalInput(product.discount_ends_at ?? null),
         });
         setImages(product.images ?? []);
         setRequiresPhotoUpload(!!product.requiresPhotoUpload);
@@ -182,7 +187,7 @@ export default function UrunDuzenle() {
     const res = await fetch(`/api/admin/products/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: form.name, slug: form.slug, basePrice: form.basePrice, categoryId: form.categoryId, description: form.description, images, specs: form.details.trim() ? { details: form.details.trim() } : null, requiresPhotoUpload, photoCount: requiresPhotoUpload ? photoCount : 1, mockupTemplateUrl: mockupTemplateUrl || null }),
+      body: JSON.stringify({ name: form.name, slug: form.slug, basePrice: form.basePrice, categoryId: form.categoryId, description: form.description, images, specs: form.details.trim() ? { details: form.details.trim() } : null, requiresPhotoUpload, photoCount: requiresPhotoUpload ? photoCount : 1, mockupTemplateUrl: mockupTemplateUrl || null, discount_percent: form.discountPercent || null, discount_starts_at: localInputToIso(form.discountStartsAt), discount_ends_at: localInputToIso(form.discountEndsAt) }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -259,6 +264,24 @@ export default function UrunDuzenle() {
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-text">Fiyat (₺)</label>
             <input type="number" value={form.basePrice} onChange={e => setForm(f => ({ ...f, basePrice: Number(e.target.value) }))} required className={inputCls} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text">İndirim (%) — opsiyonel</label>
+            <input type="number" min="0" max="100" value={form.discountPercent}
+              onChange={e => setForm(f => ({ ...f, discountPercent: e.target.value }))}
+              className={inputCls} placeholder="örn. 20" />
+            <div className="grid grid-cols-2 gap-2 mt-1">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-text-light">Başlangıç</label>
+                <input type="datetime-local" value={form.discountStartsAt}
+                  onChange={e => setForm(f => ({ ...f, discountStartsAt: e.target.value }))} className={inputCls} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-text-light">Bitiş</label>
+                <input type="datetime-local" value={form.discountEndsAt}
+                  onChange={e => setForm(f => ({ ...f, discountEndsAt: e.target.value }))} className={inputCls} />
+              </div>
+            </div>
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-text">Kategori</label>
