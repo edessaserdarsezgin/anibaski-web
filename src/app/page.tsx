@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getShippingSettings } from "@/lib/shipping";
 import { createAdminClient } from "@/lib/supabase/server";
 import HomeCategoryRows from "@/components/home/HomeCategoryRows";
+import FeaturedStrip from "@/components/home/FeaturedStrip";
 
 export const metadata: Metadata = {
   title: "AnıBaskı | Anılarınızı Dokunulur Kılın",
@@ -37,6 +38,14 @@ export default async function HomePage() {
       products: (prods ?? []).filter((p) => p.categoryId === c.id).slice(0, 8),
     }));
   }
+
+  const { data: featRaw } = await homeDb
+    .from("products_with_order_count")
+    .select("id, name, slug, basePrice, images, discount_percent, discount_starts_at, discount_ends_at")
+    .eq("is_featured", true).eq("isActive", true)
+    .order("featured_position", { ascending: true }).order("createdAt", { ascending: false })
+    .limit(12);
+  const featured = featRaw ?? [];
 
   return (
     <>
@@ -251,6 +260,8 @@ export default async function HomePage() {
             )}
           </div>
         </section>
+
+        <FeaturedStrip products={featured} />
 
         {/* ── Güven Şeridi — Terracotta ─────────────────── */}
         <section className="py-12 px-8 bg-primary">
