@@ -36,6 +36,7 @@ export default function YeniUrunPage() {
   const [productName, setProductName] = useState("");
   const [productSlug, setProductSlug] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [extraCategoryIds, setExtraCategoryIds] = useState<string[]>([]);
 
   // Gruplu varyant state
   const [details, setDetails] = useState("");
@@ -177,6 +178,14 @@ export default function YeniUrunPage() {
       });
     }
 
+    if (extraCategoryIds.length > 0) {
+      await fetch(`/api/admin/products/${product.id}/categories`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ categoryIds: extraCategoryIds }),
+      });
+    }
+
     router.push("/admin/urunler");
     router.refresh();
   }
@@ -251,6 +260,22 @@ export default function YeniUrunPage() {
               );
             })}
           </select>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text">Ek Kategoriler (opsiyonel)</label>
+          <p className="text-xs text-text-light">Ürün, birincil kategorisinin yanı sıra seçtiğin kategorilerde de listelenir.</p>
+          <div className="flex flex-wrap gap-2 mt-1">
+            {categories.map((c) => {
+              const on = extraCategoryIds.includes(c.id);
+              return (
+                <button type="button" key={c.id}
+                  onClick={() => setExtraCategoryIds(s => on ? s.filter(x => x !== c.id) : [...s, c.id])}
+                  className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${on ? "border-primary bg-primary text-white" : "border-border text-text hover:border-primary"}`}>
+                  {c.name}
+                </button>
+              );
+            })}
+          </div>
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text">Fiyat (₺)</label>

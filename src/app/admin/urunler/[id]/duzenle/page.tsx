@@ -34,6 +34,7 @@ export default function UrunDuzenle() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [extraCategoryIds, setExtraCategoryIds] = useState<string[]>([]);
   const [form, setForm] = useState({
     name: "", slug: "", basePrice: 0, categoryId: "", description: "",
     details: "",
@@ -101,6 +102,8 @@ export default function UrunDuzenle() {
       setCategories(Array.isArray(cats) ? cats : []);
       setAllTags(tags);
       setSelectedTags(productTags);
+      const catRes = await fetch(`/api/admin/products/${id}/categories`);
+      if (catRes.ok) setExtraCategoryIds(await catRes.json());
       setLoading(false);
     }
     load();
@@ -199,6 +202,11 @@ export default function UrunDuzenle() {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tags: selectedTags }),
+    });
+    await fetch(`/api/admin/products/${id}/categories`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ categoryIds: extraCategoryIds }),
     });
     router.push("/admin/urunler");
     router.refresh();
@@ -299,6 +307,22 @@ export default function UrunDuzenle() {
                 );
               })}
             </select>
+          </div>
+          <div className="flex flex-col gap-1.5 col-span-2">
+            <label className="text-sm font-semibold text-text">Ek Kategoriler (opsiyonel)</label>
+            <p className="text-xs text-text-light">Ürün, birincil kategorisinin yanı sıra seçtiğin kategorilerde de listelenir.</p>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {categories.filter(c => c.id !== form.categoryId).map((c) => {
+                const on = extraCategoryIds.includes(c.id);
+                return (
+                  <button type="button" key={c.id}
+                    onClick={() => setExtraCategoryIds(s => on ? s.filter(x => x !== c.id) : [...s, c.id])}
+                    className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${on ? "border-primary bg-primary text-white" : "border-border text-text hover:border-primary"}`}>
+                    {c.name}
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <div className="flex flex-col gap-1.5 col-span-2">
             <label className="text-sm font-semibold text-text">Açıklama</label>
