@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
   const { data: product, error: productError } = await admin.supabase
     .from("products")
-    .insert({ name, slug, description, basePrice, categoryId: category.id, images: imageUrls?.length ? imageUrls : [], requiresPhotoUpload: !!requiresPhotoUpload, photoCount: photoCount ?? 1, specs: specs ?? null, ...parseDiscountInput(body) })
+    .insert({ name, slug, description, basePrice, categoryId: category.id, images: imageUrls?.length ? imageUrls : [], requiresPhotoUpload: !!requiresPhotoUpload, photoCount: photoCount ?? 1, specs: specs ?? null, ...parseDiscountInput(body), is_featured: !!body.is_featured, featured_position: Number.isFinite(Number(body.featured_position)) ? Number(body.featured_position) : 0 })
     .select().single();
 
   if (productError) return NextResponse.json({ error: productError.message }, { status: 500 });
