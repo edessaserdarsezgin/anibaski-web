@@ -50,6 +50,14 @@ export default async function UrunDetayPage({ params }: Props) {
     : { data: null };
   const isFavorited = !!favRow;
 
+  const { data: shipRow } = await adminDb.from("shipping_settings").select("*").eq("id", 1).single();
+  const shippingInfo = {
+    productionTime: shipRow?.production_time?.trim() || "2–3 iş günü",
+    shippingTime: shipRow?.shipping_time?.trim() || "1–3 iş günü",
+    freeShippingThreshold: shipRow?.free_shipping_threshold != null ? Number(shipRow.free_shipping_threshold) : 500,
+    orderCutoffNote: shipRow?.order_cutoff_note?.trim() || "Siparişler hafta içi 14:00'a kadar verilirse aynı gün üretime alınır.",
+  };
+
   const { data: variants } = await supabase
     .from("product_variants")
     .select("id, type, label, value, priceAddon")
@@ -165,9 +173,9 @@ export default async function UrunDetayPage({ params }: Props) {
               <p className="text-xs font-semibold text-text-light uppercase tracking-wide">Kargo & Teslimat</p>
               <div className="flex items-center gap-4">
                 {[
-                  { icon: "M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z", label: "Üretim", value: "2–3 iş günü" },
-                  { icon: "M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H3m16.5 0h-.75m-7.5 0h6m-6 0V5.625A2.625 2.625 0 0 1 12.375 3h3.75A2.625 2.625 0 0 1 18.75 5.625V18.75m-10.5 0V9.375A2.625 2.625 0 0 1 10.875 6.75h3.75", label: "Kargo", value: "1–3 iş günü" },
-                  { icon: "M21 11.25v8.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1 0 9.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1 1 14.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z", label: "Ücretsiz", value: "150 ₺ üzeri" },
+                  { icon: "M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z", label: "Üretim", value: shippingInfo.productionTime },
+                  { icon: "M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H3m16.5 0h-.75m-7.5 0h6m-6 0V5.625A2.625 2.625 0 0 1 12.375 3h3.75A2.625 2.625 0 0 1 18.75 5.625V18.75m-10.5 0V9.375A2.625 2.625 0 0 1 10.875 6.75h3.75", label: "Kargo", value: shippingInfo.shippingTime },
+                  { icon: "M21 11.25v8.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1 0 9.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1 1 14.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z", label: "Ücretsiz", value: `${shippingInfo.freeShippingThreshold.toLocaleString("tr-TR")} ₺ üzeri` },
                 ].map(({ icon, label, value }) => (
                   <div key={label} className="flex-1 flex flex-col items-center gap-1 text-center">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-primary">
@@ -179,7 +187,7 @@ export default async function UrunDetayPage({ params }: Props) {
                 ))}
               </div>
               <p className="text-[11px] text-text-light border-t border-border pt-2.5">
-                Siparişler haftaiçi <span className="font-semibold text-text">14:00</span>&apos;a kadar verilirse aynı gün üretime alınır.
+                {shippingInfo.orderCutoffNote}
               </p>
             </div>
 
