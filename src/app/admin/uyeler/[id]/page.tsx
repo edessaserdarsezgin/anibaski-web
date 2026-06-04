@@ -28,16 +28,20 @@ export default async function AdminUyeDetayPage({ params }: Props) {
   const { id } = await params;
   const supabase = createAdminClient();
 
-  const [{ data: profile }, { data: addresses }, { data: orders }] = await Promise.all([
+  const [{ data: profile }, { data: addresses }, { data: orders }, { data: jobs }] = await Promise.all([
     supabase.from("profiles").select(`id, email, "fullName", phone, role, notify_delivery_contact, "createdAt"`).eq("id", id).single(),
     supabase.from("addresses").select("*").eq("userId", id),
-    supabase.from("orders").select(`id, status, total, "createdAt", "paymentMethod", "paymentStatus"`).eq("userId", id).order("createdAt", { ascending: false }),
+    supabase.from("orders").select(`id, status, total, "createdAt", "paymentMethod", "paymentStatus", "discountCode", "discountAmount"`).eq("userId", id).order("createdAt", { ascending: false }),
+    supabase.from("studio_jobs").select(`status`).eq("userId", id),
   ]);
 
   if (!profile) notFound();
 
   const completedOrders = (orders ?? []).filter(o => o.paymentMethod === "cod" || o.paymentStatus === "paid");
   const totalSpent = completedOrders.reduce((sum, o) => sum + Number(o.total), 0);
+  const couponUses = completedOrders.filter((o) => o.discountCode).length;
+  const totalSaved = completedOrders.reduce((sum, o) => sum + Number(o.discountAmount ?? 0), 0);
+  const aiSuccess = (jobs ?? []).filter((j) => j.status === "success").length;
 
   return (
     <div>
@@ -66,6 +70,21 @@ export default async function AdminUyeDetayPage({ params }: Props) {
         <div className="bg-white rounded-2xl border border-border p-5">
           <p className="text-xs text-text-light uppercase tracking-widest mb-1">Toplam Harcama</p>
           <p className="text-lg font-semibold text-primary">{totalSpent.toLocaleString("tr-TR")} ₺</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="bg-white rounded-2xl border border-border p-5">
+          <p className="text-xs text-text-light uppercase tracking-widest mb-1">Kupon Kullanımı</p>
+          <p className="text-lg font-semibold text-text">{couponUses}</p>
+        </div>
+        <div className="bg-white rounded-2xl border border-border p-5">
+          <p className="text-xs text-text-light uppercase tracking-widest mb-1">Toplam Tasarruf</p>
+          <p className="text-lg font-semibold text-primary">{totalSaved.toLocaleString("tr-TR")} ₺</p>
+        </div>
+        <div className="bg-white rounded-2xl border border-border p-5">
+          <p className="text-xs text-text-light uppercase tracking-widest mb-1">AI İşlem (başarılı)</p>
+          <p className="text-lg font-semibold text-text">{aiSuccess}</p>
         </div>
       </div>
 
