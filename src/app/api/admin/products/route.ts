@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { parseDiscountInput } from "@/lib/pricing";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
 
   const { data: product, error: productError } = await admin.supabase
     .from("products")
-    .insert({ name, slug, description, basePrice, categoryId: category.id, images: imageUrls?.length ? imageUrls : [], requiresPhotoUpload: !!requiresPhotoUpload, photoCount: photoCount ?? 1, specs: specs ?? null })
+    .insert({ name, slug, description, basePrice, categoryId: category.id, images: imageUrls?.length ? imageUrls : [], requiresPhotoUpload: !!requiresPhotoUpload, photoCount: photoCount ?? 1, specs: specs ?? null, ...parseDiscountInput(body) })
     .select().single();
 
   if (productError) return NextResponse.json({ error: productError.message }, { status: 500 });

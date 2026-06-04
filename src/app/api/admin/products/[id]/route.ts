@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { parseDiscountInput } from "@/lib/pricing";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -31,9 +32,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
-  const { name, slug, basePrice, categoryId, description, images, specs, isActive, requiresPhotoUpload, photoCount, mockupTemplateUrl } = await req.json();
+  const body = await req.json();
+  const { name, slug, basePrice, categoryId, description, images, specs, isActive, requiresPhotoUpload, photoCount, mockupTemplateUrl } = body;
 
-  const updateData: Record<string, unknown> = { name, slug, basePrice, categoryId, description: description || null, images, specs: specs || null };
+  const updateData: Record<string, unknown> = { name, slug, basePrice, categoryId, description: description || null, images, specs: specs || null, ...parseDiscountInput(body) };
   if (typeof isActive === "boolean") updateData.isActive = isActive;
   if (typeof requiresPhotoUpload === "boolean") {
     updateData.requiresPhotoUpload = requiresPhotoUpload;
