@@ -32,7 +32,7 @@ export default async function AramaPage({ searchParams }: Props) {
     const supabase = createAdminClient();
     const { data } = await supabase
       .from("products")
-      .select("id, name, slug, basePrice, images, description, discount_percent, discount_starts_at, discount_ends_at, category:categories(name, slug)")
+      .select("id, name, slug, basePrice, images, description, discount_percent, discount_starts_at, discount_ends_at, category:categories!products_categoryId_fkey(name, slug)")
       .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
       .eq("isActive", true)
       .order("name", { ascending: true });

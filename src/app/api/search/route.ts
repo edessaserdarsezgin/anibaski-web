@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("products")
-    .select("id, name, slug, images, basePrice, category:categories(name, slug)")
+    .select("id, name, slug, images, basePrice, category:categories!products_categoryId_fkey(name, slug)")
     .or(`name.ilike.%${q}%,description.ilike.%${q}%`)
     .eq("isActive", true)
     .limit(limit);

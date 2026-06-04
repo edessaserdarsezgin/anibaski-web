@@ -43,7 +43,7 @@ export default async function UrunlerPage({ searchParams }: Props) {
   const tagProductIds = (tagIdsResult.data as { productId: string }[] | null)?.map(r => r.productId) ?? null;
   let baseQuery = adminDb
     .from("products_with_order_count")
-    .select("id, name, slug, description, basePrice, images, discount_percent, discount_starts_at, discount_ends_at, category:categories(name, slug), productTags:product_tags(tagId, position, tag:tags(name, color))")
+    .select("id, name, slug, description, basePrice, images, discount_percent, discount_starts_at, discount_ends_at, category:categories!products_categoryId_fkey(name, slug), productTags:product_tags(tagId, position, tag:tags(name, color))")
     .eq("isActive", true)
     .order(column, { ascending });
   if (readyMadeIds.length > 0) {

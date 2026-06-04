@@ -9,7 +9,7 @@ export default async function AdminUrunlerPage() {
   const supabase = createAdminClient();
   const { data: products } = await supabase
     .from("products")
-    .select("id, name, slug, basePrice, isActive, category:categories(name)")
+    .select("id, name, slug, basePrice, isActive, category:categories!products_categoryId_fkey(name)")
     .order("createdAt", { ascending: false });
 
   return (

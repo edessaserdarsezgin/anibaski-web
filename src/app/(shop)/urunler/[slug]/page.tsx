@@ -38,7 +38,7 @@ export default async function UrunDetayPage({ params }: Props) {
   const supabase = await createClient();
 
   const [{ data: product }, { data: { user } }] = await Promise.all([
-    supabase.from("products").select("*, category:categories(id, name, slug), productTags:product_tags(tagId, position, tag:tags(name, color))").eq("slug", slug).eq("isActive", true).single(),
+    supabase.from("products").select("*, category:categories!products_categoryId_fkey(id, name, slug), productTags:product_tags(tagId, position, tag:tags(name, color))").eq("slug", slug).eq("isActive", true).single(),
     supabase.auth.getUser(),
   ]);
 

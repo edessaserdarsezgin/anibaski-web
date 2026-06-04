@@ -19,7 +19,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const { data, error } = await admin.supabase
     .from("products")
-    .select("*, category:categories(id, name, slug)")
+    .select("*, category:categories!products_categoryId_fkey(id, name, slug)")
     .eq("id", id)
     .single();
 
