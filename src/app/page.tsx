@@ -4,6 +4,8 @@ import Footer from "@/components/layout/Footer";
 import AnnouncementBanner from "@/components/layout/AnnouncementBanner";
 import Link from "next/link";
 import { getShippingSettings } from "@/lib/shipping";
+import { createAdminClient } from "@/lib/supabase/server";
+import HomeCategoryRows from "@/components/home/HomeCategoryRows";
 
 export const metadata: Metadata = {
   title: "AnıBaskı | Anılarınızı Dokunulur Kılın",
@@ -19,6 +21,23 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   const { freeShippingThreshold } = await getShippingSettings();
+
+  const homeDb = createAdminClient();
+  const { data: homeCats } = await homeDb
+    .from("categories").select("id, name, slug").eq("show_on_home", true).order("home_position", { ascending: true });
+  let catRows: { id: string; name: string; slug: string; products: { id: string; name: string; slug: string; basePrice: number; images: string[] | null; discount_percent: number | null; discount_starts_at: string | null; discount_ends_at: string | null }[] }[] = [];
+  if (homeCats && homeCats.length > 0) {
+    const ids = homeCats.map((c) => c.id);
+    const { data: prods } = await homeDb
+      .from("products_with_order_count")
+      .select("id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at")
+      .in("categoryId", ids).eq("isActive", true).order("createdAt", { ascending: false });
+    catRows = homeCats.map((c) => ({
+      id: c.id, name: c.name, slug: c.slug,
+      products: (prods ?? []).filter((p) => p.categoryId === c.id).slice(0, 8),
+    }));
+  }
+
   return (
     <>
       <style>{`
@@ -195,6 +214,9 @@ export default async function HomePage() {
               </Link>
             </div>
 
+            {catRows.length > 0 ? (
+              <HomeCategoryRows rows={catRows} />
+            ) : (
             <div className="grid grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 gap-4 lg:h-[480px]">
               {/* Featured — large */}
               <Link href="/kategoriler/fotograf-baskilari"
@@ -226,6 +248,7 @@ export default async function HomePage() {
                 </Link>
               ))}
             </div>
+            )}
           </div>
         </section>
 
