@@ -29,7 +29,7 @@ export default async function AdminUyeDetayPage({ params }: Props) {
   const supabase = createAdminClient();
 
   const [{ data: profile }, { data: addresses }, { data: orders }, { data: jobs }] = await Promise.all([
-    supabase.from("profiles").select(`id, email, "fullName", phone, role, notify_delivery_contact, "createdAt"`).eq("id", id).single(),
+    supabase.from("profiles").select(`id, email, "fullName", phone, role, notify_delivery_contact, landline, "createdAt"`).eq("id", id).single(),
     supabase.from("addresses").select("*").eq("userId", id),
     supabase.from("orders").select(`id, status, total, "createdAt", "paymentMethod", "paymentStatus", "discountCode", "discountAmount"`).eq("userId", id).order("createdAt", { ascending: false }),
     supabase.from("studio_jobs").select(`status`).eq("userId", id),
@@ -97,6 +97,7 @@ export default async function AdminUyeDetayPage({ params }: Props) {
             phone={profile.phone}
             role={profile.role}
             notifyDeliveryContact={profile.notify_delivery_contact ?? false}
+            landline={profile.landline ?? null}
           />
         </section>
 

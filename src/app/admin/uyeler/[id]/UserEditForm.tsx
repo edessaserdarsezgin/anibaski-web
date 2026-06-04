@@ -9,9 +9,10 @@ type Props = {
   phone: string | null;
   role: string;
   notifyDeliveryContact: boolean;
+  landline: string | null;
 };
 
-export default function UserEditForm({ userId, fullName, phone, role, notifyDeliveryContact }: Props) {
+export default function UserEditForm({ userId, fullName, phone, role, notifyDeliveryContact, landline }: Props) {
   const router = useRouter();
   const [form, setForm] = useState({
     fullName: fullName ?? "",
@@ -68,6 +69,15 @@ export default function UserEditForm({ userId, fullName, phone, role, notifyDeli
           className={inputCls}
           placeholder="05xx xxx xx xx"
           type="tel"
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-sm font-semibold text-text">Sabit Telefon</label>
+        <input
+          value={landline ?? "—"}
+          disabled
+          className={inputCls + " opacity-60 cursor-not-allowed"}
         />
       </div>
 
