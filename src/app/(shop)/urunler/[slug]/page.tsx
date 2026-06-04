@@ -196,7 +196,7 @@ export default async function UrunDetayPage({ params }: Props) {
               {[
                 {
                   label: "Ücretsiz Kargo",
-                  sub: "150₺ üzeri",
+                  sub: `${shippingInfo.freeShippingThreshold.toLocaleString("tr-TR")}₺ üzeri`,
                   icon: (
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H3m16.5 0h-.75m-7.5 0h6m-6 0V5.625A2.625 2.625 0 0112.375 3h3.75A2.625 2.625 0 0118.75 5.625V18.75m-10.5 0V9.375A2.625 2.625 0 0110.875 6.75h3.75" />
                   ),
