@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { normalizePhone } from "@/lib/phone";
 
 export async function PATCH(req: NextRequest) {
   const supabase = await createClient();
@@ -15,6 +16,22 @@ export async function PATCH(req: NextRequest) {
   // Mevcut telefonu kontrol et — değişmişse phone_verified resetlensin
   const { data: current } = await supabase
     .from("profiles").select("phone").eq("id", user.id).single();
+
+  // Telefon değiştiyse başka hesapta kayıtlı mı kontrol et
+  if (normalizePhone(current?.phone) !== normalizePhone(phone)) {
+    const admin = createAdminClient();
+    const { data: inUse, error: rpcErr } = await admin.rpc("phone_in_use", {
+      p_norm: normalizePhone(phone),
+      p_exclude: user.id,
+    });
+    if (rpcErr) return NextResponse.json({ error: rpcErr.message }, { status: 500 });
+    if (inUse) {
+      return NextResponse.json(
+        { error: "Bu telefon numarası başka bir hesapta kayıtlı." },
+        { status: 409 }
+      );
+    }
+  }
 
   const updates: Record<string, unknown> = {
     fullName: fullName || null,
