@@ -20,24 +20,31 @@ type Profile = {
   createdAt: string;
 };
 
-type OrderRow = { userId: string; total: number };
+type OrderRow = { userId: string; total: number; discountCode: string | null; discountAmount: number | string | null };
 
 export default async function AdminUyelerPage() {
   noStore();
   const supabase = createAdminClient();
 
-  const [{ data: profiles }, { data: orders }] = await Promise.all([
+  const [{ data: profiles }, { data: orders }, { data: jobs }] = await Promise.all([
     supabase.from("profiles").select(`id, email, "fullName", phone, role, "createdAt"`).order("createdAt", { ascending: false }),
-    supabase.from("orders").select(`"userId", total, "paymentMethod", "paymentStatus"`),
+    supabase.from("orders").select(`"userId", total, "discountCode", "discountAmount", "paymentMethod", "paymentStatus"`),
+    supabase.from("studio_jobs").select(`"userId", status`),
   ]);
 
   // Tamamlanmış (paid veya cod) siparişlerin kullanıcıya göre özetini çıkar
   const completed = (orders ?? []).filter((o) => o.paymentMethod === "cod" || o.paymentStatus === "paid");
-  const stats = completed.reduce<Record<string, { count: number; total: number }>>((acc, o: OrderRow) => {
+  const stats = completed.reduce<Record<string, { count: number; total: number; coupon: number; saved: number }>>((acc, o: OrderRow) => {
     const k = o.userId;
-    if (!acc[k]) acc[k] = { count: 0, total: 0 };
+    if (!acc[k]) acc[k] = { count: 0, total: 0, coupon: 0, saved: 0 };
     acc[k].count += 1;
     acc[k].total += Number(o.total);
+    if (o.discountCode) { acc[k].coupon += 1; acc[k].saved += Number(o.discountAmount ?? 0); }
+    return acc;
+  }, {});
+
+  const aiStats = (jobs ?? []).reduce<Record<string, number>>((acc, j: { userId: string; status: string }) => {
+    if (j.status === "success") acc[j.userId] = (acc[j.userId] ?? 0) + 1;
     return acc;
   }, {});
 
@@ -60,6 +67,8 @@ export default async function AdminUyelerPage() {
                 <th className="text-left px-4 py-3 font-semibold">Üyelik</th>
                 <th className="text-center px-4 py-3 font-semibold">Sipariş</th>
                 <th className="text-right px-4 py-3 font-semibold">Toplam Harcama</th>
+                <th className="text-center px-4 py-3 font-semibold">Kupon</th>
+                <th className="text-center px-4 py-3 font-semibold">AI</th>
                 <th className="px-4 py-3 font-semibold">Rol</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -81,6 +90,8 @@ export default async function AdminUyelerPage() {
                     <td className="px-4 py-4 text-right font-semibold text-primary">
                       {stat ? `${stat.total.toLocaleString("tr-TR")} ₺` : "—"}
                     </td>
+                    <td className="px-4 py-4 text-center text-text-light">{stat?.coupon ?? 0}</td>
+                    <td className="px-4 py-4 text-center text-text-light">{aiStats[u.id] ?? 0}</td>
                     <td className="px-4 py-4">
                       <RoleSelect userId={u.id} currentRole={u.role} colorMap={ROLE_COLOR} />
                     </td>
