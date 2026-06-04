@@ -3,6 +3,7 @@ import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import AddToCartButton from "./AddToCartButton";
+import { activeDiscountPercent } from "@/lib/pricing";
 import ProductGallery from "./ProductGallery";
 import ProductDetailsTabs from "./ProductDetailsTabs";
 
@@ -143,6 +144,11 @@ export default async function UrunDetayPage({ params }: Props) {
                 photoCount: product.photoCount ?? 1,
                 mockupTemplateUrl: product.mockupTemplateUrl ?? null,
               }}
+              discountPercent={activeDiscountPercent({
+                discount_percent: product.discount_percent ?? null,
+                discount_starts_at: product.discount_starts_at ?? null,
+                discount_ends_at: product.discount_ends_at ?? null,
+              })}
               variantGroups={Object.entries(variantGroups).map(([type, items]) => ({
                 type,
                 items: items.map((v) => ({

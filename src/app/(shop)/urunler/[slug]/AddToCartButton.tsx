@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { syncCartSnapshot } from "@/hooks/useCart";
+import { applyDiscount } from "@/lib/pricing";
 
 type VariantItem = { id: string; label: string; value: string; priceAddon: number };
 type VariantGroup = { type: string; items: VariantItem[] };
@@ -19,16 +20,18 @@ type Props = {
     mockupTemplateUrl?: string | null;
   };
   variantGroups: VariantGroup[];
+  discountPercent?: number;
 };
 
-export default function AddToCartButton({ isLoggedIn, product, variantGroups }: Props) {
+export default function AddToCartButton({ isLoggedIn, product, variantGroups, discountPercent = 0 }: Props) {
   const router = useRouter();
   const [selected, setSelected] = useState<Record<string, VariantItem>>({});
   const [quantity, setQuantity] = useState(1);
   const [showModal, setShowModal] = useState(false);
 
   const totalAddon = Object.values(selected).reduce((sum, v) => sum + v.priceAddon, 0);
-  const unitPrice = product.basePrice + totalAddon;
+  const fullUnit = product.basePrice + totalAddon;
+  const unitPrice = applyDiscount(fullUnit, discountPercent);
   const totalPrice = unitPrice * quantity;
 
   function handleAddToCart() {
@@ -116,9 +119,17 @@ export default function AddToCartButton({ isLoggedIn, product, variantGroups }: 
 
       {/* Fiyat + Aksiyon */}
       <div className="pt-4 border-t border-border">
-        <p className="text-2xl font-semibold text-primary mb-4">
-          {totalPrice.toLocaleString("tr-TR")} ₺
-        </p>
+        {discountPercent > 0 ? (
+          <div className="mb-4 flex items-center gap-2 flex-wrap">
+            <span className="line-through text-text-light text-base">{(fullUnit * quantity).toLocaleString("tr-TR")} ₺</span>
+            <span className="text-2xl font-semibold text-primary">{totalPrice.toLocaleString("tr-TR")} ₺</span>
+            <span className="text-xs font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full">%{discountPercent}</span>
+          </div>
+        ) : (
+          <p className="text-2xl font-semibold text-primary mb-4">
+            {totalPrice.toLocaleString("tr-TR")} ₺
+          </p>
+        )}
 
         <div className="flex gap-2">
           {product.requiresPhotoUpload ? (
