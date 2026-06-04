@@ -29,6 +29,23 @@ export default function KayitPage() {
     setError("");
     setLoading(true);
 
+    // Telefon tekillik ön kontrolü
+    try {
+      const res = await fetch("/api/auth/check-phone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: phone.trim() }),
+      });
+      const json = await res.json();
+      if (!json.available) {
+        setError("Bu telefon numarası ile zaten bir hesap var.");
+        setLoading(false);
+        return;
+      }
+    } catch {
+      // Ön kontrol erişilemezse engelleme; DB index backstop devrede.
+    }
+
     const supabase = createClient();
     const { error } = await supabase.auth.signUp({
       email,
@@ -43,9 +60,14 @@ export default function KayitPage() {
     });
 
     if (error) {
-      setError(error.message === "User already registered"
-        ? "Bu e-posta adresi zaten kayıtlı."
-        : "Kayıt sırasında bir hata oluştu.");
+      const msg = error.message ?? "";
+      setError(
+        msg === "User already registered"
+          ? "Bu e-posta adresi zaten kayıtlı."
+          : /profiles_phone_unique|duplicate key|Database error/i.test(msg)
+            ? "Bu telefon numarası ile zaten bir hesap var."
+            : "Kayıt sırasında bir hata oluştu."
+      );
       setLoading(false);
       return;
     }
