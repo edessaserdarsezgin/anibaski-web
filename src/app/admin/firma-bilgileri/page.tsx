@@ -8,6 +8,7 @@ const EMPTY: CompanyInfo = {
   name: "", address: "", email: "", phone: "", taxOffice: "", taxNo: "",
   mersisNo: "", web: "", tradeRegistryNo: "", kepAddress: "",
   supportPhone: "", workingHours: "", bankName: "", accountHolder: "", iban: "",
+  landline: "", contractPhone: "phone",
 };
 
 const GROUPS: { title: string; fields: { key: keyof CompanyInfo; label: string; placeholder?: string }[] }[] = [
@@ -18,6 +19,7 @@ const GROUPS: { title: string; fields: { key: keyof CompanyInfo; label: string; 
       { key: "address", label: "Adres" },
       { key: "email", label: "E-posta" },
       { key: "phone", label: "Telefon" },
+      { key: "landline", label: "Sabit Telefon" },
       { key: "taxOffice", label: "Vergi Dairesi" },
       { key: "taxNo", label: "Vergi No" },
       { key: "mersisNo", label: "MERSİS No" },
@@ -102,6 +104,21 @@ export default function FirmaBilgileriPage() {
             </div>
           </div>
         ))}
+        <div className="bg-white rounded-2xl border border-border p-6">
+          <h2 className="font-serif text-lg text-text mb-4">Sözleşme Telefonu</h2>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text">Sözleşmelerde gösterilecek telefon</label>
+            <select
+              value={form.contractPhone}
+              onChange={e => setForm(f => ({ ...f, contractPhone: e.target.value as "phone" | "landline" }))}
+              className={inputCls + " cursor-pointer"}
+            >
+              <option value="phone">Cep Telefonu</option>
+              <option value="landline">Sabit Telefon</option>
+            </select>
+            <p className="text-xs text-text-light">Mesafeli satış, ön bilgilendirme ve cayma belgelerinde bu telefon görünür.</p>
+          </div>
+        </div>
         <button
           type="submit"
           disabled={saving}
