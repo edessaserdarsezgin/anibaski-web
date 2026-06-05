@@ -32,6 +32,12 @@ export default async function IletisimPage() {
               <a href={`tel:${phone.replace(/\s/g, "")}`}>{phone}</a>
             </li>
           )}
+          {c.landline && (
+            <li>
+              <strong>Sabit Telefon:</strong>{" "}
+              <a href={`tel:${c.landline.replace(/\s/g, "")}`}>{c.landline}</a>
+            </li>
+          )}
           {c.workingHours && (
             <li>
               <strong>Çalışma Saatleri:</strong> {c.workingHours}
