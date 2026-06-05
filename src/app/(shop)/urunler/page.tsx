@@ -4,6 +4,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import ProductCard from "@/components/product/ProductCard";
 import SortSelect from "@/components/product/SortSelect";
 import TagFilter from "@/components/product/TagFilter";
+import CategoryMenu from "@/components/product/CategoryMenu";
 import { getReadyMadeCategoryIds } from "@/lib/readyMade";
 
 type Props = { searchParams: Promise<{ sort?: string; tag?: string }> };
@@ -60,6 +61,15 @@ export default async function UrunlerPage({ searchParams }: Props) {
     : { data: [] };
   const favoriteIds = new Set((favoritesData ?? []).map((f: { productId: string }) => f.productId));
 
+  const qParts = [sort !== "newest" ? `sort=${sort}` : "", tag ? `tag=${tag}` : ""].filter(Boolean);
+  const queryString = qParts.length ? `?${qParts.join("&")}` : "";
+  const menuTree = (categories ?? [])
+    .filter((c) => !c.parentId && !readyMadeIds.includes(c.id))
+    .map((parent) => ({
+      id: parent.id, name: parent.name, slug: parent.slug,
+      children: (categories ?? []).filter((c) => c.parentId === parent.id).map((c) => ({ id: c.id, name: c.name, slug: c.slug })),
+    }));
+
   return (
     <>
       {/* ── Sayfa Başlığı ───────────────────────────── */}
@@ -83,48 +93,8 @@ export default async function UrunlerPage({ searchParams }: Props) {
 
       <div className="max-w-6xl mx-auto px-8 py-12">
 
-        {/* ── Kategori Filtreleri ──────────────────────── */}
-        <div className="flex gap-2 flex-wrap mb-12">
-          {(() => {
-            const queryParts = [
-              sort !== "newest" ? `sort=${sort}` : "",
-              tag ? `tag=${tag}` : "",
-            ].filter(Boolean);
-            const queryString = queryParts.length ? `?${queryParts.join("&")}` : "";
-            return (
-              <>
-                <Link
-                  href={`/urunler${queryString}`}
-                  className="px-5 py-2 rounded-full text-sm font-semibold border bg-text text-white border-text transition-all"
-                >
-                  Tümü
-                </Link>
-                {categories?.filter(c => !c.parentId && !readyMadeIds.includes(c.id)).map((parent) => {
-                  const children = categories.filter(c => c.parentId === parent.id);
-                  return (
-                    <div key={parent.id} className="flex items-center gap-1 flex-wrap">
-                      <Link
-                        href={`/kategoriler/${parent.slug}${queryString}`}
-                        className="px-5 py-2 rounded-full text-sm font-semibold border border-border text-text-light hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
-                      >
-                        {parent.name}
-                      </Link>
-                      {children.map(sub => (
-                        <Link
-                          key={sub.id}
-                          href={`/kategoriler/${sub.slug}${queryString}`}
-                          className="px-3 py-1.5 rounded-full text-xs font-semibold border border-border/60 text-text-light hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
-                        >
-                          {sub.name}
-                        </Link>
-                      ))}
-                    </div>
-                  );
-                })}
-              </>
-            );
-          })()}
-        </div>
+        {/* ── Kategori Menüsü ──────────────────────────── */}
+        <CategoryMenu categories={menuTree} queryString={queryString} />
 
         {/* ── Ürün Grid ───────────────────────────────── */}
         {!products?.length ? (
