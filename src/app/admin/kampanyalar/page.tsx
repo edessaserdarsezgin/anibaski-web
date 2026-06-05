@@ -4,6 +4,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import CampaignToggle from "./CampaignToggle";
 import CampaignDelete from "./CampaignDelete";
+import CampaignHomeToggle from "./CampaignHomeToggle";
 
 export const metadata = { title: "Kampanyalar | Admin" };
 
@@ -17,6 +18,7 @@ type Campaign = {
   starts_at: string | null;
   ends_at: string | null;
   is_active: boolean;
+  show_on_home: boolean;
   position: number;
 };
 
@@ -54,6 +56,7 @@ export default async function AdminKampanyalarPage() {
                 <th className="text-left px-4 py-3 font-semibold">Kupon</th>
                 <th className="text-left px-4 py-3 font-semibold">Tarih</th>
                 <th className="text-center px-4 py-3 font-semibold">Sıra</th>
+                <th className="text-center px-4 py-3 font-semibold">Ana Sayfa</th>
                 <th className="text-center px-4 py-3 font-semibold">Durum</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -79,6 +82,9 @@ export default async function AdminKampanyalarPage() {
                     {!c.starts_at && !c.ends_at && <p>Süresiz</p>}
                   </td>
                   <td className="px-4 py-4 text-center text-text-light">{c.position}</td>
+                  <td className="px-4 py-4 text-center">
+                    <CampaignHomeToggle id={c.id} on={c.show_on_home} />
+                  </td>
                   <td className="px-4 py-4 text-center">
                     <CampaignToggle id={c.id} active={c.is_active} />
                   </td>
