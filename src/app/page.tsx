@@ -7,6 +7,7 @@ import { getShippingSettings } from "@/lib/shipping";
 import { createAdminClient } from "@/lib/supabase/server";
 import HomeCategoryRows from "@/components/home/HomeCategoryRows";
 import FeaturedStrip from "@/components/home/FeaturedStrip";
+import HeroBanner from "@/components/home/HeroBanner";
 
 export const metadata: Metadata = {
   title: "AnıBaskı | Anılarınızı Dokunulur Kılın",
@@ -47,6 +48,16 @@ export default async function HomePage() {
     .limit(12);
   const featured = featRaw ?? [];
 
+  const nowIso = new Date().toISOString();
+  const { data: bannerRaw } = await homeDb
+    .from("campaigns")
+    .select("id, image_url, title, subtitle, cta_text, cta_url, starts_at, ends_at")
+    .eq("show_on_home", true).eq("is_active", true)
+    .order("position", { ascending: true });
+  const heroBanners = (bannerRaw ?? []).filter(
+    (b) => (!b.starts_at || b.starts_at <= nowIso) && (!b.ends_at || b.ends_at >= nowIso)
+  );
+
   return (
     <>
       <style>{`
@@ -77,6 +88,8 @@ export default async function HomePage() {
       <AnnouncementBanner />
       <Header />
       <main className="overflow-hidden">
+
+        <HeroBanner banners={heroBanners} />
 
         {/* ── Hero ──────────────────────────────────────── */}
         <section className="relative min-h-[92vh] flex items-center bg-bg">
