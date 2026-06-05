@@ -16,6 +16,8 @@ export type CompanyInfo = {
   bankName: string;
   accountHolder: string;
   iban: string;
+  landline: string;
+  contractPhone: "phone" | "landline";
 };
 
 export const COMPANY_DEFAULTS: CompanyInfo = {
@@ -34,6 +36,8 @@ export const COMPANY_DEFAULTS: CompanyInfo = {
   bankName: "",
   accountHolder: "",
   iban: "",
+  landline: "",
+  contractPhone: "phone",
 };
 
 export async function getCompanyInfo(): Promise<CompanyInfo> {
@@ -48,4 +52,10 @@ export async function getCompanyInfo(): Promise<CompanyInfo> {
   } catch {
     return COMPANY_DEFAULTS;
   }
+}
+
+/** Sözleşmelerde gösterilecek telefonu seçer (cep / sabit). */
+export function sellerForContracts(info: CompanyInfo): CompanyInfo {
+  const phone = info.contractPhone === "landline" && info.landline ? info.landline : info.phone;
+  return { ...info, phone };
 }
