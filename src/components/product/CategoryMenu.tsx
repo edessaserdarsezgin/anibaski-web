@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export type MenuCategory = {
-  id: string; name: string; slug: string;
+  id: string; name: string; slug: string; imageUrl?: string | null;
   children: { id: string; name: string; slug: string }[];
 };
 
@@ -77,29 +78,43 @@ export default function CategoryMenu({ categories, queryString }: { categories: 
               </button>
 
               {open && (
-                <div className="dropdown-enter absolute left-0 top-full mt-3 z-30 min-w-[224px] origin-top">
+                <div className="dropdown-enter absolute left-0 top-full mt-3 z-30 min-w-[248px] origin-top">
                   <div className="absolute -top-1.5 left-7 w-3 h-3 rotate-45 bg-white border-l border-t border-border" />
-                  <div className="relative bg-white border border-border rounded-2xl shadow-hover p-2">
-                    <Link
-                      href={`/kategoriler/${cat.slug}${queryString}`}
-                      onClick={() => setOpenId(null)}
-                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-serif text-[15px] text-text hover:bg-bg transition-colors"
-                    >
-                      <span>Tüm {cat.name}</span>
-                      <span className="text-xs text-primary" aria-hidden>→</span>
-                    </Link>
-                    <div className="my-1 mx-3 border-t border-border/70" />
+                  <div className="relative bg-white border border-border rounded-2xl shadow-hover p-2.5">
+                    {/* Başlık — kategori görseli (varsa) */}
+                    {cat.imageUrl && (
+                      <div className="flex items-center gap-3 px-2 pb-2.5 mb-1 border-b border-border/60">
+                        <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-bg border border-border shrink-0">
+                          <Image src={cat.imageUrl} alt={cat.name} fill sizes="40px" className="object-cover" />
+                        </div>
+                        <p className="font-serif text-[15px] text-text leading-tight">{cat.name}</p>
+                      </div>
+                    )}
+
+                    {/* Alt kategoriler */}
                     {cat.children.map((sub) => (
                       <Link
                         key={sub.id}
                         href={`/kategoriler/${sub.slug}${queryString}`}
                         onClick={() => setOpenId(null)}
-                        className="group/item flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-sm text-text-light hover:text-primary hover:bg-bg transition-all"
+                        className="group/item flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-text-light hover:text-primary hover:bg-bg transition-all"
                       >
                         <span className="w-1 h-4 rounded-full bg-transparent group-hover/item:bg-primary transition-colors" aria-hidden />
                         <span className="transition-transform duration-200 group-hover/item:translate-x-0.5">{sub.name}</span>
                       </Link>
                     ))}
+
+                    {/* Tümünü gör — alt CTA */}
+                    <div className="mt-1 pt-1 border-t border-border/70">
+                      <Link
+                        href={`/kategoriler/${cat.slug}${queryString}`}
+                        onClick={() => setOpenId(null)}
+                        className="group/all flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-primary hover:bg-primary/5 transition-colors"
+                      >
+                        <span>Tüm {cat.name}</span>
+                        <span className="transition-transform duration-200 group-hover/all:translate-x-0.5" aria-hidden>→</span>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               )}

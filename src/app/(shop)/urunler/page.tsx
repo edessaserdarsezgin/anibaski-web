@@ -33,7 +33,7 @@ export default async function UrunlerPage({ searchParams }: Props) {
   const adminDb = createAdminClient();
 
   const [{ data: categories }, { data: allTags }, tagIdsResult, readyMadeIds] = await Promise.all([
-    adminDb.from("categories").select("id, name, slug, parentId").order("name"),
+    adminDb.from("categories").select("id, name, slug, parentId, imageUrl").order("name"),
     adminDb.from("tags").select("id, name, color").order("name"),
     tag
       ? adminDb.from("product_tags").select("productId").eq("tagId", tag)
@@ -66,7 +66,7 @@ export default async function UrunlerPage({ searchParams }: Props) {
   const menuTree = (categories ?? [])
     .filter((c) => !c.parentId && !readyMadeIds.includes(c.id))
     .map((parent) => ({
-      id: parent.id, name: parent.name, slug: parent.slug,
+      id: parent.id, name: parent.name, slug: parent.slug, imageUrl: (parent as { imageUrl?: string | null }).imageUrl ?? null,
       children: (categories ?? []).filter((c) => c.parentId === parent.id).map((c) => ({ id: c.id, name: c.name, slug: c.slug })),
     }));
 
