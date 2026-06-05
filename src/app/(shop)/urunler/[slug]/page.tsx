@@ -3,6 +3,7 @@ import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import AddToCartButton from "./AddToCartButton";
+import RelatedProducts, { type RelatedProduct } from "@/components/product/RelatedProducts";
 import { activeDiscountPercent } from "@/lib/pricing";
 import ProductGallery from "./ProductGallery";
 import ProductDetailsTabs from "./ProductDetailsTabs";
@@ -57,6 +58,35 @@ export default async function UrunDetayPage({ params }: Props) {
     freeShippingThreshold: shipRow?.free_shipping_threshold != null ? Number(shipRow.free_shipping_threshold) : 500,
     orderCutoffNote: shipRow?.order_cutoff_note?.trim() || "Siparişler hafta içi 14:00'a kadar verilirse aynı gün üretime alınır.",
   };
+
+  function shuffle<T>(arr: T[]): T[] {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  const RELATED_COLS = "id, name, slug, basePrice, images, discount_percent, discount_starts_at, discount_ends_at";
+  const { data: sameCat } = await adminDb
+    .from("products_with_order_count")
+    .select(RELATED_COLS)
+    .eq("categoryId", product.categoryId).eq("isActive", true).neq("id", product.id)
+    .limit(24);
+  const related: RelatedProduct[] = shuffle((sameCat ?? []) as RelatedProduct[]).slice(0, 8);
+  if (related.length < 8) {
+    const have = new Set<string>([product.id, ...related.map((r) => r.id)]);
+    const { data: fill } = await adminDb
+      .from("products_with_order_count")
+      .select(RELATED_COLS)
+      .eq("isActive", true).neq("id", product.id)
+      .order("is_featured", { ascending: false }).order("createdAt", { ascending: false })
+      .limit(16);
+    for (const p of (fill ?? []) as RelatedProduct[]) {
+      if (related.length >= 8) break;
+      if (!have.has(p.id)) { related.push(p); have.add(p.id); }
+    }
+  }
 
   const { data: variants } = await supabase
     .from("product_variants")
@@ -232,6 +262,8 @@ export default async function UrunDetayPage({ params }: Props) {
           description={product.description ?? ""}
         />
       </div>
+
+      <RelatedProducts products={related} />
     </>
   );
 }
