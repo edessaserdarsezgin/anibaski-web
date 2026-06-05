@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
       discount_amount: discountAmount > 0 ? discountAmount : null,
       total,
       status: "PENDING",
-      source: source === "ai_guided" ? "ai_guided" : "direct",
+      source: source === "guided" ? "guided" : "direct",
     })
     .select("id")
     .single();

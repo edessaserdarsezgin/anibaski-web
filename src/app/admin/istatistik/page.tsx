@@ -167,10 +167,10 @@ export default async function IstatistikPage({ searchParams }: Props) {
       {/* Kaynak karşılaştırması (analytics'ten taşınan) */}
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl border border-border p-6">
-          <h2 className="font-serif text-xl text-text mb-5">AI Yolu</h2>
+          <h2 className="font-serif text-xl text-text mb-5">Rehberli Yol</h2>
           <dl className="flex flex-col gap-4">
-            <div><dt className="text-xs text-text-light mb-1">Toplam sipariş</dt><dd className="font-serif text-2xl text-text">{source.ai.count}</dd></div>
-            <div><dt className="text-xs text-text-light mb-1">Ortalama sepet</dt><dd className="font-serif text-2xl text-primary">{tl(source.ai.avgBasket)}</dd></div>
+            <div><dt className="text-xs text-text-light mb-1">Toplam sipariş</dt><dd className="font-serif text-2xl text-text">{source.guided.count}</dd></div>
+            <div><dt className="text-xs text-text-light mb-1">Ortalama sepet</dt><dd className="font-serif text-2xl text-primary">{tl(source.guided.avgBasket)}</dd></div>
           </dl>
         </div>
         <div className="bg-white rounded-2xl border border-border p-6">

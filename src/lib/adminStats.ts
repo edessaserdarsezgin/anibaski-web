@@ -96,7 +96,7 @@ export function aggregateSource(orders: OrderRow[]) {
     const total = arr.reduce((s, o) => s + num(o.total), 0);
     return { count: arr.length, avgBasket: arr.length ? total / arr.length : 0 };
   };
-  return { ai: build("ai_guided"), direct: build("direct") };
+  return { guided: build("guided"), direct: build("direct") };
 }
 
 export function aggregateCampaigns(orders: OrderRow[], campaigns: CampaignRow[]) {
