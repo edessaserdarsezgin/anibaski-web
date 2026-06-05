@@ -22,6 +22,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (key in body) updates[key] = body[key];
   });
   if ("is_active" in body) updates.is_active = body.is_active;
+  if ("show_on_home" in body) updates.show_on_home = body.show_on_home;
   updates.updated_at = new Date().toISOString();
 
   if (Object.keys(updates).length <= 1) {

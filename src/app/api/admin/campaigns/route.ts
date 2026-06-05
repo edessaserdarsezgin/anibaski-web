@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
       ends_at: body.ends_at ?? null,
       position: body.position ?? 0,
       is_active: body.is_active ?? true,
+      show_on_home: body.show_on_home ?? false,
     })
     .select()
     .single();
