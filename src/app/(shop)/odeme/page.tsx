@@ -3,7 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import CheckoutClient from "./CheckoutClient";
 import { getShippingSettings } from "@/lib/shipping";
-import { getCompanyInfo } from "@/lib/company";
+import { getCompanyInfo, sellerForContracts } from "@/lib/company";
 
 export const metadata = { title: "Ödeme", robots: { index: false, follow: false } };
 
@@ -46,6 +46,6 @@ export default async function OdemePage() {
     codFee={shippingSettings.codFee}
     userEmail={user.email ?? ""}
     userFullName={(profile as { fullName?: string | null })?.fullName ?? ""}
-    seller={company}
+    seller={sellerForContracts(company)}
   />;
 }

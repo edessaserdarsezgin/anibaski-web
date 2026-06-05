@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
-import { getCompanyInfo } from "@/lib/company";
+import { getCompanyInfo, sellerForContracts } from "@/lib/company";
 import LegalAccordion from "@/components/legal/LegalAccordion";
 import OrderStatusSelect from "./OrderStatusSelect";
 import CancelRequestButton from "./CancelRequestButton";
@@ -364,7 +364,7 @@ export default async function SiparisDetayPage({ params }: Props) {
                 address: order.address as unknown as { fullName: string; phone: string; address: string; district: string; city: string; zip?: string | null } | null,
               }}
               buyer={buyerProfile}
-              seller={company}
+              seller={sellerForContracts(company)}
             />
           </div>
 
