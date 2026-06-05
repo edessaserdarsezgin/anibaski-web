@@ -1,284 +1,189 @@
-"use client";
-
-import { useState, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { createAdminClient } from "@/lib/supabase/server";
+import { GUIDE_NEEDS, GUIDE_GIFTS, type GuideRef } from "@/lib/guide";
+import GuideProductCard, { type ResolvedGuideProduct } from "@/components/product/GuideProductCard";
 
-const OCCASIONS = [
-  "Kişisel hatıra",
-  "Hediye",
-  "Düğün / Nişan",
-  "Doğum Günü",
-  "Yıldönümü",
-  "Tatil / Seyahat",
+export const metadata = { title: "Baskı Rehberi | AnıBaskı" };
+
+const NAV = [
+  { href: "#urun", label: "Ürün Rehberi" },
+  { href: "#cozunurluk", label: "Çözünürlük" },
+  { href: "#ipuclari", label: "Çekim İpuçları" },
+  { href: "#hediye", label: "Hediye" },
 ];
 
-const BUDGETS = ["100₺ altı", "100–250₺", "250–500₺", "500₺ üzeri"];
+const RES_TABLE: { size: string; res: string }[] = [
+  { size: "10×15 cm", res: "~2 MP (1200×1800 px)" },
+  { size: "13×18 cm", res: "~3 MP" },
+  { size: "15×21 cm", res: "~4 MP" },
+  { size: "18×24 cm", res: "~6 MP" },
+  { size: "20×30 cm", res: "~7 MP (2362×3543 px)" },
+  { size: "30×40 cm / Kanvas", res: "~9 MP (kanvas mesafeden bakıldığı için toleranslı)" },
+];
 
-type Step = "upload" | "analyzing" | "recommendation";
+const TIPS: { icon: string; title: string; text: string }[] = [
+  { icon: "☀️", title: "Gün ışığında çek", text: "Doğal ışık en doğru renkleri verir; mümkünse gündüz, pencere önünde çek." },
+  { icon: "🤳", title: "Telefonu sabit tut", text: "Net bir kare için elini sabitle veya bir yüzeye yasla; titreme bulanıklık yapar." },
+  { icon: "🔍", title: "Dijital zoom yapma", text: "Zoom çözünürlüğü düşürür; yaklaşman gerekiyorsa fiziksel olarak yaklaş." },
+  { icon: "📐", title: "Ürün oranına göre kadrajla", text: "Kanvas/çerçeve için dikey, panorama için yatay; kenarlardan biraz boşluk bırak." },
+  { icon: "🎚️", title: "En yüksek çözünürlükte çek", text: "Telefon kamera ayarından en yüksek çözünürlüğü seç; büyük baskılarda fark eder." },
+  { icon: "📤", title: "Orijinali gönder", text: "WhatsApp ve bazı uygulamalar fotoğrafı sıkıştırır; bize orijinal/yüksek çözünürlüklü dosyayı yükle." },
+];
 
-type Recommendation = {
-  recommendedProduct: string;
-  reasoning: string;
-  alternativeProduct?: string;
-  priceRange?: string;
-  recommendedProductSlug?: string | null;
-  recommendedProductImage?: string | null;
-  alternativeProductSlug?: string | null;
-};
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase mb-2">{children}</p>;
+}
 
-export default function UrunRehberiPage() {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+export default async function BaskiRehberiPage() {
+  const db = createAdminClient();
+  const slugs = Array.from(new Set([...GUIDE_NEEDS, ...GUIDE_GIFTS].map((r) => r.slug)));
 
-  const [step, setStep] = useState<Step>("upload");
-  const [files, setFiles] = useState<File[]>([]);
-  const [occasion, setOccasion] = useState("");
-  const [budget, setBudget] = useState("");
-  const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { data } = await db
+    .from("products")
+    .select("slug, name, basePrice, images, discount_percent, discount_starts_at, discount_ends_at")
+    .in("slug", slugs)
+    .eq("isActive", true);
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!e.target.files) return;
-    setFiles(Array.from(e.target.files));
+  const map = new Map<string, ResolvedGuideProduct>();
+  for (const p of (data ?? []) as Array<{
+    slug: string;
+    name: string;
+    basePrice: string | number;
+    images: string[] | null;
+    discount_percent: number | null;
+    discount_starts_at: string | null;
+    discount_ends_at: string | null;
+  }>) {
+    map.set(p.slug, {
+      name: p.name,
+      slug: p.slug,
+      basePrice: Number(p.basePrice),
+      image: p.images?.[0] ?? null,
+      discount: {
+        discount_percent: p.discount_percent ?? null,
+        discount_starts_at: p.discount_starts_at ?? null,
+        discount_ends_at: p.discount_ends_at ?? null,
+      },
+    });
   }
 
-  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
-    e.preventDefault();
-    const dropped = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
-    setFiles(dropped);
-  }
-
-  async function handleAnalyze() {
-    if (files.length === 0) return;
-    setError(null);
-    setStep("analyzing");
-
-    try {
-      const imageUrls: string[] = [];
-      for (const file of files) {
-        const formData = new FormData();
-        formData.append("file", file);
-        const res = await fetch("/api/upload", { method: "POST", body: formData });
-        if (!res.ok) throw new Error("Dosya yüklenemedi");
-        const data = await res.json();
-        imageUrls.push(data.url);
-      }
-
-      const res = await fetch("/api/ai/product-recommendation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageUrls, photoCount: files.length, occasion, budget }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error((data as { error?: string }).error ?? "Analiz yapılamadı");
-      }
-
-      const result: Recommendation = await res.json();
-      setRecommendation(result);
-      setStep("recommendation");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Analiz yapılamadı, lütfen tekrar deneyin.");
-      setStep("upload");
-    }
-  }
-
-  function handleRetry() {
-    setError(null);
-    setFiles([]);
-    setOccasion("");
-    setBudget("");
-    setRecommendation(null);
-    setStep("upload");
-  }
-
-  if (step === "analyzing") {
-    return (
-      <div className="max-w-2xl mx-auto px-8 py-24 flex flex-col items-center gap-6 text-center">
-        <div className="w-16 h-16 rounded-full border-4 border-border border-t-primary animate-spin" />
-        <h2 className="font-serif text-2xl text-text">Fotoğrafların analiz ediliyor...</h2>
-        <p className="text-secondary text-sm">Bu işlem birkaç saniye sürebilir.</p>
-      </div>
-    );
-  }
-
-  if (step === "recommendation" && recommendation) {
-    const productHref = recommendation.recommendedProductSlug
-      ? `/urunler/${recommendation.recommendedProductSlug}`
-      : "/urunler";
-    const altHref = recommendation.alternativeProductSlug
-      ? `/urunler/${recommendation.alternativeProductSlug}`
-      : "/urunler";
-
-    return (
-      <div className="max-w-2xl mx-auto px-8 py-16">
-        <div className="bg-white rounded-3xl border border-border overflow-hidden">
-          {recommendation.recommendedProductImage && (
-            <div className="relative w-full h-56 bg-bg">
-              <Image
-                src={recommendation.recommendedProductImage}
-                alt={recommendation.recommendedProduct}
-                fill
-                className="object-cover"
-              />
-            </div>
-          )}
-          <div className="p-8 flex flex-col gap-6">
-            <div>
-              <p className="text-xs font-semibold text-secondary uppercase tracking-widest mb-2">
-                Sana Özel Öneri
-              </p>
-              <h1 className="font-serif text-3xl text-text">{recommendation.recommendedProduct}</h1>
-            </div>
-
-            {recommendation.reasoning && (
-              <p className="text-secondary leading-relaxed">{recommendation.reasoning}</p>
-            )}
-
-            {recommendation.priceRange && (
-              <p className="text-primary font-semibold text-lg">{recommendation.priceRange}</p>
-            )}
-
-            <Link
-              href={productHref}
-              onClick={() => sessionStorage.setItem("source", "ai_guided")}
-              className="py-3.5 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full transition-colors text-center"
-            >
-              Bu Ürünü İncele →
-            </Link>
-
-            {recommendation.alternativeProduct && (
-              <p className="text-sm text-secondary text-center">
-                Alternatif:{" "}
-                <Link
-                  href={altHref}
-                  onClick={() => sessionStorage.setItem("source", "ai_guided")}
-                  className="text-text font-semibold hover:text-primary transition-colors"
-                >
-                  {recommendation.alternativeProduct}
-                </Link>
-              </p>
-            )}
-
-            <button
-              onClick={handleRetry}
-              className="text-xs text-secondary hover:text-primary transition-colors text-center"
-            >
-              Yeniden analiz et
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const resolve = (r: GuideRef): ResolvedGuideProduct | null => map.get(r.slug) ?? null;
 
   return (
-    <div className="max-w-2xl mx-auto px-8 py-16 flex flex-col gap-8">
-      <div className="text-center">
-        <h1 className="font-serif text-4xl text-text mb-3">
-          Fotoğraflarını Yükle, Biz Öneri Yapalım
-        </h1>
-        <p className="text-secondary leading-relaxed">
-          Kaç fotoğrafın olduğunu, ne için kullanacağını söyle — sana en uygun ürünü önerelim.
+    <div className="max-w-5xl mx-auto px-8 py-12">
+      {/* Hero */}
+      <div className="mb-8">
+        <Eyebrow>Baskı Rehberi</Eyebrow>
+        <h1 className="font-serif text-4xl md:text-5xl text-text mb-3">Fotoğrafların için doğru ürünü seç</h1>
+        <p className="text-text-light max-w-2xl">
+          Hangi ürün sana uygun, kaliteli baskı için neye dikkat etmeli, nasıl daha iyi fotoğraf çekersin — hepsi
+          burada. Kartlardaki ürünler güncel fiyatlarıyla doğrudan mağazamızdan gelir.
         </p>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 flex items-center justify-between gap-4">
-          <p className="text-sm text-red-700">{error}</p>
-          <button
-            onClick={handleRetry}
-            className="text-sm font-semibold text-red-700 hover:text-red-900 shrink-0 transition-colors"
+      {/* Sticky bölüm menüsü */}
+      <nav className="sticky top-0 z-10 -mx-8 px-8 py-3 bg-bg/90 backdrop-blur border-b border-border mb-10 flex flex-wrap gap-2">
+        {NAV.map((n) => (
+          <a
+            key={n.href}
+            href={n.href}
+            className="px-4 py-1.5 rounded-full text-sm bg-white border border-border text-text hover:border-primary hover:text-primary transition-colors"
           >
-            Tekrar dene
-          </button>
-        </div>
-      )}
+            {n.label}
+          </a>
+        ))}
+      </nav>
 
-      <div
-        onClick={() => fileInputRef.current?.click()}
-        onDrop={handleDrop}
-        onDragOver={(e) => e.preventDefault()}
-        className="border-2 border-dashed border-border rounded-3xl bg-bg hover:border-primary hover:bg-white transition-colors cursor-pointer flex flex-col items-center justify-center gap-4 py-12 px-8 text-center"
-      >
-        <div className="w-14 h-14 rounded-2xl bg-white border border-border flex items-center justify-center text-2xl shadow-sm">
-          📷
-        </div>
-        <div>
-          <p className="font-semibold text-text">Fotoğrafları buraya sürükle veya tıkla</p>
-          <p className="text-secondary text-sm mt-1">PNG, JPG, HEIC desteklenir</p>
-        </div>
-        {files.length > 0 && (
-          <p className="text-primary font-semibold text-sm">{files.length} fotoğraf seçildi ✓</p>
-        )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          className="hidden"
-          onChange={handleFileChange}
-        />
-      </div>
-
-      <div className="flex flex-col gap-3">
-        <p className="font-semibold text-text text-sm">
-          Ne için?{" "}
-          <span className="text-secondary font-normal">(opsiyonel)</span>
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {OCCASIONS.map((o) => (
-            <button
-              key={o}
-              onClick={() => setOccasion(occasion === o ? "" : o)}
-              className={`px-4 py-2 rounded-full text-sm border transition-colors ${
-                occasion === o
-                  ? "bg-primary text-white border-primary"
-                  : "bg-white border-border text-text hover:border-primary"
-              }`}
-            >
-              {o}
-            </button>
+      {/* 1 — Hangi ürün sana uygun? */}
+      <section id="urun" className="scroll-mt-20 mb-14">
+        <Eyebrow>Ürün Rehberi</Eyebrow>
+        <h2 className="font-serif text-3xl text-text mb-6">Hangi ürün sana uygun?</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {GUIDE_NEEDS.map((r) => (
+            <GuideProductCard
+              key={r.scenario}
+              icon={r.icon}
+              scenario={r.scenario}
+              blurb={r.blurb}
+              product={resolve(r)}
+              categorySlug={r.categorySlug}
+            />
           ))}
         </div>
-      </div>
+      </section>
 
-      <div className="flex flex-col gap-3">
-        <p className="font-semibold text-text text-sm">
-          Bütçen?{" "}
-          <span className="text-secondary font-normal">(opsiyonel)</span>
+      {/* 2 — Çözünürlük */}
+      <section id="cozunurluk" className="scroll-mt-20 mb-14">
+        <Eyebrow>Kalite</Eyebrow>
+        <h2 className="font-serif text-3xl text-text mb-6">Kaliteli baskı için çözünürlük</h2>
+        <div className="bg-white rounded-2xl border border-border overflow-hidden mb-4">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-bg text-text-light text-left">
+                <th className="px-5 py-3 font-semibold">Baskı boyutu</th>
+                <th className="px-5 py-3 font-semibold">Önerilen min. çözünürlük</th>
+              </tr>
+            </thead>
+            <tbody>
+              {RES_TABLE.map((row) => (
+                <tr key={row.size} className="border-t border-border">
+                  <td className="px-5 py-3 font-semibold text-text">{row.size}</td>
+                  <td className="px-5 py-3 text-text-light">{row.res}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-sm text-text-light leading-relaxed">
+          Düşük çözünürlüklü fotoğraflar büyük baskıda bulanık veya pikselli çıkabilir. WhatsApp ve bazı uygulamalar
+          fotoğrafı sıkıştırır — en iyi sonuç için bize{" "}
+          <strong className="text-text">orijinal, yüksek çözünürlüklü</strong> dosyayı yükle.
         </p>
-        <div className="flex flex-wrap gap-2">
-          {BUDGETS.map((b) => (
-            <button
-              key={b}
-              onClick={() => setBudget(budget === b ? "" : b)}
-              className={`px-4 py-2 rounded-full text-sm border transition-colors ${
-                budget === b
-                  ? "bg-primary text-white border-primary"
-                  : "bg-white border-border text-text hover:border-primary"
-              }`}
-            >
-              {b}
-            </button>
+      </section>
+
+      {/* 3 — Çekim ipuçları */}
+      <section id="ipuclari" className="scroll-mt-20 mb-14">
+        <Eyebrow>İpuçları</Eyebrow>
+        <h2 className="font-serif text-3xl text-text mb-6">Daha iyi fotoğraf için ipuçları</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {TIPS.map((t) => (
+            <div key={t.title} className="bg-white rounded-2xl border border-border p-5">
+              <span className="text-2xl">{t.icon}</span>
+              <p className="font-semibold text-text mt-3 mb-1">{t.title}</p>
+              <p className="text-sm text-text-light leading-relaxed">{t.text}</p>
+            </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      <button
-        onClick={handleAnalyze}
-        disabled={files.length === 0}
-        className="py-4 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        Analiz Et
-      </button>
+      {/* 4 — Hediye */}
+      <section id="hediye" className="scroll-mt-20 mb-14">
+        <Eyebrow>Hediye</Eyebrow>
+        <h2 className="font-serif text-3xl text-text mb-6">Hediye önerileri</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {GUIDE_GIFTS.map((r) => (
+            <GuideProductCard
+              key={r.scenario}
+              icon={r.icon}
+              scenario={r.scenario}
+              blurb={r.blurb}
+              product={resolve(r)}
+              categorySlug={r.categorySlug}
+            />
+          ))}
+        </div>
+      </section>
 
-      <p className="text-center text-sm text-secondary">
-        <Link href="/urunler" className="hover:text-primary transition-colors">
-          Ürünlere kendim bakayım →
+      {/* Kapanış CTA */}
+      <div className="bg-bg border border-border rounded-2xl p-6 text-center">
+        <p className="text-text-light mb-3">Aradığını bulamadın mı? Tüm ürünlerimize göz at.</p>
+        <Link
+          href="/urunler"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-full transition-colors"
+        >
+          Tüm Ürünler →
         </Link>
-      </p>
+      </div>
     </div>
   );
 }
