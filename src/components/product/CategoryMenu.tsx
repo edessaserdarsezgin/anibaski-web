@@ -8,8 +8,19 @@ export type MenuCategory = {
   children: { id: string; name: string; slug: string }[];
 };
 
-const pill = "px-5 py-2 rounded-full text-sm font-semibold border transition-all";
-const idle = "border-border text-text-light hover:border-primary hover:text-primary hover:bg-primary/5";
+const base =
+  "group/pill relative inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-sm font-semibold border transition-all duration-300";
+const idle =
+  "border-border bg-white/60 text-text-light hover:text-primary hover:border-primary/40 hover:bg-white hover:shadow-soft hover:-translate-y-0.5";
+
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"
+      className={`w-3.5 h-3.5 transition-all duration-300 ${open ? "rotate-180 text-primary" : "text-text-light/60 group-hover/pill:text-primary"}`}>
+      <path d="M6 9l6 6 6-6" stroke="currentColor" />
+    </svg>
+  );
+}
 
 export default function CategoryMenu({ categories, queryString }: { categories: MenuCategory[]; queryString: string }) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -31,53 +42,71 @@ export default function CategoryMenu({ categories, queryString }: { categories: 
   }, []);
 
   return (
-    <div ref={ref} className="flex gap-2 flex-wrap mb-12">
-      <Link href={`/urunler${queryString}`} className={`${pill} bg-text text-white border-text`}>
-        Tümü
-      </Link>
-      {categories.map((cat) => {
-        if (cat.children.length === 0) {
+    <div ref={ref} className="mb-12">
+      <p className="text-[11px] font-semibold tracking-[0.25em] uppercase text-text-light/70 mb-3 ml-1">
+        Kategoriler
+      </p>
+      <div className="flex gap-2.5 flex-wrap">
+        <Link
+          href={`/urunler${queryString}`}
+          className={`${base} bg-text text-white border-text hover:-translate-y-0.5 hover:shadow-soft`}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-accent" aria-hidden />
+          Tümü
+        </Link>
+
+        {categories.map((cat) => {
+          if (cat.children.length === 0) {
+            return (
+              <Link key={cat.id} href={`/kategoriler/${cat.slug}${queryString}`} className={`${base} ${idle}`}>
+                {cat.name}
+              </Link>
+            );
+          }
+          const open = openId === cat.id;
           return (
-            <Link key={cat.id} href={`/kategoriler/${cat.slug}${queryString}`} className={`${pill} ${idle}`}>
-              {cat.name}
-            </Link>
+            <div key={cat.id} className="relative">
+              <button
+                type="button"
+                onClick={() => setOpenId(open ? null : cat.id)}
+                aria-expanded={open}
+                className={`${base} ${open ? "border-primary/50 text-primary bg-primary/5 shadow-soft" : idle}`}
+              >
+                {cat.name}
+                <Chevron open={open} />
+              </button>
+
+              {open && (
+                <div className="dropdown-enter absolute left-0 top-full mt-3 z-30 min-w-[224px] origin-top">
+                  <div className="absolute -top-1.5 left-7 w-3 h-3 rotate-45 bg-white border-l border-t border-border" />
+                  <div className="relative bg-white border border-border rounded-2xl shadow-hover p-2">
+                    <Link
+                      href={`/kategoriler/${cat.slug}${queryString}`}
+                      onClick={() => setOpenId(null)}
+                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-serif text-[15px] text-text hover:bg-bg transition-colors"
+                    >
+                      <span>Tüm {cat.name}</span>
+                      <span className="text-xs text-primary" aria-hidden>→</span>
+                    </Link>
+                    <div className="my-1 mx-3 border-t border-border/70" />
+                    {cat.children.map((sub) => (
+                      <Link
+                        key={sub.id}
+                        href={`/kategoriler/${sub.slug}${queryString}`}
+                        onClick={() => setOpenId(null)}
+                        className="group/item flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-sm text-text-light hover:text-primary hover:bg-bg transition-all"
+                      >
+                        <span className="w-1 h-4 rounded-full bg-transparent group-hover/item:bg-primary transition-colors" aria-hidden />
+                        <span className="transition-transform duration-200 group-hover/item:translate-x-0.5">{sub.name}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           );
-        }
-        const open = openId === cat.id;
-        return (
-          <div key={cat.id} className="relative">
-            <button
-              type="button"
-              onClick={() => setOpenId(open ? null : cat.id)}
-              className={`${pill} inline-flex items-center gap-1 ${open ? "border-primary text-primary bg-primary/5" : idle}`}
-            >
-              {cat.name}
-              <span className={`text-xs transition-transform ${open ? "rotate-180" : ""}`} aria-hidden>▾</span>
-            </button>
-            {open && (
-              <div className="absolute left-0 top-full mt-2 z-20 min-w-[200px] bg-white border border-border rounded-2xl shadow-lg p-2">
-                <Link
-                  href={`/kategoriler/${cat.slug}${queryString}`}
-                  onClick={() => setOpenId(null)}
-                  className="block px-3 py-2 rounded-lg text-sm font-semibold text-text hover:bg-bg"
-                >
-                  Tüm {cat.name}
-                </Link>
-                {cat.children.map((sub) => (
-                  <Link
-                    key={sub.id}
-                    href={`/kategoriler/${sub.slug}${queryString}`}
-                    onClick={() => setOpenId(null)}
-                    className="block px-3 py-2 rounded-lg text-sm text-text-light hover:bg-bg hover:text-primary"
-                  >
-                    {sub.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })}
+        })}
+      </div>
     </div>
   );
 }
