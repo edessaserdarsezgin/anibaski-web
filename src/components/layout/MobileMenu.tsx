@@ -3,13 +3,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import type { MenuCategory } from "./HeaderCategoryBar";
 
 interface Props {
   email?: string;
   isAdmin: boolean;
+  categories?: MenuCategory[];
 }
 
-export default function MobileMenu({ email, isAdmin }: Props) {
+export default function MobileMenu({ email, isAdmin, categories = [] }: Props) {
   const [open, setOpen] = useState(false);
 
   async function handleSignOut() {
@@ -46,8 +48,40 @@ export default function MobileMenu({ email, isAdmin }: Props) {
                 onClick={() => setOpen(false)}
                 className="py-3 text-sm font-semibold text-text hover:text-primary transition-colors border-b border-border"
               >
-                Ürünler
+                Tüm Ürünler
               </Link>
+
+              {categories.length > 0 && (
+                <div className="py-2 border-b border-border">
+                  <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-text-light/70 py-1">Kategoriler</p>
+                  {categories.map((cat) => (
+                    <div key={cat.id} className="py-0.5">
+                      <Link
+                        href={`/kategoriler/${cat.slug}`}
+                        onClick={() => setOpen(false)}
+                        className="block py-1.5 text-sm font-semibold text-text hover:text-primary transition-colors"
+                      >
+                        {cat.name}
+                      </Link>
+                      {cat.children.length > 0 && (
+                        <div className="pl-3 flex flex-col border-l border-border ml-1">
+                          {cat.children.map((sub) => (
+                            <Link
+                              key={sub.id}
+                              href={`/kategoriler/${sub.slug}`}
+                              onClick={() => setOpen(false)}
+                              className="py-1.5 pl-2 text-sm text-text-light hover:text-primary transition-colors"
+                            >
+                              {sub.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <Link
                 href="/kategoriler/hazir-urunler"
                 onClick={() => setOpen(false)}

@@ -4,7 +4,6 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import ProductCard from "@/components/product/ProductCard";
 import SortSelect from "@/components/product/SortSelect";
 import TagFilter from "@/components/product/TagFilter";
-import CategoryMenu from "@/components/product/CategoryMenu";
 import { getReadyMadeCategoryIds } from "@/lib/readyMade";
 
 type Props = { searchParams: Promise<{ sort?: string; tag?: string }> };
@@ -32,8 +31,7 @@ export default async function UrunlerPage({ searchParams }: Props) {
   const { data: { user } } = await supabase.auth.getUser();
   const adminDb = createAdminClient();
 
-  const [{ data: categories }, { data: allTags }, tagIdsResult, readyMadeIds] = await Promise.all([
-    adminDb.from("categories").select("id, name, slug, parentId, imageUrl").order("name"),
+  const [{ data: allTags }, tagIdsResult, readyMadeIds] = await Promise.all([
     adminDb.from("tags").select("id, name, color").order("name"),
     tag
       ? adminDb.from("product_tags").select("productId").eq("tagId", tag)
@@ -61,15 +59,6 @@ export default async function UrunlerPage({ searchParams }: Props) {
     : { data: [] };
   const favoriteIds = new Set((favoritesData ?? []).map((f: { productId: string }) => f.productId));
 
-  const qParts = [sort !== "newest" ? `sort=${sort}` : "", tag ? `tag=${tag}` : ""].filter(Boolean);
-  const queryString = qParts.length ? `?${qParts.join("&")}` : "";
-  const menuTree = (categories ?? [])
-    .filter((c) => !c.parentId && !readyMadeIds.includes(c.id))
-    .map((parent) => ({
-      id: parent.id, name: parent.name, slug: parent.slug, imageUrl: (parent as { imageUrl?: string | null }).imageUrl ?? null,
-      children: (categories ?? []).filter((c) => c.parentId === parent.id).map((c) => ({ id: c.id, name: c.name, slug: c.slug })),
-    }));
-
   return (
     <>
       {/* ── Sayfa Başlığı ───────────────────────────── */}
@@ -92,9 +81,6 @@ export default async function UrunlerPage({ searchParams }: Props) {
       </section>
 
       <div className="max-w-6xl mx-auto px-8 py-12">
-
-        {/* ── Kategori Menüsü ──────────────────────────── */}
-        <CategoryMenu categories={menuTree} queryString={queryString} />
 
         {/* ── Ürün Grid ───────────────────────────────── */}
         {!products?.length ? (

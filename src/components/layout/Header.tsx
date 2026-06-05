@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { getReadyMadeCategoryIds } from "@/lib/readyMade";
 import CartCount from "./CartCount";
 import UserMenu from "./UserMenu";
 import MobileMenu from "./MobileMenu";
 import SearchBar from "./SearchBar";
 import StudioCreditBadge from "./StudioCreditBadge";
+import HeaderCategoryBar from "./HeaderCategoryBar";
 
 export default async function Header() {
   const supabase = await createClient();
@@ -15,6 +17,18 @@ export default async function Header() {
     const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
     isAdmin = profile?.role === "ADMIN";
   }
+
+  const adminDb = createAdminClient();
+  const [{ data: cats }, readyMadeIds] = await Promise.all([
+    adminDb.from("categories").select("id, name, slug, parentId, imageUrl").order("name"),
+    getReadyMadeCategoryIds(),
+  ]);
+  const menuTree = (cats ?? [])
+    .filter((c) => !c.parentId && !readyMadeIds.includes(c.id))
+    .map((parent) => ({
+      id: parent.id, name: parent.name, slug: parent.slug, imageUrl: (parent as { imageUrl?: string | null }).imageUrl ?? null,
+      children: (cats ?? []).filter((c) => c.parentId === parent.id).map((c) => ({ id: c.id, name: c.name, slug: c.slug })),
+    }));
 
   return (
     <header className="sticky top-0 z-50 bg-bg border-b border-border">
@@ -94,9 +108,11 @@ export default async function Header() {
             )}
           </div>
 
-          <MobileMenu email={user?.email ?? undefined} isAdmin={isAdmin} />
+          <MobileMenu email={user?.email ?? undefined} isAdmin={isAdmin} categories={menuTree} />
         </div>
       </div>
+
+      <HeaderCategoryBar categories={menuTree} />
 
       <div className="md:hidden border-t border-border px-4 py-2.5">
         <SearchBar />
