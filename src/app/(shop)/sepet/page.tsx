@@ -6,8 +6,15 @@ import Image from "next/image";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/components/ui/ToastProvider";
 import BackButton from "@/components/ui/BackButton";
+import CardScroller from "@/components/ui/CardScroller";
+import ProductCard from "@/components/product/ProductCard";
 
 type AppliedCoupon = { code: string; discountAmount: number; discountType: string; discountValue: number };
+
+type SuggestionProduct = {
+  id: string; name: string; slug: string; basePrice: number; images: string[] | null;
+  discount_percent: number | null; discount_starts_at: string | null; discount_ends_at: string | null;
+};
 
 export default function SepetPage() {
   const { items, total, updateQuantity, removeItem } = useCart();
@@ -23,6 +30,14 @@ export default function SepetPage() {
         setShippingFeeVal(d.shippingFee);
         setFreeShippingThreshold(d.freeShippingThreshold);
       })
+      .catch(() => {});
+  }, []);
+
+  const [suggestions, setSuggestions] = useState<SuggestionProduct[]>([]);
+  useEffect(() => {
+    fetch("/api/cart/suggestions")
+      .then(r => r.json())
+      .then(d => setSuggestions(d.products ?? []))
       .catch(() => {});
   }, []);
 
@@ -53,6 +68,10 @@ export default function SepetPage() {
     return sum + Math.max(0, original - item.unitPrice) * item.quantity;
   }, 0);
   const totalSavings = productSavings + discountAmount;
+
+  // Çapraz satış — sepetteki ürünleri çıkar
+  const cartProductIds = new Set(items.map((i) => i.productId));
+  const filteredSuggestions = suggestions.filter((p) => !cartProductIds.has(p.id)).slice(0, 10);
 
   // Adet değişince sessionStorage'daki indirim tutarını güncelle
   useEffect(() => {
@@ -292,6 +311,18 @@ export default function SepetPage() {
           </div>
         </div>
       </div>
+
+      {/* Sepete Özel Ürünler — çapraz satış */}
+      {filteredSuggestions.length > 0 && (
+        <section className="mt-12">
+          <h2 className="font-serif text-2xl text-text mb-5">Sepete Özel Ürünler</h2>
+          <CardScroller>
+            {filteredSuggestions.map((p) => (
+              <ProductCard key={p.id} variant="strip" product={p} />
+            ))}
+          </CardScroller>
+        </section>
+      )}
     </div>
   );
 }
