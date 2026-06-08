@@ -61,7 +61,7 @@ export default async function SiparislerPage() {
               className="bg-white rounded-2xl border border-border p-6 hover:shadow-hover hover:border-primary transition-all"
             >
               <div className="flex items-start justify-between gap-4 mb-4">
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-text-light mb-1">
                     {new Date(order.createdAt).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}
                   </p>
@@ -76,7 +76,7 @@ export default async function SiparislerPage() {
                     return null;
                   })()}
                 </div>
-                <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${STATUS_COLOR[order.status]}`}>
+                <span className={`shrink-0 whitespace-nowrap text-xs font-semibold px-3 py-1 rounded-full border ${STATUS_COLOR[order.status]}`}>
                   {STATUS_LABEL[order.status]}
                 </span>
               </div>
@@ -95,11 +95,11 @@ export default async function SiparislerPage() {
                           ? <Image src={product.images[0]} alt="" fill className="object-cover" sizes="40px" />
                           : <div className="w-full h-full" />}
                       </div>
-                      <div>
-                        <p className="text-sm text-text">
+                      <div className="min-w-0">
+                        <p className="text-sm text-text truncate">
                           {product?.name} <span className="text-text-light">×{item.quantity}</span>
                         </p>
-                        {variantText && <p className="text-xs text-text-light">{variantText}</p>}
+                        {variantText && <p className="text-xs text-text-light truncate">{variantText}</p>}
                       </div>
                     </div>
                   );

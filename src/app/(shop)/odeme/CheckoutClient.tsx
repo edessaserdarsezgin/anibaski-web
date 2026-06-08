@@ -75,11 +75,11 @@ function AddressPicker({
           <input type="radio" name={label} checked={selectedId === addr.id}
             onChange={() => { onSelect(addr.id); setShowForm(false); }}
             className="mt-0.5 accent-primary" />
-          <div className="text-sm flex flex-col gap-0.5">
-            <p className="font-semibold text-text">{addr.title}</p>
-            <p className="text-text-light">{addr.fullName} · {addr.phone}</p>
-            <p className="text-text-light">{addr.address}</p>
-            <p className="text-text-light">{addr.district}, {addr.city}{addr.zip ? ` ${addr.zip}` : ""}</p>
+          <div className="text-sm flex flex-col gap-0.5 min-w-0">
+            <p className="font-semibold text-text truncate">{addr.title}</p>
+            <p className="text-text-light truncate">{addr.fullName} · {addr.phone}</p>
+            <p className="text-text-light break-words">{addr.address}</p>
+            <p className="text-text-light break-words">{addr.district}, {addr.city}{addr.zip ? ` ${addr.zip}` : ""}</p>
           </div>
         </label>
       ))}
@@ -404,8 +404,8 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
               <h2 className="font-serif text-xl text-text mb-4">Sipariş Özeti</h2>
               <div className="flex flex-col gap-2 text-sm mb-4">
                 {items.map((item, i) => (
-                  <div key={i} className="flex justify-between items-start">
-                    <span className="text-text-light truncate max-w-[180px]">{item.productName}</span>
+                  <div key={i} className="flex justify-between items-start gap-2">
+                    <span className="text-text-light truncate flex-1 min-w-0">{item.productName}</span>
                     <div className="text-right ml-2 shrink-0">
                       {item.quantity > 1 && (
                         <p className="text-xs text-text-light">
