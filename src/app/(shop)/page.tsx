@@ -24,26 +24,28 @@ export default async function HomePage() {
   const homeDb = createAdminClient();
   const { data: homeCats } = await homeDb
     .from("categories").select("id, name, slug").eq("show_on_home", true).order("home_position", { ascending: true });
-  let catRows: { id: string; name: string; slug: string; products: { id: string; name: string; slug: string; basePrice: number; images: string[] | null; discount_percent: number | null; discount_starts_at: string | null; discount_ends_at: string | null }[] }[] = [];
+  type CatRowProduct = { id: string; name: string; slug: string; basePrice: number; images: string[] | null; discount_percent: number | null; discount_starts_at: string | null; discount_ends_at: string | null; productTags?: { tagId: string; position: string; tag: { name: string; color: string } }[] | null };
+  let catRows: { id: string; name: string; slug: string; products: CatRowProduct[] }[] = [];
   if (homeCats && homeCats.length > 0) {
     const ids = homeCats.map((c) => c.id);
     const { data: prods } = await homeDb
       .from("products_with_order_count")
-      .select("id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at")
+      .select("id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color))")
       .in("categoryId", ids).eq("isActive", true).order("createdAt", { ascending: false });
+    const prodsList = (prods ?? []) as unknown as (CatRowProduct & { categoryId: string })[];
     catRows = homeCats.map((c) => ({
       id: c.id, name: c.name, slug: c.slug,
-      products: (prods ?? []).filter((p) => p.categoryId === c.id).slice(0, 8),
+      products: prodsList.filter((p) => p.categoryId === c.id).slice(0, 8),
     }));
   }
 
   const { data: featRaw } = await homeDb
     .from("products_with_order_count")
-    .select("id, name, slug, basePrice, images, discount_percent, discount_starts_at, discount_ends_at")
+    .select("id, name, slug, basePrice, images, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color))")
     .eq("is_featured", true).eq("isActive", true)
     .order("featured_position", { ascending: true }).order("createdAt", { ascending: false })
     .limit(12);
-  const featured = featRaw ?? [];
+  const featured = (featRaw ?? []) as unknown as Parameters<typeof FeaturedStrip>[0]["products"];
 
   const nowIso = new Date().toISOString();
   const { data: bannerRaw } = await homeDb

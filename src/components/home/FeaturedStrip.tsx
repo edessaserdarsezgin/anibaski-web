@@ -4,6 +4,7 @@ import CardScroller from "@/components/ui/CardScroller";
 type FeatProduct = {
   id: string; name: string; slug: string; basePrice: number; images: string[] | null;
   discount_percent: number | null; discount_starts_at: string | null; discount_ends_at: string | null;
+  productTags?: { tagId: string; position: string; tag: { name: string; color: string } }[] | null;
 };
 
 export default function FeaturedStrip({ products }: { products: FeatProduct[] }) {
