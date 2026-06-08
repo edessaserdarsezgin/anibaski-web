@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { Suspense } from "react";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import SortSelect from "@/components/product/SortSelect";
 import TagFilter from "@/components/product/TagFilter";
-import PriceTag from "@/components/product/PriceTag";
+import ProductCard from "@/components/product/ProductCard";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -197,74 +196,15 @@ export default async function KategoriPage({ params, searchParams }: Props) {
               </Suspense>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-5">
-              {products.map((product) => (
-                <Link
-                  key={product.id}
-                  href={`/urunler/${product.slug}`}
-                  className="group bg-white rounded-3xl border border-border overflow-hidden hover:shadow-hover hover:border-primary/30 hover:-translate-y-1 transition-all duration-300"
-                >
-                  <div className="relative aspect-[4/3] bg-bg overflow-hidden">
-                    {product.images?.[0] ? (
-                      <Image
-                        src={product.images[0]}
-                        alt={product.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        sizes="(max-width: 768px) 50vw, 33vw"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-border">
-                        <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M13.5 12h.008v.008H13.5V12zm4.5-1.5a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span className="text-xs">Görsel yok</span>
-                      </div>
-                    )}
-                    {(["top-left","bottom-left","bottom-right"] as const).map((pos) => {
-                      const tags = (product.productTags as unknown as { tagId: string; position: string; tag: { name: string; color: string } }[] | null)?.filter(pt => pt.position === pos) ?? [];
-                      if (!tags.length) return null;
-                      const cls: Record<string, string> = {
-                        "top-left":    "absolute top-3 left-3 z-10 flex flex-col gap-1.5",
-                        "bottom-left": "absolute bottom-3 left-3 z-10 flex flex-col gap-1.5",
-                        "bottom-right":"absolute bottom-3 right-3 z-10 flex flex-col items-end gap-1.5",
-                      };
-                      return (
-                        <div key={pos} className={cls[pos]}>
-                          {tags.map(pt => (
-                            <span key={pt.tagId} className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-md" style={{ backgroundColor: pt.tag.color }}>
-                              {pt.tag.name}
-                            </span>
-                          ))}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="p-5">
-                    <h2 className="font-serif text-base text-text group-hover:text-primary transition-colors line-clamp-2 leading-snug mb-3">
-                      {product.name}
-                    </h2>
-                    {product.description && (
-                      <p className="text-xs text-text-light line-clamp-2 leading-relaxed mb-4">
-                        {product.description}
-                      </p>
-                    )}
-                    <div className="flex items-center justify-between">
-                      <PriceTag
-                        basePrice={Number(product.basePrice)}
-                        discount={{
-                          discount_percent: (product as { discount_percent?: number | null }).discount_percent ?? null,
-                          discount_starts_at: (product as { discount_starts_at?: string | null }).discount_starts_at ?? null,
-                          discount_ends_at: (product as { discount_ends_at?: string | null }).discount_ends_at ?? null,
-                        }}
-                        suffix="den itibaren"
-                      />
-                      <span className="w-8 h-8 rounded-full border border-border group-hover:border-primary group-hover:bg-primary flex items-center justify-center text-text-light group-hover:text-white transition-all text-sm">
-                        →
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+              {products.map((product) => {
+                const productTags = product.productTags as unknown as { tagId: string; position: string; tag: { name: string; color: string } }[] | null;
+                return (
+                  <ProductCard
+                    key={product.id}
+                    product={{ ...product, basePrice: Number(product.basePrice), productTags }}
+                  />
+                );
+              })}
             </div>
 
             <div className="mt-20 py-14 px-10 rounded-3xl bg-text flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">

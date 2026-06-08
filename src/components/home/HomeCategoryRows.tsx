@@ -1,6 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
-import PriceTag from "@/components/product/PriceTag";
+import ProductCard from "@/components/product/ProductCard";
 import CardScroller from "@/components/ui/CardScroller";
 
 type RowProduct = {
@@ -22,19 +21,7 @@ export default function HomeCategoryRows({ rows }: { rows: Row[] }) {
           </div>
           <CardScroller>
             {row.products.map((p) => (
-              <Link key={p.id} href={`/urunler/${p.slug}`}
-                className="group shrink-0 w-44 bg-white rounded-2xl border border-border overflow-hidden hover:shadow-hover hover:border-primary/30 transition-all">
-                <div className="relative aspect-square bg-bg overflow-hidden">
-                  {p.images?.[0] && (
-                    <Image src={p.images[0]} alt={p.name} fill sizes="176px"
-                      className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                  )}
-                </div>
-                <div className="p-3">
-                  <p className="text-sm text-text line-clamp-2 leading-snug mb-2 group-hover:text-primary transition-colors">{p.name}</p>
-                  <PriceTag basePrice={Number(p.basePrice)} discount={{ discount_percent: p.discount_percent, discount_starts_at: p.discount_starts_at, discount_ends_at: p.discount_ends_at }} />
-                </div>
-              </Link>
+              <ProductCard key={p.id} variant="strip" product={p} />
             ))}
           </CardScroller>
         </div>

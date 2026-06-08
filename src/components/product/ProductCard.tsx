@@ -28,9 +28,11 @@ type Props = {
   initialFavorited?: boolean;
   priority?: boolean;
   showDescription?: boolean;
+  /** "grid" = tam kart (varsayılan); "strip" = yatay şeritler için kompakt kart */
+  variant?: "grid" | "strip";
 };
 
-export default function ProductCard({ product, initialFavorited = false, priority = false, showDescription = false }: Props) {
+export default function ProductCard({ product, initialFavorited = false, priority = false, showDescription = false, variant = "grid" }: Props) {
   const [favorited, setFavorited] = useState(initialFavorited);
   const [loading, setLoading] = useState(false);
 
@@ -59,6 +61,42 @@ export default function ProductCard({ product, initialFavorited = false, priorit
     } finally {
       setLoading(false);
     }
+  }
+
+  // Kompakt şerit kartı — yatay kaydırıcılarda (ana sayfa, benzer ürünler) kullanılır
+  if (variant === "strip") {
+    return (
+      <Link
+        href={`/urunler/${product.slug}`}
+        className="group shrink-0 w-44 bg-white rounded-2xl border border-border overflow-hidden hover:shadow-hover hover:border-primary/30 transition-all"
+      >
+        <div className="relative aspect-square bg-bg overflow-hidden">
+          {product.images?.[0] && (
+            <Image
+              src={product.images[0]}
+              alt={product.name}
+              fill
+              priority={priority}
+              sizes="176px"
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          )}
+        </div>
+        <div className="p-3">
+          <p className="text-sm text-text line-clamp-2 leading-snug mb-2 group-hover:text-primary transition-colors">
+            {product.name}
+          </p>
+          <PriceTag
+            basePrice={Number(product.basePrice)}
+            discount={{
+              discount_percent: product.discount_percent ?? null,
+              discount_starts_at: product.discount_starts_at ?? null,
+              discount_ends_at: product.discount_ends_at ?? null,
+            }}
+          />
+        </div>
+      </Link>
+    );
   }
 
   return (
