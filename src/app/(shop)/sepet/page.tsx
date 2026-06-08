@@ -42,6 +42,18 @@ export default function SepetPage() {
   const shippingFee = total >= freeShippingThreshold ? 0 : shippingFeeVal;
   const grandTotal = total + shippingFee - discountAmount;
 
+  // Ücretsiz kargo ilerlemesi
+  const remainingForFreeShipping = Math.max(0, freeShippingThreshold - total);
+  const shippingProgress = freeShippingThreshold > 0 ? Math.min(100, (total / freeShippingThreshold) * 100) : 100;
+
+  // Toplam kazanç = ürün indirimleri (orijinal birim = basePrice + varyant eklentileri) + kupon
+  const productSavings = items.reduce((sum, item) => {
+    const addons = Object.values(item.variantSelections).reduce((s, v) => s + v.priceAddon, 0);
+    const original = item.basePrice + addons;
+    return sum + Math.max(0, original - item.unitPrice) * item.quantity;
+  }, 0);
+  const totalSavings = productSavings + discountAmount;
+
   // Adet değişince sessionStorage'daki indirim tutarını güncelle
   useEffect(() => {
     if (!appliedCoupon) return;
@@ -96,7 +108,25 @@ export default function SepetPage() {
   return (
     <div className="max-w-6xl mx-auto px-8 py-12">
       <BackButton className="mb-6" />
-      <h1 className="font-serif text-3xl text-text mb-8">Sepetim</h1>
+      <h1 className="font-serif text-3xl text-text mb-6">Sepetim</h1>
+
+      {/* Ücretsiz kargo ilerleme çubuğu */}
+      <div className="bg-white rounded-2xl border border-border p-4 mb-6">
+        {remainingForFreeShipping > 0 ? (
+          <p className="text-sm text-text mb-2.5">
+            🚚 Ücretsiz kargo için sepetine{" "}
+            <b className="text-primary">{remainingForFreeShipping.toLocaleString("tr-TR")} ₺</b> daha ürün ekle!
+          </p>
+        ) : (
+          <p className="text-sm font-semibold text-green-700 mb-2.5">🎉 Tebrikler, ücretsiz kargo kazandın!</p>
+        )}
+        <div className="h-2 rounded-full bg-bg overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${remainingForFreeShipping > 0 ? "bg-primary" : "bg-green-500"}`}
+            style={{ width: `${shippingProgress}%` }}
+          />
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Ürünler */}
@@ -238,6 +268,13 @@ export default function SepetPage() {
                 {grandTotal.toLocaleString("tr-TR")} ₺
               </span>
             </div>
+
+            {totalSavings > 0 && (
+              <div className="mt-3 flex justify-between items-center bg-green-50 border border-green-200 rounded-xl px-4 py-2.5">
+                <span className="text-sm font-semibold text-green-700">Toplam Kazanç</span>
+                <span className="text-sm font-bold text-green-700">{totalSavings.toLocaleString("tr-TR")} ₺</span>
+              </div>
+            )}
 
             <Link
               href="/odeme"
