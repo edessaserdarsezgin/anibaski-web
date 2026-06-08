@@ -14,7 +14,7 @@ export default function Footer() {
             </p>
           </div>
           <div>
-            <h4 className="font-serif text-sm font-semibold text-text mb-3">Kategoriler</h4>
+            <h3 className="font-serif text-sm font-semibold text-text mb-3">Kategoriler</h3>
             <ul className="space-y-2 text-sm text-text-light">
               <li><Link href="/kategoriler/albumler-ve-kitaplar" className="hover:text-primary transition-colors">Foto Kitap</Link></li>
               <li><Link href="/kategoriler/fotograf-baskilari" className="hover:text-primary transition-colors">Fotoğraf Baskı</Link></li>
@@ -23,7 +23,7 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="font-serif text-sm font-semibold text-text mb-3">Yardım</h4>
+            <h3 className="font-serif text-sm font-semibold text-text mb-3">Yardım</h3>
             <ul className="space-y-2 text-sm text-text-light">
               <li><Link href="/siparisler" className="hover:text-primary transition-colors">Sipariş Takibi</Link></li>
               <li><Link href="/teslimat" className="hover:text-primary transition-colors">Teslimat</Link></li>
@@ -32,7 +32,7 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="font-serif text-sm font-semibold text-text mb-3">Yasal</h4>
+            <h3 className="font-serif text-sm font-semibold text-text mb-3">Yasal</h3>
             <ul className="space-y-2 text-sm text-text-light">
               <li><Link href="/politikalar/gizlilik" className="hover:text-primary transition-colors">Gizlilik & KVKK</Link></li>
               <li><Link href="/politikalar/mesafeli-satis-sozlesmesi" className="hover:text-primary transition-colors">Mesafeli Satış Sözleşmesi</Link></li>

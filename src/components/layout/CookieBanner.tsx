@@ -23,7 +23,7 @@ export default function CookieBanner() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4">
+    <div role="region" aria-label="Çerez bildirimi" className="fixed bottom-0 left-0 right-0 z-50 p-4">
       <div className="max-w-4xl mx-auto bg-text rounded-2xl px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-xl">
         <p className="text-sm text-white/80 flex-1 leading-relaxed">
           Siteyi daha iyi bir deneyim sunmak için çerezler kullanıyoruz.{" "}

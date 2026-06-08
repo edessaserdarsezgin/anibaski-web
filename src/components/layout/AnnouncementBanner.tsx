@@ -25,6 +25,8 @@ export default async function AnnouncementBanner() {
 
   return (
     <div
+      role="region"
+      aria-label="Duyuru"
       className="w-full py-2.5 flex items-center justify-center"
       style={{ backgroundColor: banner.bgColor }}
     >
