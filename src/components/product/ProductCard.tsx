@@ -101,7 +101,7 @@ export default function ProductCard({ product, initialFavorited = false, priorit
   }
 
   return (
-    <div className="relative group">
+    <div className="relative group h-full">
       {/* Favori butonu */}
       <button
         onClick={toggleFavorite}
@@ -123,7 +123,7 @@ export default function ProductCard({ product, initialFavorited = false, priorit
 
       <Link
         href={`/urunler/${product.slug}`}
-        className="block bg-white rounded-3xl border border-border overflow-hidden hover:shadow-hover hover:border-primary/30 hover:-translate-y-1 transition-all duration-300"
+        className="flex flex-col h-full bg-white rounded-3xl border border-border overflow-hidden hover:shadow-hover hover:border-primary/30 hover:-translate-y-1 transition-all duration-300"
       >
         {/* Görsel */}
         <div className="relative aspect-[4/3] bg-bg overflow-hidden">
@@ -170,8 +170,8 @@ export default function ProductCard({ product, initialFavorited = false, priorit
         </div>
 
         {/* Bilgi */}
-        <div className="p-5">
-          <h2 className="font-serif text-base text-text group-hover:text-primary transition-colors line-clamp-2 leading-snug mb-3">
+        <div className="p-5 flex-1 flex flex-col">
+          <h2 className="font-serif text-base text-text group-hover:text-primary transition-colors leading-snug mb-3">
             {product.name}
           </h2>
           {showDescription && product.description && (
@@ -179,15 +179,17 @@ export default function ProductCard({ product, initialFavorited = false, priorit
               {product.description}
             </p>
           )}
-          <PriceTag
-            basePrice={Number(product.basePrice)}
-            discount={{
-              discount_percent: product.discount_percent ?? null,
-              discount_starts_at: product.discount_starts_at ?? null,
-              discount_ends_at: product.discount_ends_at ?? null,
-            }}
-            suffix="den itibaren"
-          />
+          <div className="mt-auto pt-1">
+            <PriceTag
+              basePrice={Number(product.basePrice)}
+              discount={{
+                discount_percent: product.discount_percent ?? null,
+                discount_starts_at: product.discount_starts_at ?? null,
+                discount_ends_at: product.discount_ends_at ?? null,
+              }}
+              suffix="den itibaren"
+            />
+          </div>
         </div>
       </Link>
     </div>
