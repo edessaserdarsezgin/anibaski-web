@@ -1,7 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
 import { createAdminClient } from "@/lib/supabase/server";
-import PriceTag from "@/components/product/PriceTag";
+import ProductCard from "@/components/product/ProductCard";
 
 export const metadata = {
   title: "Arama Sonuçları",
@@ -61,34 +60,14 @@ export default async function AramaPage({ searchParams }: Props) {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-5">
           {products.map((p) => {
-            const cat = Array.isArray(p.category) ? p.category[0] : p.category;
+            const category = Array.isArray(p.category) ? p.category[0] : p.category;
             return (
-              <Link
+              <ProductCard
                 key={p.id}
-                href={`/urunler/${p.slug}`}
-                className="group bg-white rounded-2xl border border-border overflow-hidden hover:border-primary hover:shadow-hover transition-all"
-              >
-                <div className="relative aspect-square bg-bg">
-                  {p.images?.[0] ? (
-                    <Image
-                      src={p.images[0]}
-                      alt={p.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-text-light text-sm">Görsel yok</div>
-                  )}
-                </div>
-                <div className="p-5">
-                  {cat && <p className="text-xs text-text-light mb-1">{cat.name}</p>}
-                  <h2 className="font-serif text-lg text-text mb-2">{p.name}</h2>
-                  <PriceTag basePrice={Number(p.basePrice)} discount={{ discount_percent: p.discount_percent ?? null, discount_starts_at: p.discount_starts_at ?? null, discount_ends_at: p.discount_ends_at ?? null }} />
-                </div>
-              </Link>
+                product={{ ...p, basePrice: Number(p.basePrice), category }}
+              />
             );
           })}
         </div>
