@@ -171,11 +171,6 @@ export default function ProductCard({ product, initialFavorited = false, priorit
 
         {/* Bilgi */}
         <div className="p-5">
-          {product.category && (
-            <span className="inline-block mb-2 text-[10px] font-semibold text-text-light uppercase tracking-wide">
-              {product.category.name}
-            </span>
-          )}
           <h2 className="font-serif text-base text-text group-hover:text-primary transition-colors line-clamp-2 leading-snug mb-3">
             {product.name}
           </h2>
