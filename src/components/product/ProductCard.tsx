@@ -63,14 +63,15 @@ export default function ProductCard({ product, initialFavorited = false, priorit
     }
   }
 
-  // Kompakt şerit kartı — yatay kaydırıcılarda (ana sayfa, benzer ürünler) kullanılır
+  // Kompakt şerit kartı — yatay kaydırıcılarda (ana sayfa, benzer ürünler) kullanılır.
+  // Grid kartıyla aynı görsel kimlik (serif isim, 4:3 görsel, rounded-3xl); sadece dar ve favori/etiketsiz.
   if (variant === "strip") {
     return (
       <Link
         href={`/urunler/${product.slug}`}
-        className="group shrink-0 w-44 bg-white rounded-2xl border border-border overflow-hidden hover:shadow-hover hover:border-primary/30 transition-all"
+        className="group block shrink-0 w-44 bg-white rounded-3xl border border-border overflow-hidden hover:shadow-hover hover:border-primary/30 hover:-translate-y-1 transition-all duration-300"
       >
-        <div className="relative aspect-square bg-bg overflow-hidden">
+        <div className="relative aspect-[4/3] bg-bg overflow-hidden">
           {product.images?.[0] && (
             <Image
               src={product.images[0]}
@@ -82,10 +83,10 @@ export default function ProductCard({ product, initialFavorited = false, priorit
             />
           )}
         </div>
-        <div className="p-3">
-          <p className="text-sm text-text line-clamp-2 leading-snug mb-2 group-hover:text-primary transition-colors">
+        <div className="p-4">
+          <h2 className="font-serif text-base text-text line-clamp-2 leading-snug mb-2 group-hover:text-primary transition-colors">
             {product.name}
-          </p>
+          </h2>
           <PriceTag
             basePrice={Number(product.basePrice)}
             discount={{
