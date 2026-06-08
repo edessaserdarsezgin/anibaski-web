@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/components/ui/ToastProvider";
+import BackButton from "@/components/ui/BackButton";
 
 type AppliedCoupon = { code: string; discountAmount: number; discountType: string; discountValue: number };
 
@@ -75,7 +76,9 @@ export default function SepetPage() {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-6xl mx-auto px-8 py-24 text-center">
+      <div className="max-w-6xl mx-auto px-8 py-12">
+        <BackButton className="mb-10" />
+        <div className="text-center">
         <p className="text-4xl mb-4">🛒</p>
         <h1 className="font-serif text-2xl text-text mb-2">Sepetiniz boş</h1>
         <p className="text-text-light mb-8">Ürünleri keşfetmeye başlayın.</p>
@@ -85,12 +88,14 @@ export default function SepetPage() {
         >
           Ürünlere Git
         </Link>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="max-w-6xl mx-auto px-8 py-12">
+      <BackButton className="mb-6" />
       <h1 className="font-serif text-3xl text-text mb-8">Sepetim</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

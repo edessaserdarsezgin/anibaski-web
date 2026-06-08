@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
+import BackButton from "@/components/ui/BackButton";
 
 function GirisForm() {
   const router = useRouter();
@@ -48,6 +49,7 @@ function GirisForm() {
   return (
     <div className="w-full max-w-md">
       <div className="bg-white/93 backdrop-blur-md rounded-2xl border border-white/40 shadow-2xl p-8">
+        <BackButton className="mb-5 -ml-1" />
         <h1 className="font-serif text-2xl text-text mb-1">Giriş Yap</h1>
         <p className="text-sm text-text-light mb-8">
           Hesabın yok mu?{" "}

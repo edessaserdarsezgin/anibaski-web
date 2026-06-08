@@ -107,7 +107,7 @@ export default async function Header() {
             )}
           </div>
 
-          <MobileMenu email={user?.email ?? undefined} isAdmin={isAdmin} categories={menuTree} />
+          <MobileMenu isAdmin={isAdmin} categories={menuTree} />
         </div>
       </div>
 
