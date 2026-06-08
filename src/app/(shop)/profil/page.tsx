@@ -6,6 +6,7 @@ import CreditStatsView from "@/components/studio/CreditStatsView";
 import ProfileForm from "./ProfileForm";
 import AddressBook from "./AddressBook";
 import PhoneVerification from "./PhoneVerification";
+import LogoutButton from "./LogoutButton";
 
 export const metadata = { title: "Profilim", robots: { index: false, follow: false } };
 
@@ -203,6 +204,8 @@ export default async function ProfilPage() {
                 </p>
               </div>
             </div>
+
+            <LogoutButton />
           </div>
         </section>
 
