@@ -1,7 +1,4 @@
 import type { Metadata } from "next";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
-import AnnouncementBanner from "@/components/layout/AnnouncementBanner";
 import Link from "next/link";
 import { getShippingSettings } from "@/lib/shipping";
 import { createAdminClient } from "@/lib/supabase/server";
@@ -85,9 +82,7 @@ export default async function HomePage() {
         .cat-large .cat-icon { transition: transform 0.5s ease, opacity 0.5s ease; }
       `}</style>
 
-      <AnnouncementBanner />
-      <Header />
-      <main className="overflow-hidden">
+      <div className="overflow-hidden">
 
         <HeroBanner banners={heroBanners} />
 
@@ -343,8 +338,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-      </main>
-      <Footer />
+      </div>
     </>
   );
 }
