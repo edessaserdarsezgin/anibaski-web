@@ -323,7 +323,7 @@ export default async function HomePage() {
           <div className="relative max-w-2xl mx-auto text-center flex flex-col items-center gap-8">
             <h2 className="font-serif text-4xl md:text-6xl text-white leading-tight">
               Bir anınızı{" "}
-              <em className="not-italic text-primary">hayata</em>{" "}
+              <em className="not-italic text-accent">hayata</em>{" "}
               geçirin
             </h2>
             <p className="text-white/55 text-lg max-w-sm leading-relaxed">

@@ -78,6 +78,7 @@ export default function SearchBar() {
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setOpen(true)}
             onKeyDown={(e) => { if (e.key === "Escape") clearSearch(); }}
+            aria-label="Ürün ara"
             placeholder="Ürün ara..."
             className="w-full pl-10 pr-10 py-2 rounded-full border border-border bg-white text-sm outline-none focus:border-primary transition-colors"
           />
