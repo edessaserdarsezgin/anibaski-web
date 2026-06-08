@@ -195,7 +195,7 @@ export default async function KategoriPage({ params, searchParams }: Props) {
                 <SortSelect current={sort} />
               </Suspense>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
               {products.map((product) => {
                 const productTags = product.productTags as unknown as { tagId: string; position: string; tag: { name: string; color: string } }[] | null;
                 return (
