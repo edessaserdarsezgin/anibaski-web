@@ -41,8 +41,8 @@ export default function MobileMenu({ email, isAdmin, categories = [] }: Props) {
       {open && (
         <>
           <div className="fixed inset-0 top-16 z-40 bg-black/20" onClick={() => setOpen(false)} />
-          <div className="md:hidden fixed left-0 right-0 top-16 z-50 bg-bg border-b border-border shadow-hover">
-            <nav className="max-w-6xl mx-auto px-6 py-4 flex flex-col">
+          <div className="md:hidden fixed left-0 right-0 top-16 bottom-0 z-50 bg-bg border-b border-border shadow-hover overflow-y-auto overscroll-contain">
+            <nav className="max-w-6xl mx-auto px-6 py-4 pb-24 flex flex-col">
               <Link
                 href="/urunler"
                 onClick={() => setOpen(false)}
