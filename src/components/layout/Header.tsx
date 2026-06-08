@@ -7,6 +7,7 @@ import MobileMenu from "./MobileMenu";
 import SearchBar from "./SearchBar";
 import StudioCreditBadge from "./StudioCreditBadge";
 import HeaderCategoryBar from "./HeaderCategoryBar";
+import MobileBottomNav from "./MobileBottomNav";
 
 export default async function Header() {
   const supabase = await createClient();
@@ -31,6 +32,7 @@ export default async function Header() {
     }));
 
   return (
+    <>
     <header className="sticky top-0 z-50 bg-bg border-b border-border">
       <div className="max-w-6xl mx-auto px-8 h-16 flex items-center justify-between">
         <Link href="/" className="font-serif text-2xl text-text">
@@ -121,5 +123,7 @@ export default async function Header() {
         <SearchBar />
       </div>
     </header>
+    <MobileBottomNav isLoggedIn={!!user} />
+    </>
   );
 }
