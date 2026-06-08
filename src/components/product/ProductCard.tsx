@@ -71,7 +71,7 @@ export default function ProductCard({ product, initialFavorited = false, priorit
         href={`/urunler/${product.slug}`}
         className="group block shrink-0 snap-start w-[calc(45.45%-1rem)] sm:w-[calc(31.25%-1rem)] lg:w-[calc(22.22%-1rem)] bg-white rounded-3xl border border-border overflow-hidden hover:shadow-hover hover:border-primary/30 hover:-translate-y-1 transition-all duration-300"
       >
-        <div className="relative aspect-[4/3] bg-bg overflow-hidden">
+        <div className="relative aspect-square bg-bg overflow-hidden">
           {product.images?.[0] && (
             <Image
               src={product.images[0]}
@@ -126,7 +126,7 @@ export default function ProductCard({ product, initialFavorited = false, priorit
         className="flex flex-col h-full bg-white rounded-3xl border border-border overflow-hidden hover:shadow-hover hover:border-primary/30 hover:-translate-y-1 transition-all duration-300"
       >
         {/* Görsel */}
-        <div className="relative aspect-[4/3] bg-bg overflow-hidden">
+        <div className="relative aspect-square bg-bg overflow-hidden">
           {product.images?.[0] ? (
             <Image
               src={product.images[0]}
@@ -170,8 +170,8 @@ export default function ProductCard({ product, initialFavorited = false, priorit
         </div>
 
         {/* Bilgi */}
-        <div className="p-5 flex-1 flex flex-col">
-          <h2 className="font-serif text-base text-text group-hover:text-primary transition-colors leading-snug mb-3">
+        <div className="p-4 flex-1 flex flex-col">
+          <h2 className="font-serif text-base text-text group-hover:text-primary transition-colors line-clamp-2 leading-snug mb-2">
             {product.name}
           </h2>
           {showDescription && product.description && (

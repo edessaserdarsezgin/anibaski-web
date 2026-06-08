@@ -131,7 +131,7 @@ export default async function KategoriPage({ params, searchParams }: Props) {
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto px-8 py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-12">
 
         {/* ── Alt Kategori Filtreleri (sadece ana kategoride göster) ── */}
         {(subCategories?.length ?? 0) > 0 && (
@@ -195,7 +195,7 @@ export default async function KategoriPage({ params, searchParams }: Props) {
                 <SortSelect current={sort} />
               </Suspense>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
               {products.map((product) => {
                 const productTags = product.productTags as unknown as { tagId: string; position: string; tag: { name: string; color: string } }[] | null;
                 return (

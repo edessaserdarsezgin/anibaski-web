@@ -39,7 +39,7 @@ export default async function AramaPage({ searchParams }: Props) {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-12">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-12">
       <h1 className="font-serif text-3xl text-text mb-2">Arama Sonuçları</h1>
       <p className="text-sm text-text-light mb-8">
         {query
@@ -60,7 +60,7 @@ export default async function AramaPage({ searchParams }: Props) {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
           {products.map((p) => {
             const category = Array.isArray(p.category) ? p.category[0] : p.category;
             return (

@@ -80,7 +80,7 @@ export default async function UrunlerPage({ searchParams }: Props) {
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto px-8 py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-12">
 
         {/* ── Ürün Grid ───────────────────────────────── */}
         {!products?.length ? (
@@ -106,7 +106,7 @@ export default async function UrunlerPage({ searchParams }: Props) {
               <SortSelect current={sort} />
             </Suspense>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
             {products.map((product, idx) => {
               const category = product.category as unknown as { name: string; slug: string } | null;
               const productTags = product.productTags as unknown as { tagId: string; position: string; tag: { name: string; color: string } }[] | null;

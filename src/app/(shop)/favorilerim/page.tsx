@@ -29,7 +29,7 @@ export default async function FavorilerimPage() {
     .filter(Boolean);
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-12">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-12">
       <BackButton className="mb-6" />
       <div className="mb-8">
         <h1 className="font-serif text-3xl md:text-4xl text-text">Favorilerim</h1>
@@ -48,7 +48,7 @@ export default async function FavorilerimPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
           {products.map((product) => (
             <ProductCard
               key={product.id}
