@@ -136,7 +136,15 @@ export default function AddToCartButton({ isLoggedIn, product, variantGroups, di
             <div className="flex flex-col gap-2 flex-1">
               {!isLoggedIn && (
                 <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
-                  Fotoğraf yüklemek için giriş yapmanız gerekiyor.
+                  Fotoğraf yüklemek için{" "}
+                  <button
+                    type="button"
+                    onClick={handleGoUpload}
+                    className="font-semibold text-primary underline underline-offset-2 hover:text-primary-hover"
+                  >
+                    giriş yapın
+                  </button>
+                  .
                 </p>
               )}
               <button onClick={handleGoUpload}

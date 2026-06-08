@@ -21,6 +21,14 @@ export default function SearchBar() {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function clearSearch() {
+    setQuery("");
+    setResults([]);
+    setOpen(false);
+    inputRef.current?.focus();
+  }
 
   // Dış tıklamada kapat
   useEffect(() => {
@@ -64,12 +72,14 @@ export default function SearchBar() {
       <form onSubmit={handleSubmit}>
         <div className="relative">
           <input
+            ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setOpen(true)}
+            onKeyDown={(e) => { if (e.key === "Escape") clearSearch(); }}
             placeholder="Ürün ara..."
-            className="w-full pl-10 pr-4 py-2 rounded-full border border-border bg-white text-sm outline-none focus:border-primary transition-colors"
+            className="w-full pl-10 pr-10 py-2 rounded-full border border-border bg-white text-sm outline-none focus:border-primary transition-colors"
           />
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -81,6 +91,18 @@ export default function SearchBar() {
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
           </svg>
+          {query && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              aria-label="Aramayı temizle"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-border/60 hover:bg-primary hover:text-white text-text-light flex items-center justify-center transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
       </form>
 
