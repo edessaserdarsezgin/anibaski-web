@@ -49,7 +49,7 @@ export default function CardScroller({
     <div className="relative">
       <div
         ref={ref}
-        className={`no-scrollbar flex gap-4 overflow-x-auto pb-2 -mx-2 px-2 ${className}`}
+        className={`no-scrollbar flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-px-2 pb-2 -mx-2 px-2 ${className}`}
       >
         {children}
       </div>

@@ -69,7 +69,7 @@ export default function ProductCard({ product, initialFavorited = false, priorit
     return (
       <Link
         href={`/urunler/${product.slug}`}
-        className="group block shrink-0 w-44 bg-white rounded-3xl border border-border overflow-hidden hover:shadow-hover hover:border-primary/30 hover:-translate-y-1 transition-all duration-300"
+        className="group block shrink-0 snap-start w-[calc(45.45%-1rem)] sm:w-[calc(31.25%-1rem)] lg:w-[calc(22.22%-1rem)] bg-white rounded-3xl border border-border overflow-hidden hover:shadow-hover hover:border-primary/30 hover:-translate-y-1 transition-all duration-300"
       >
         <div className="relative aspect-[4/3] bg-bg overflow-hidden">
           {product.images?.[0] && (
@@ -78,7 +78,7 @@ export default function ProductCard({ product, initialFavorited = false, priorit
               alt={product.name}
               fill
               priority={priority}
-              sizes="176px"
+              sizes="(min-width:1024px) 240px, (min-width:640px) 220px, 45vw"
               className="object-cover group-hover:scale-105 transition-transform duration-500"
             />
           )}
