@@ -69,7 +69,7 @@ const CATEGORIES: { id: string; title: string; items: FaqItem[] }[] = [
 export default function SssPage() {
   return (
     <div className="max-w-3xl mx-auto px-8 py-12">
-      <h1 className="font-serif text-4xl text-text mb-2">Sıkça Sorulan Sorular</h1>
+      <h1 className="font-serif text-3xl md:text-4xl text-text mb-2">Sıkça Sorulan Sorular</h1>
       <p className="text-text-light mb-8">Aradığınız cevabı aşağıdaki kategorilerde bulabilirsiniz.</p>
 
       <div className="flex flex-wrap gap-2 mb-10">

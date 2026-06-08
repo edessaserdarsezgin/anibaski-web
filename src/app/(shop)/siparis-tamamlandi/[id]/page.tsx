@@ -62,7 +62,7 @@ export default async function SiparisTamamlandiPage({ params }: Props) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
           </div>
-          <h1 className="anim-up-1 font-serif text-4xl text-text mb-2">Siparişiniz Alındı!</h1>
+          <h1 className="anim-up-1 font-serif text-3xl md:text-4xl text-text mb-2">Siparişiniz Alındı!</h1>
           <p className="anim-up-2 text-text-light text-lg">
             Teşekkürler. Siparişinizi hazırlamaya başlıyoruz.
           </p>

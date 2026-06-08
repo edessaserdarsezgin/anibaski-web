@@ -154,7 +154,7 @@ export default async function UrunDetayPage({ params }: Props) {
 
             {/* Başlık */}
             <div>
-              <h1 className="font-serif text-4xl text-text leading-snug">{product.name}</h1>
+              <h1 className="font-serif text-3xl md:text-4xl text-text leading-snug">{product.name}</h1>
               {(product.productTags as { tagId: string; tag: { name: string; color: string } }[] | null)?.length ? (
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {(product.productTags as { tagId: string; tag: { name: string; color: string } }[]).map((pt) => (

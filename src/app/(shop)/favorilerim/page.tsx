@@ -30,7 +30,7 @@ export default async function FavorilerimPage() {
   return (
     <div className="max-w-6xl mx-auto px-8 py-12">
       <div className="mb-8">
-        <h1 className="font-serif text-4xl text-text">Favorilerim</h1>
+        <h1 className="font-serif text-3xl md:text-4xl text-text">Favorilerim</h1>
         <p className="text-text-light mt-2">{products.length} ürün kaydedildi</p>
       </div>
 

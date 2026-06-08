@@ -143,7 +143,7 @@ export default async function HomePage() {
               </div>
 
               {/* Micro stats */}
-              <div className="flex gap-10 pt-4 border-t border-border">
+              <div className="flex gap-6 sm:gap-10 pt-4 border-t border-border">
                 {[
                   { num: "50.000+", label: "Mutlu Müşteri" },
                   { num: "2–5 gün", label: "Teslimat" },
@@ -198,7 +198,7 @@ export default async function HomePage() {
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-20">
               <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase mb-4">Süreç</p>
-              <h2 className="font-serif text-5xl text-text">Üç adımda tamamdır</h2>
+              <h2 className="font-serif text-3xl md:text-5xl text-text">Üç adımda tamamdır</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-0 relative">
@@ -229,7 +229,7 @@ export default async function HomePage() {
             <div className="flex items-end justify-between mb-12">
               <div>
                 <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase mb-2">Koleksiyonlar</p>
-                <h2 className="font-serif text-5xl text-text">Ne yapmak istersiniz?</h2>
+                <h2 className="font-serif text-3xl md:text-5xl text-text">Ne yapmak istersiniz?</h2>
               </div>
               <Link href="/urunler" className="hidden md:block text-sm font-semibold text-text-light hover:text-primary transition-colors">
                 Tümünü gör →
@@ -301,7 +301,7 @@ export default async function HomePage() {
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
               <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase mb-4">Neden AnıBaskı?</p>
-              <h2 className="font-serif text-5xl text-text">Farkımız kalitemizden gelir</h2>
+              <h2 className="font-serif text-3xl md:text-5xl text-text">Farkımız kalitemizden gelir</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
@@ -326,7 +326,7 @@ export default async function HomePage() {
             <div className="absolute -bottom-24 -left-24 w-[350px] h-[350px] rounded-full bg-accent/15 blur-3xl" />
           </div>
           <div className="relative max-w-2xl mx-auto text-center flex flex-col items-center gap-8">
-            <h2 className="font-serif text-6xl text-white leading-tight">
+            <h2 className="font-serif text-4xl md:text-6xl text-white leading-tight">
               Bir anınızı{" "}
               <em className="not-italic text-primary">hayata</em>{" "}
               geçirin

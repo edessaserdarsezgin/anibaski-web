@@ -213,7 +213,7 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
   return (
     <div className="max-w-2xl mx-auto px-8 py-16 flex flex-col gap-8">
       <div className="text-center">
-        <h1 className="font-serif text-4xl text-text mb-3">{tool?.name ?? "Stüdyo"}</h1>
+        <h1 className="font-serif text-3xl md:text-4xl text-text mb-3">{tool?.name ?? "Stüdyo"}</h1>
         <p className="text-secondary">{tool?.description}</p>
       </div>
 

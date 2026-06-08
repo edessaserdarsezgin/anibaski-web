@@ -211,7 +211,7 @@ export default async function SiparisDetayPage({ params }: Props) {
                           <p className="text-xs font-semibold text-text-light mb-2">
                             Yüklenen Fotoğraflar ({item.uploadedImages.length} adet)
                           </p>
-                          <div className="grid grid-cols-5 gap-1.5">
+                          <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
                             {item.uploadedImages.map((url, i) => (
                               <a key={i} href={url} target="_blank" rel="noopener noreferrer"
                                 className="relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary transition-colors group">

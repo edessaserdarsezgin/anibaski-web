@@ -14,7 +14,7 @@ export default function FeaturedStrip({ products }: { products: FeatProduct[] })
         <div className="flex items-end justify-between mb-8">
           <div>
             <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase mb-2">Seçtiklerimiz</p>
-            <h2 className="font-serif text-4xl text-text">Öne Çıkanlar</h2>
+            <h2 className="font-serif text-3xl md:text-4xl text-text">Öne Çıkanlar</h2>
           </div>
         </div>
         <CardScroller>

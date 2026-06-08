@@ -14,7 +14,7 @@ export default function CreditStatsView({ stats }: { stats: CreditStats }) {
     <div className="flex flex-col gap-4">
       <div>
         <p className="text-xs text-text-light uppercase tracking-widest mb-2">Kullanılan kredi</p>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {items.map((it) => (
             <div key={it.label} className="rounded-xl border border-border bg-bg px-3 py-2 text-center">
               <p className="text-lg font-semibold text-text">{it.value}</p>
