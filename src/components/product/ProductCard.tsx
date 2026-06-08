@@ -184,20 +184,15 @@ export default function ProductCard({ product, initialFavorited = false, priorit
               {product.description}
             </p>
           )}
-          <div className="flex items-center justify-between">
-            <PriceTag
-              basePrice={Number(product.basePrice)}
-              discount={{
-                discount_percent: product.discount_percent ?? null,
-                discount_starts_at: product.discount_starts_at ?? null,
-                discount_ends_at: product.discount_ends_at ?? null,
-              }}
-              suffix="den itibaren"
-            />
-            <span className="w-8 h-8 rounded-full border border-border group-hover:border-primary group-hover:bg-primary flex items-center justify-center text-text-light group-hover:text-white transition-all text-sm">
-              →
-            </span>
-          </div>
+          <PriceTag
+            basePrice={Number(product.basePrice)}
+            discount={{
+              discount_percent: product.discount_percent ?? null,
+              discount_starts_at: product.discount_starts_at ?? null,
+              discount_ends_at: product.discount_ends_at ?? null,
+            }}
+            suffix="den itibaren"
+          />
         </div>
       </Link>
     </div>
