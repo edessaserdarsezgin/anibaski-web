@@ -60,10 +60,6 @@ export default async function Header() {
           )}
         </nav>
 
-        <div className="hidden md:flex flex-1 max-w-md">
-          <SearchBar />
-        </div>
-
         <div className="flex items-center gap-2">
           <Link
             href="/favorilerim"
@@ -109,6 +105,13 @@ export default async function Header() {
           </div>
 
           <MobileMenu email={user?.email ?? undefined} isAdmin={isAdmin} categories={menuTree} />
+        </div>
+      </div>
+
+      {/* Masaüstü — arama kendi tam-genişlik satırında (üst menüyle sıkışmasın) */}
+      <div className="hidden md:block border-t border-border">
+        <div className="max-w-6xl mx-auto px-8 py-2.5">
+          <SearchBar />
         </div>
       </div>
 
