@@ -64,7 +64,7 @@ export default function ProductCard({ product, initialFavorited = false, priorit
   }
 
   // Kompakt şerit kartı — yatay kaydırıcılarda (ana sayfa, benzer ürünler) kullanılır.
-  // Grid kartıyla aynı görsel kimlik (serif isim, 4:3 görsel, rounded-3xl); sadece dar ve favori/etiketsiz.
+  // Grid kartıyla aynı görsel kimlik (serif isim, kare görsel, p-4, line-clamp-2); sadece dar ve favori/etiketsiz.
   if (variant === "strip") {
     return (
       <Link
@@ -94,6 +94,7 @@ export default function ProductCard({ product, initialFavorited = false, priorit
               discount_starts_at: product.discount_starts_at ?? null,
               discount_ends_at: product.discount_ends_at ?? null,
             }}
+            suffix="den itibaren"
           />
         </div>
       </Link>
