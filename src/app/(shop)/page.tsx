@@ -219,7 +219,7 @@ export default async function HomePage() {
         </section>
 
         {/* ── Kategoriler — Asimetrik grid ─────────────── */}
-        <section className="py-28 px-8 bg-bg">
+        <section className="py-28 px-4 sm:px-8 bg-bg">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-end justify-between mb-12">
               <div>

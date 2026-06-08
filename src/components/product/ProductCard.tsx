@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import PriceTag from "@/components/product/PriceTag";
@@ -32,36 +29,7 @@ type Props = {
   variant?: "grid" | "strip";
 };
 
-export default function ProductCard({ product, initialFavorited = false, priority = false, showDescription = false, variant = "grid" }: Props) {
-  const [favorited, setFavorited] = useState(initialFavorited);
-  const [loading, setLoading] = useState(false);
-
-  async function toggleFavorite(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    setLoading(true);
-    const prev = favorited;
-    setFavorited(!prev); // optimistic update
-    try {
-      const res = await fetch(
-        prev ? `/api/favorites?productId=${product.id}` : "/api/favorites",
-        {
-          method: prev ? "DELETE" : "POST",
-          ...(prev ? {} : { headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: product.id }) }),
-        }
-      );
-      if (res.status === 401) {
-        setFavorited(prev); // geri al
-        window.location.href = `/giris?redirect=${encodeURIComponent(window.location.pathname)}`;
-      } else if (!res.ok) {
-        setFavorited(prev); // geri al
-      }
-    } catch {
-      setFavorited(prev);
-    } finally {
-      setLoading(false);
-    }
-  }
+export default function ProductCard({ product, priority = false, showDescription = false, variant = "grid" }: Props) {
 
   // Kompakt şerit kartı — yatay kaydırıcılarda (ana sayfa, benzer ürünler) kullanılır.
   // Grid kartıyla aynı görsel kimlik (serif isim, kare görsel, p-4, line-clamp-2); sadece dar ve favori/etiketsiz.
@@ -84,7 +52,7 @@ export default function ProductCard({ product, initialFavorited = false, priorit
           )}
         </div>
         <div className="p-4">
-          <h2 className="font-serif text-base text-text line-clamp-2 leading-snug mb-2 group-hover:text-primary transition-colors">
+          <h2 className="font-serif text-sm text-text line-clamp-3 leading-snug mb-2 group-hover:text-primary transition-colors">
             {product.name}
           </h2>
           <PriceTag
@@ -102,26 +70,7 @@ export default function ProductCard({ product, initialFavorited = false, priorit
   }
 
   return (
-    <div className="relative group h-full">
-      {/* Favori butonu */}
-      <button
-        onClick={toggleFavorite}
-        disabled={loading}
-        aria-label={favorited ? "Favorilerden çıkar" : "Favorilere ekle"}
-        className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm border border-white/50 flex items-center justify-center shadow-sm hover:scale-110 transition-transform disabled:opacity-50"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          className="w-4 h-4"
-          fill={favorited ? "#e07a5f" : "none"}
-          stroke={favorited ? "#e07a5f" : "#8187a2"}
-          strokeWidth={1.75}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-        </svg>
-      </button>
-
+    <div className="group h-full">
       <Link
         href={`/urunler/${product.slug}`}
         className="flex flex-col h-full bg-white rounded-3xl border border-border overflow-hidden hover:shadow-hover hover:border-primary/30 hover:-translate-y-1 transition-all duration-300"
@@ -172,7 +121,7 @@ export default function ProductCard({ product, initialFavorited = false, priorit
 
         {/* Bilgi */}
         <div className="p-4 flex-1 flex flex-col">
-          <h2 className="font-serif text-base text-text group-hover:text-primary transition-colors line-clamp-2 leading-snug mb-2">
+          <h2 className="font-serif text-sm text-text group-hover:text-primary transition-colors line-clamp-3 leading-snug mb-2">
             {product.name}
           </h2>
           {showDescription && product.description && (
