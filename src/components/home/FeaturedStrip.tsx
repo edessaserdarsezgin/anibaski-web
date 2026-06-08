@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import PriceTag from "@/components/product/PriceTag";
+import CardScroller from "@/components/ui/CardScroller";
 
 type FeatProduct = {
   id: string; name: string; slug: string; basePrice: number; images: string[] | null;
@@ -18,7 +19,7 @@ export default function FeaturedStrip({ products }: { products: FeatProduct[] })
             <h2 className="font-serif text-4xl text-text">Öne Çıkanlar</h2>
           </div>
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-2 -mx-2 px-2">
+        <CardScroller>
           {products.map((p) => (
             <Link key={p.id} href={`/urunler/${p.slug}`}
               className="group shrink-0 w-48 bg-white rounded-2xl border border-border overflow-hidden hover:shadow-hover hover:border-primary/30 transition-all">
@@ -34,7 +35,7 @@ export default function FeaturedStrip({ products }: { products: FeatProduct[] })
               </div>
             </Link>
           ))}
-        </div>
+        </CardScroller>
       </div>
     </section>
   );

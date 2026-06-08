@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import PriceTag from "@/components/product/PriceTag";
+import CardScroller from "@/components/ui/CardScroller";
 
 export type RelatedProduct = {
   id: string; name: string; slug: string; basePrice: number; images: string[] | null;
@@ -16,7 +17,7 @@ export default function RelatedProducts({ products }: { products: RelatedProduct
           <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase mb-2">Keşfet</p>
           <h2 className="font-serif text-3xl md:text-4xl text-text">Benzer Ürünler</h2>
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-2 -mx-2 px-2">
+        <CardScroller>
           {products.map((p) => (
             <Link key={p.id} href={`/urunler/${p.slug}`}
               className="group shrink-0 w-48 bg-white rounded-2xl border border-border overflow-hidden hover:shadow-hover hover:border-primary/30 transition-all">
@@ -32,7 +33,7 @@ export default function RelatedProducts({ products }: { products: RelatedProduct
               </div>
             </Link>
           ))}
-        </div>
+        </CardScroller>
       </div>
     </section>
   );

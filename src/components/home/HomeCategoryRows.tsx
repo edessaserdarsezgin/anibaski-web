@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import PriceTag from "@/components/product/PriceTag";
+import CardScroller from "@/components/ui/CardScroller";
 
 type RowProduct = {
   id: string; name: string; slug: string; basePrice: number; images: string[] | null;
@@ -19,7 +20,7 @@ export default function HomeCategoryRows({ rows }: { rows: Row[] }) {
               Tümünü gör →
             </Link>
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-2 -mx-2 px-2">
+          <CardScroller>
             {row.products.map((p) => (
               <Link key={p.id} href={`/urunler/${p.slug}`}
                 className="group shrink-0 w-44 bg-white rounded-2xl border border-border overflow-hidden hover:shadow-hover hover:border-primary/30 transition-all">
@@ -35,7 +36,7 @@ export default function HomeCategoryRows({ rows }: { rows: Row[] }) {
                 </div>
               </Link>
             ))}
-          </div>
+          </CardScroller>
         </div>
       ))}
     </div>

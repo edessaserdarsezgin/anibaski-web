@@ -27,9 +27,10 @@ type Props = {
   };
   initialFavorited?: boolean;
   priority?: boolean;
+  showDescription?: boolean;
 };
 
-export default function ProductCard({ product, initialFavorited = false, priority = false }: Props) {
+export default function ProductCard({ product, initialFavorited = false, priority = false, showDescription = false }: Props) {
   const [favorited, setFavorited] = useState(initialFavorited);
   const [loading, setLoading] = useState(false);
 
@@ -139,7 +140,7 @@ export default function ProductCard({ product, initialFavorited = false, priorit
           <h2 className="font-serif text-base text-text group-hover:text-primary transition-colors line-clamp-2 leading-snug mb-3">
             {product.name}
           </h2>
-          {product.description && (
+          {showDescription && product.description && (
             <p className="text-xs text-text-light line-clamp-2 leading-relaxed mb-4">
               {product.description}
             </p>
