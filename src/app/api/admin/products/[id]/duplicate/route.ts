@@ -1,18 +1,8 @@
 import { NextResponse } from "next/server";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
-
-async function requireAdmin() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (profile?.role !== "ADMIN") return null;
-  return user;
-}
-
+import { createAdminClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth";
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const user = await requireAdmin();
-  if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!(await requireAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
   const supabase = createAdminClient();

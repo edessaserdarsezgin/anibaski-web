@@ -1,15 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { parseDiscountInput } from "@/lib/pricing";
-
-async function requireAdmin() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (!profile || profile.role !== "ADMIN") return null;
-  return { user, supabase: createAdminClient() };
-}
+import { requireAdmin } from "@/lib/auth";
 
 export async function GET() {
   const admin = await requireAdmin();

@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { data: caller } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (caller?.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const guard = await requireAdmin();
+  if (!guard) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const { user } = guard;
 
   const { id } = await params;
   const body = await req.json();
@@ -38,12 +36,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { data: caller } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (caller?.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const guard = await requireAdmin();
+  if (!guard) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const { user } = guard;
 
   const { id } = await params;
 

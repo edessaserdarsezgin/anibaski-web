@@ -1,15 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
-
-async function requireAdmin() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (!profile || profile.role !== "ADMIN") return null;
-  return { user, supabase: createAdminClient() };
-}
-
+import { requireAdmin } from "@/lib/auth";
 // Siparişe ait tüm fotoğraf URL'lerini JSON olarak döner
 // Admin bu URL'leri kullanarak fotoğrafları indirebilir
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

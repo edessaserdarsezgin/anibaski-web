@@ -1,18 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
-
-async function requireAdmin() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Unauthorized" as const, status: 401 };
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (profile?.role !== "ADMIN") return { error: "Forbidden" as const, status: 403 };
-  return { ok: true as const };
-}
-
+import { createAdminClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth";
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const guard = await requireAdmin();
-  if ("error" in guard) return NextResponse.json({ error: guard.error }, { status: guard.status });
+  if (!(await requireAdmin())) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
 
   const { id } = await params;
   const body = await req.json();
@@ -35,8 +25,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const guard = await requireAdmin();
-  if ("error" in guard) return NextResponse.json({ error: guard.error }, { status: guard.status });
+  if (!(await requireAdmin())) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
 
   const { id } = await params;
   const { error } = await createAdminClient().from("campaigns").delete().eq("id", id);
