@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import ProductCard from "@/components/product/ProductCard";
 import SortSelect from "@/components/product/SortSelect";
 import TagFilter from "@/components/product/TagFilter";
@@ -26,9 +26,6 @@ export const metadata = {
 export default async function UrunlerPage({ searchParams }: Props) {
   const { sort = "newest", tag } = await searchParams;
   const { column, ascending } = getSortOrder(sort);
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
   const adminDb = createAdminClient();
 
   const [{ data: allTags }, tagIdsResult, readyMadeIds] = await Promise.all([
@@ -53,11 +50,6 @@ export default async function UrunlerPage({ searchParams }: Props) {
         ? await baseQuery.in("id", tagProductIds)
         : { data: [] })
     : await baseQuery;
-
-  const { data: favoritesData } = user
-    ? await adminDb.from("favorites").select("productId").eq("userId", user.id)
-    : { data: [] };
-  const favoriteIds = new Set((favoritesData ?? []).map((f: { productId: string }) => f.productId));
 
   return (
     <>
@@ -114,7 +106,6 @@ export default async function UrunlerPage({ searchParams }: Props) {
                 <ProductCard
                   key={product.id}
                   product={{ ...product, basePrice: Number(product.basePrice), category, productTags }}
-                  initialFavorited={favoriteIds.has(product.id)}
                   priority={idx < 3}
                 />
               );

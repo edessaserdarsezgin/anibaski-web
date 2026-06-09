@@ -54,7 +54,6 @@ export default async function FavorilerimPage() {
             <ProductCard
               key={product.id}
               product={product}
-              initialFavorited={true}
             />
           ))}
         </div>

@@ -22,7 +22,6 @@ type Props = {
     discount_starts_at?: string | null;
     discount_ends_at?: string | null;
   };
-  initialFavorited?: boolean;
   priority?: boolean;
   showDescription?: boolean;
   /** variant SADECE genişlik/yerleşimi belirler — kart gövdesi her ikisinde aynı.

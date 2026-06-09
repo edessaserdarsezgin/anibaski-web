@@ -25,14 +25,16 @@ type Product = {
 export default async function AramaPage({ searchParams }: Props) {
   const { q } = await searchParams;
   const query = q?.trim() ?? "";
+  // PostgREST .or() filter injection'a karşı temizlik (display için query, filtre için safeQuery)
+  const safeQuery = query.replace(/[,()%:*\\]/g, " ").trim();
 
   let products: Product[] = [];
-  if (query.length >= 2) {
+  if (safeQuery.length >= 2) {
     const supabase = createAdminClient();
     const { data } = await supabase
       .from("products")
       .select("id, name, slug, basePrice, images, description, discount_percent, discount_starts_at, discount_ends_at, category:categories!products_categoryId_fkey(name, slug)")
-      .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
+      .or(`name.ilike.%${safeQuery}%,description.ilike.%${safeQuery}%`)
       .eq("isActive", true)
       .order("name", { ascending: true });
     products = (data ?? []) as Product[];

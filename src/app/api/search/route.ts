@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 
 export async function GET(req: NextRequest) {
-  const q = req.nextUrl.searchParams.get("q")?.trim() ?? "";
+  const raw = req.nextUrl.searchParams.get("q")?.trim() ?? "";
+  // PostgREST .or() filter injection'a karşı: virgül/parantez/operatör karakterlerini temizle
+  const q = raw.replace(/[,()%:*\\]/g, " ").trim();
   const limit = Number(req.nextUrl.searchParams.get("limit") ?? 6);
 
   if (!q || q.length < 2) return NextResponse.json({ results: [] });
