@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import BackButton from "@/components/ui/BackButton";
+import AuthTabs from "@/components/auth/AuthTabs";
+import PasswordInput from "@/components/auth/PasswordInput";
 
 export default function KayitPage() {
-  const router = useRouter();
-
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -110,13 +110,8 @@ export default function KayitPage() {
   return (
     <div className="w-full max-w-md">
       <div className="bg-white/93 backdrop-blur-md rounded-2xl border border-white/40 shadow-2xl p-8">
-        <h1 className="font-serif text-2xl text-text mb-1">Hesap Oluştur</h1>
-        <p className="text-sm text-text-light mb-8">
-          Zaten hesabın var mı?{" "}
-          <Link href="/giris" className="text-primary hover:underline font-semibold">
-            Giriş yap
-          </Link>
-        </p>
+        <BackButton className="mb-5 -ml-1" />
+        <AuthTabs active="kayit" />
 
         <button
           type="button"
@@ -187,14 +182,11 @@ export default function KayitPage() {
 
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-text">Şifre</label>
-            <input
-              type="password"
-              required
-              minLength={6}
-              autoComplete="new-password"
+            <PasswordInput
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="px-4 py-2.5 rounded-lg border border-border bg-bg text-text text-sm outline-none focus:border-primary transition-colors"
+              onChange={setPassword}
+              autoComplete="new-password"
+              minLength={6}
               placeholder="En az 6 karakter"
             />
           </div>

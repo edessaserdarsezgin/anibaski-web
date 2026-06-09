@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
 import BackButton from "@/components/ui/BackButton";
+import AuthTabs from "@/components/auth/AuthTabs";
+import PasswordInput from "@/components/auth/PasswordInput";
 
 function GirisForm() {
   const router = useRouter();
@@ -50,13 +52,7 @@ function GirisForm() {
     <div className="w-full max-w-md">
       <div className="bg-white/93 backdrop-blur-md rounded-2xl border border-white/40 shadow-2xl p-8">
         <BackButton className="mb-5 -ml-1" />
-        <h1 className="font-serif text-2xl text-text mb-1">Giriş Yap</h1>
-        <p className="text-sm text-text-light mb-8">
-          Hesabın yok mu?{" "}
-          <Link href="/kayit" className="text-primary hover:underline font-semibold">
-            Kayıt ol
-          </Link>
-        </p>
+        <AuthTabs active="giris" />
 
         <button
           type="button"
@@ -105,13 +101,10 @@ function GirisForm() {
                 Şifremi unuttum
               </Link>
             </div>
-            <input
-              type="password"
-              required
-              autoComplete="current-password"
+            <PasswordInput
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="px-4 py-2.5 rounded-lg border border-border bg-bg text-text text-sm outline-none focus:border-primary transition-colors"
+              onChange={setPassword}
+              autoComplete="current-password"
               placeholder="••••••••"
             />
           </div>
