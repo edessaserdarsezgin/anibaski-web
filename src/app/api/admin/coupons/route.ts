@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import { couponValueError } from "@/lib/pricing";
 export async function GET() {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -22,6 +23,9 @@ export async function POST(req: NextRequest) {
   if (!code?.trim() || !discountType || !discountValue) {
     return NextResponse.json({ error: "Kod, tür ve değer zorunlu" }, { status: 400 });
   }
+
+  const valErr = couponValueError(discountType, discountValue);
+  if (valErr) return NextResponse.json({ error: valErr }, { status: 400 });
 
   const { data, error } = await admin.supabase
     .from("coupons")

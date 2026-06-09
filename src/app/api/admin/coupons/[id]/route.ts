@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import { couponValueError } from "@/lib/pricing";
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
   const body = await req.json();
+
+  // İndirim değeri güncelleniyorsa doğrula (düzenleme formu type+value'yu birlikte yollar).
+  if ("discountValue" in body) {
+    const valErr = couponValueError(body.discountType, body.discountValue);
+    if (valErr) return NextResponse.json({ error: valErr }, { status: 400 });
+  }
 
   // JS'den gelen camelCase'i snake_case'e çevir
   const mapped: Record<string, unknown> = {};

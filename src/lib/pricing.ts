@@ -31,6 +31,21 @@ export function parseDiscountInput(body: {
   return { discount_percent: pct, discount_starts_at: s, discount_ends_at: e };
 }
 
+/**
+ * Kupon indirim değeri geçerli mi? Geçersizse hata mesajı, geçerliyse null.
+ * Yüzde kupon < 100 olmalı: %100 + ücretsiz kargo → sipariş toplamı 0 olur,
+ * PayTR 0 tutarı işleyemez ve ödenmemiş hayalet sipariş kalır. (Bedava/tekrar
+ * baskı ileride ayrı admin akışıyla çözülecek — bkz. SORUNLAR.MD.)
+ */
+export function couponValueError(discountType: unknown, discountValue: unknown): string | null {
+  const v = Number(discountValue);
+  if (!Number.isFinite(v) || v <= 0) return "İndirim değeri 0'dan büyük olmalı.";
+  if (discountType === "percentage" && v >= 100) {
+    return "Yüzde kupon en fazla %99 olabilir (%100 sepeti tamamen sıfırlar).";
+  }
+  return null;
+}
+
 /** ISO → datetime-local input değeri (yerel). */
 export function isoToLocalInput(iso: string | null): string {
   if (!iso) return "";

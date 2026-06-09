@@ -174,7 +174,7 @@ export default function KuponlarPage() {
               <label className="text-xs font-semibold text-text">
                 {form.discountType === "percentage" ? "İndirim Oranı (%)" : "İndirim Tutarı (₺)"}
               </label>
-              <input required type="number" min="1" value={form.discountValue} onChange={e => setForm(p => ({ ...p, discountValue: e.target.value }))}
+              <input required type="number" min="1" max={form.discountType === "percentage" ? 99 : undefined} value={form.discountValue} onChange={e => setForm(p => ({ ...p, discountValue: e.target.value }))}
                 placeholder={form.discountType === "percentage" ? "20" : "50"} className="px-3 py-2 text-sm rounded-lg border border-border outline-none focus:border-primary" />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -289,7 +289,7 @@ export default function KuponlarPage() {
                               <label className="text-xs font-semibold text-text">
                                 {editForm.discountType === "percentage" ? "Oran (%)" : "Tutar (₺)"}
                               </label>
-                              <input required type="number" min="1" value={editForm.discountValue}
+                              <input required type="number" min="1" max={editForm.discountType === "percentage" ? 99 : undefined} value={editForm.discountValue}
                                 onChange={e => setEditForm(p => ({ ...p, discountValue: e.target.value }))}
                                 className="px-3 py-2 text-sm rounded-lg border border-border outline-none focus:border-primary" />
                             </div>
