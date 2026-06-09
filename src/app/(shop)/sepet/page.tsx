@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 import BackButton from "@/components/ui/BackButton";
 import CardScroller from "@/components/ui/CardScroller";
 import ProductCard from "@/components/product/ProductCard";
+import EmptyState from "@/components/ui/EmptyState";
 
 type AppliedCoupon = { code: string; discountAmount: number; discountType: string; discountValue: number };
 
@@ -108,18 +109,18 @@ export default function SepetPage() {
   if (items.length === 0) {
     return (
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-12">
-        <BackButton className="mb-10" />
-        <div className="text-center">
-        <p className="text-4xl mb-4">🛒</p>
-        <h1 className="font-serif text-2xl text-text mb-2">Sepetiniz boş</h1>
-        <p className="text-text-light mb-8">Ürünleri keşfetmeye başlayın.</p>
-        <Link
-          href="/urunler"
-          className="inline-block px-8 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full transition-colors"
-        >
-          Ürünlere Git
-        </Link>
-        </div>
+        <BackButton className="mb-6" />
+        <EmptyState
+          icon={
+            <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007Z" />
+            </svg>
+          }
+          title="Sepetin şimdilik boş"
+          subtitle="Anılarını ürüne dönüştürmeye başla — keşfet, sepete ekle, kolayca tamamla."
+          ctaHref="/urunler"
+          ctaLabel="Alışverişe Başla"
+        />
       </div>
     );
   }

@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import ProductCard from "@/components/product/ProductCard";
 import BackButton from "@/components/ui/BackButton";
+import EmptyState from "@/components/ui/EmptyState";
 
 export const metadata = { title: "Favorilerim | AnıBaskı", robots: { index: false, follow: false } };
 
@@ -37,16 +37,17 @@ export default async function FavorilerimPage() {
       </div>
 
       {products.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-32 gap-5">
-          <div className="w-20 h-20 rounded-3xl bg-bg border border-border flex items-center justify-center text-4xl">♡</div>
-          <div className="text-center">
-            <p className="font-serif text-2xl text-text mb-2">Henüz favori ürün yok</p>
-            <p className="text-text-light text-sm">Ürünlerdeki ♡ butonuna tıklayarak burada saklayabilirsiniz.</p>
-          </div>
-          <Link href="/urunler" className="px-6 py-2.5 border border-border rounded-full text-sm font-semibold text-text-light hover:border-primary hover:text-primary transition-colors">
-            Ürünlere Göz At
-          </Link>
-        </div>
+        <EmptyState
+          icon={
+            <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+            </svg>
+          }
+          title="Favorilerin şimdilik boş 🤍"
+          subtitle="Beğendiğin ürünleri kalp ikonuyla buraya ekle, sonra kolayca geri dön."
+          ctaHref="/urunler"
+          ctaLabel="Alışverişe Başla"
+        />
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
           {products.map((product) => (
