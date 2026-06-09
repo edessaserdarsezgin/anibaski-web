@@ -71,6 +71,10 @@ export default async function UrunDetayPage({ params }: Props) {
   function shuffle<T>(arr: T[]): T[] {
     const a = [...arr];
     for (let i = a.length - 1; i > 0; i--) {
+      // Sunucu bileşeni istek başına tek kez render edilir; ilgili ürünleri her
+      // ziyarette çeşitlendirmek için kasıtlı rastgelelik (purity kuralı burada
+      // geçerli değil — client re-render yok).
+      // eslint-disable-next-line react-hooks/purity
       const j = Math.floor(Math.random() * (i + 1));
       [a[i], a[j]] = [a[j], a[i]];
     }
