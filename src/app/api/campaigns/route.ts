@@ -13,6 +13,9 @@ export async function GET() {
     .or(`ends_at.is.null,ends_at.gte.${now}`)
     .order("position", { ascending: true });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[campaigns] yükleme hatası:", error);
+    return NextResponse.json({ error: "Kampanyalar yüklenemedi" }, { status: 500 });
+  }
   return NextResponse.json({ campaigns: data ?? [] });
 }

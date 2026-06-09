@@ -34,7 +34,10 @@ export async function POST(req: NextRequest) {
     .from("uploads")
     .upload(path, file, { contentType: file.type, upsert: false });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[upload] yükleme hatası:", error);
+    return NextResponse.json({ error: "Yükleme başarısız" }, { status: 500 });
+  }
 
   const { data: signed, error: signError } = await supabase.storage
     .from("uploads")

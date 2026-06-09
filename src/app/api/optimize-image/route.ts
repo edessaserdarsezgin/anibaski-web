@@ -39,7 +39,8 @@ export async function POST(req: NextRequest) {
     .upload(optimizedPath, optimized, { contentType: "image/jpeg", upsert: true });
 
   if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 500 });
+    console.error("[optimize-image] yükleme hatası:", uploadError);
+    return NextResponse.json({ error: "Görsel işlenemedi" }, { status: 500 });
   }
 
   const { data: signed } = await adminSupabase.storage

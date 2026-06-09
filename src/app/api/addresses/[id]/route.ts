@@ -15,7 +15,10 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     .eq("id", id)
     .eq("userId", user.id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[addresses] işlem hatası:", error);
+    return NextResponse.json({ error: "Adres işlemi başarısız" }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }
 
@@ -36,6 +39,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[addresses] işlem hatası:", error);
+    return NextResponse.json({ error: "Adres işlemi başarısız" }, { status: 500 });
+  }
   return NextResponse.json(data);
 }

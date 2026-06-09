@@ -21,7 +21,10 @@ export async function POST(req: NextRequest) {
     { onConflict: "userId,productId", ignoreDuplicates: true }
   );
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[favorites] hata:", error);
+    return NextResponse.json({ error: "Favori işlemi başarısız" }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }
 
@@ -40,6 +43,9 @@ export async function DELETE(req: NextRequest) {
     .eq("userId", user.id)
     .eq("productId", productId);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[favorites] hata:", error);
+    return NextResponse.json({ error: "Favori işlemi başarısız" }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }

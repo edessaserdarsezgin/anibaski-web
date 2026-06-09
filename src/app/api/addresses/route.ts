@@ -29,6 +29,9 @@ export async function POST(req: NextRequest) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[addresses] kayıt hatası:", error);
+    return NextResponse.json({ error: "Adres kaydedilemedi" }, { status: 500 });
+  }
   return NextResponse.json(data, { status: 201 });
 }

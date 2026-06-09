@@ -9,7 +9,10 @@ export async function POST(req: NextRequest) {
 
   const db = createAdminClient();
   const { data, error } = await db.rpc("phone_in_use", { p_norm: norm, p_exclude: null });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[check-phone] hata:", error);
+    return NextResponse.json({ error: "Telefon kontrolü başarısız" }, { status: 500 });
+  }
 
   return NextResponse.json({ available: !data });
 }

@@ -24,7 +24,10 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
   const adminClient = createAdminClient();
   const { error } = await adminClient.from("orders").update({ status: "CANCEL_REQUESTED" }).eq("id", id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[orders/cancel] hata:", error);
+    return NextResponse.json({ error: "İptal talebi oluşturulamadı" }, { status: 500 });
+  }
 
   // Müşteriye bildirim
   const [{ data: profile }, { data: address }] = await Promise.all([
