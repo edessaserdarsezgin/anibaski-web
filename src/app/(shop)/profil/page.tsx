@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCreditStatus, getCreditStats } from "@/lib/studioCredits";
-import CreditStatsView from "@/components/studio/CreditStatsView";
+import CreditAccordion from "./CreditAccordion";
 import LogoutButton from "./LogoutButton";
 
 export const metadata = { title: "Hesabım", robots: { index: false, follow: false } };
@@ -65,33 +65,8 @@ export default async function ProfilPage() {
           ))}
         </nav>
 
-        {/* AI Stüdyo Kredilerim — farklılaştırıcı, menünün altında */}
-        <section className="bg-white rounded-2xl border border-border p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-serif text-lg text-text">AI Stüdyo Kredilerim</h2>
-            <Link href="/studyo" className="text-sm text-primary hover:underline font-semibold">
-              Stüdyoya git →
-            </Link>
-          </div>
-          <p className="text-sm text-text-light mb-4">
-            {credits.total > 0 ? (
-              credits.trial ? (
-                <>Ücretsiz deneme hakkın: <b className="text-primary">{credits.dailyFreeRemaining}</b>. Beğenirsen baskıya geç — ilk siparişinden sonra her gün ücretsiz kredi kazanırsın 🎁</>
-              ) : (
-                <>Şu an <b className="text-primary">{credits.total}</b> kullanım hakkın var
-                  {" "}(bugün <b className="text-text">{credits.dailyFreeRemaining}</b> ücretsiz
-                  {credits.earnedAvailable > 0 && <> + <b className="text-text">{credits.earnedAvailable}</b> kazanılmış</>}).</>
-              )
-            ) : (
-              credits.trial ? (
-                <>Deneme hakkın doldu — bir baskı siparişi ver, her gün ücretsiz kredi kazanmaya başla 🎁</>
-              ) : (
-                <>Hakkın doldu — her 1000 ₺&apos;lik baskı siparişinde yeni kredi kazanırsın 🎁</>
-              )
-            )}
-          </p>
-          <CreditStatsView stats={creditStats} />
-        </section>
+        {/* AI Stüdyo Kredilerim — akordiyon (varsayılan kapalı, sayfa kısa kalsın) */}
+        <CreditAccordion credits={credits} creditStats={creditStats} />
 
         {/* Çıkış — ayrı kart */}
         <div className="bg-white rounded-2xl border border-border p-2">
