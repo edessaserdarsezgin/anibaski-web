@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import sharp from "sharp";
 import { isRateLimited } from "@/lib/rateLimit";
 import { requireAdmin } from "@/lib/auth";
 
@@ -28,16 +29,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Dosya boyutu 20 MB sınırını aşıyor." }, { status: 400 });
   }
 
-  const ALLOWED_EXTENSIONS: Record<string, string> = {
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-  };
-  const ext = ALLOWED_EXTENSIONS[file.type];
-  const path = `${Date.now()}.${ext}`;
+  // Katalog görselleri yalnız ekranda gösterilir (basılmaz) → agresif optimize:
+  // EXIF yönü + en uzun kenar 1600px (büyütmeden) + WebP q80. ~2 MB ham → ~150-300 KB.
+  const inputBuf = Buffer.from(await file.arrayBuffer());
+  const optimized = await sharp(inputBuf)
+    .rotate()
+    .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
+    .webp({ quality: 80 })
+    .toBuffer();
 
-  const { error } = await adminClient.storage.from("products").upload(path, file, {
-    contentType: file.type,
+  const path = `${Date.now()}.webp`;
+  const { error } = await adminClient.storage.from("products").upload(path, optimized, {
+    contentType: "image/webp",
     upsert: false,
   });
 
