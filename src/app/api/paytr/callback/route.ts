@@ -41,11 +41,20 @@ export async function POST(req: NextRequest) {
   if (status === "success") {
     // status: PENDING bırakılır (admin onaylayıp PREPARING'e çekecek)
     // paymentStatus: paid → ödeme onaylandı, üretim henüz başlamadı
-    const { error: updateErr } = await adminClient
+    // Idempotency: yalnızca henüz ödenmemiş siparişi güncelle. PayTR, OK yanıtını geç
+    // alırsa callback'i tekrar gönderir; sipariş zaten 'paid' ise hiçbir satır dönmez →
+    // yan etkiler (kredi grant + kupon sayacı + bildirim) TEKRAR çalışmaz.
+    const { data: updatedRows, error: updateErr } = await adminClient
       .from("orders")
       .update({ paymentStatus: "paid", paymentRef: merchantOid })
-      .eq("id", orderId);
+      .eq("id", orderId)
+      .or("paymentStatus.is.null,paymentStatus.neq.paid")
+      .select("id");
     if (updateErr) console.error("[PayTR callback] update error:", updateErr);
+    if (!updatedRows || updatedRows.length === 0) {
+      // Zaten işlenmiş (tekrar/eşzamanlı callback) ya da sipariş yok → no-op, OK dön.
+      return new Response("OK", { status: 200 });
+    }
 
     // Ödeme onaylandı → bildirim gönder
     const { data: order } = await adminClient
