@@ -46,12 +46,21 @@ export default async function UrunDetayPage({ params }: Props) {
   if (!product) notFound();
 
   const adminDb = createAdminClient();
-  const { data: favRow } = user
-    ? await adminDb.from("favorites").select("id").eq("userId", user.id).eq("productId", product.id).maybeSingle()
-    : { data: null };
-  const isFavorited = !!favRow;
+  const RELATED_COLS = "id, name, slug, basePrice, images, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color))";
 
-  const { data: shipRow } = await adminDb.from("shipping_settings").select("*").eq("id", 1).single();
+  // product elde edildikten sonra kalan sorgular birbirinden bağımsız → ardışık (waterfall) yerine tek turda paralel.
+  const [favRes, shipRes, sameCatRes, variantsRes] = await Promise.all([
+    user
+      ? adminDb.from("favorites").select("id").eq("userId", user.id).eq("productId", product.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    adminDb.from("shipping_settings").select("*").eq("id", 1).single(),
+    adminDb.from("products_with_order_count").select(RELATED_COLS)
+      .eq("categoryId", product.categoryId).eq("isActive", true).neq("id", product.id).limit(24),
+    supabase.from("product_variants").select("id, type, label, value, priceAddon").eq("productId", product.id).order("type"),
+  ]);
+
+  const isFavorited = !!favRes.data;
+  const shipRow = shipRes.data;
   const shippingInfo = {
     productionTime: shipRow?.production_time?.trim() || "2–3 iş günü",
     shippingTime: shipRow?.shipping_time?.trim() || "1–3 iş günü",
@@ -67,13 +76,7 @@ export default async function UrunDetayPage({ params }: Props) {
     }
     return a;
   }
-  const RELATED_COLS = "id, name, slug, basePrice, images, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color))";
-  const { data: sameCat } = await adminDb
-    .from("products_with_order_count")
-    .select(RELATED_COLS)
-    .eq("categoryId", product.categoryId).eq("isActive", true).neq("id", product.id)
-    .limit(24);
-  const related: RelatedProduct[] = shuffle((sameCat ?? []) as unknown as RelatedProduct[]).slice(0, 8);
+  const related: RelatedProduct[] = shuffle((sameCatRes.data ?? []) as unknown as RelatedProduct[]).slice(0, 8);
   if (related.length < 8) {
     const have = new Set<string>([product.id, ...related.map((r) => r.id)]);
     const { data: fill } = await adminDb
@@ -88,11 +91,7 @@ export default async function UrunDetayPage({ params }: Props) {
     }
   }
 
-  const { data: variants } = await supabase
-    .from("product_variants")
-    .select("id, type, label, value, priceAddon")
-    .eq("productId", product.id)
-    .order("type");
+  const variants = variantsRes.data;
 
   type RawVariant = { id: string; type: string; label: string; value: string; priceAddon?: unknown };
 
