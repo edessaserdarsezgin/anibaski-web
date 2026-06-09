@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { sendOrderNotification } from "@/lib/email/orderNotification";
 import { notifyOrderCreated } from "@/lib/whatsapp/notify";
+import { activeDiscountPercent, applyDiscount } from "@/lib/pricing";
+import { getShippingSettings } from "@/lib/shipping";
+
+type IncomingItem = {
+  productId: string;
+  productName?: string;
+  variantSelections?: Record<string, { id?: string; label?: string } | unknown>;
+  quantity: number;
+  uploadedImages?: string[];
+};
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -9,9 +19,14 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { shippingAddressId, billingAddressId, paymentMethod, items, subtotal, shippingFee, total, discountCode, source } = body;
+  // DİKKAT: istemciden gelen subtotal/shippingFee/total/unitPrice GÜVENİLMEZ — sunucuda yeniden hesaplanır.
+  const { shippingAddressId, billingAddressId, paymentMethod, items, discountCode, source } = body as {
+    shippingAddressId?: string; billingAddressId?: string; paymentMethod?: string;
+    items?: IncomingItem[]; discountCode?: string | null; source?: string;
+  };
 
   if (!shippingAddressId) return NextResponse.json({ error: "Teslimat adresi gerekli" }, { status: 400 });
+  if (!Array.isArray(items) || items.length === 0) return NextResponse.json({ error: "Sepet boş" }, { status: 400 });
 
   await supabase.from("profiles").upsert({
     id: user.id,
@@ -19,16 +34,66 @@ export async function POST(req: NextRequest) {
     fullName: user.user_metadata?.full_name ?? null,
   });
 
-  // Kupon server-side doğrulama
+  // ── Sunucu-taraflı fiyat yeniden hesaplama (fiyat manipülasyonuna karşı) ──
+  const adminDb = createAdminClient();
+  const productIds = [...new Set(items.map((i) => i.productId).filter(Boolean))];
+  const variantIds = [...new Set(
+    items.flatMap((i) => Object.values(i.variantSelections ?? {}).map((v) => (v as { id?: string })?.id).filter(Boolean) as string[])
+  )];
+
+  const [{ data: products }, { data: variants }] = await Promise.all([
+    adminDb.from("products").select("id, basePrice, discount_percent, discount_starts_at, discount_ends_at, isActive").in("id", productIds),
+    variantIds.length
+      ? adminDb.from("product_variants").select("id, productId, priceAddon").in("id", variantIds)
+      : Promise.resolve({ data: [] as { id: string; productId: string; priceAddon: number }[] }),
+  ]);
+
+  const productMap = new Map((products ?? []).map((p) => [p.id, p]));
+  const variantMap = new Map((variants ?? []).map((v) => [v.id, v]));
+
+  const computedItems: { productId: string; productName?: string; variantSelections: Record<string, unknown>; quantity: number; unitPrice: number; uploadedImages: string[] }[] = [];
+  for (const item of items) {
+    const product = productMap.get(item.productId);
+    if (!product || product.isActive === false) {
+      return NextResponse.json({ error: "Sepette geçersiz veya pasif ürün var." }, { status: 400 });
+    }
+    const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
+
+    let addons = 0;
+    for (const sel of Object.values(item.variantSelections ?? {})) {
+      const vid = (sel as { id?: string })?.id;
+      if (!vid) continue;
+      const v = variantMap.get(vid);
+      if (v && v.productId === item.productId) addons += Number(v.priceAddon) || 0;
+    }
+
+    const fullUnit = Number(product.basePrice) + addons;
+    const unitPrice = applyDiscount(fullUnit, activeDiscountPercent(product));
+
+    computedItems.push({
+      productId: item.productId,
+      productName: item.productName,
+      variantSelections: (item.variantSelections as Record<string, unknown>) ?? {},
+      quantity,
+      unitPrice,
+      uploadedImages: item.uploadedImages ?? [],
+    });
+  }
+
+  const subtotal = Math.round(computedItems.reduce((s, it) => s + it.unitPrice * it.quantity, 0) * 100) / 100;
+
+  // Kargo + kapıda ödeme bedeli — ayarlardan
+  const ship = await getShippingSettings();
+  const baseShipping = subtotal >= ship.freeShippingThreshold ? 0 : ship.shippingFee;
+  const codFee = paymentMethod === "cod" ? ship.codFee : 0;
+  const shippingFee = baseShipping + codFee;
+
+  // Kupon — server-side doğrulama (sunucu subtotal'ı ile)
   let discountAmount = 0;
   let validatedCouponCode: string | null = null;
   if (discountCode) {
     const { data: coupon } = await supabase
-      .from("coupons")
-      .select("*")
-      .eq("code", discountCode)
-      .eq("is_active", true)
-      .single();
+      .from("coupons").select("*").eq("code", discountCode).eq("is_active", true).single();
 
     const expired = coupon && coupon.expires_at && new Date(coupon.expires_at) < new Date();
     if (expired) {
@@ -44,8 +109,6 @@ export async function POST(req: NextRequest) {
         : Math.min(Number(coupon.discount_value), subtotal);
       validatedCouponCode = coupon.code;
 
-      // Kupon used_count yalnızca kapıda ödemede burada artar
-      // Kredi kartında PayTR callback başarı durumunda artırılır
       if (paymentMethod === "cod") {
         const newCount = coupon.used_count + 1;
         const limitReached = coupon.max_uses !== null && newCount >= coupon.max_uses;
@@ -56,6 +119,8 @@ export async function POST(req: NextRequest) {
       }
     }
   }
+
+  const total = Math.round((subtotal + shippingFee - discountAmount) * 100) / 100;
 
   const { data: order, error: orderError } = await supabase
     .from("orders")
@@ -79,22 +144,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Order save failed" }, { status: 500 });
   }
 
-  const orderItems = items.map((item: {
-    productId: string;
-    variantSelections: Record<string, unknown>;
-    quantity: number;
-    unitPrice: number;
-    uploadedImages?: string[];
-  }) => ({
-    orderId: order.id,
-    productId: item.productId,
-    variantSelections: item.variantSelections ?? {},
-    quantity: item.quantity,
-    unitPrice: item.unitPrice,
-    uploadedImages: item.uploadedImages ?? [],
-  }));
-
-  await supabase.from("order_items").insert(orderItems);
+  await supabase.from("order_items").insert(
+    computedItems.map((item) => ({
+      orderId: order.id,
+      productId: item.productId,
+      variantSelections: item.variantSelections,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      uploadedImages: item.uploadedImages,
+    }))
+  );
 
   // Kapıda ödemede bildirim hemen gönderilir (ödeme zaten kapıda)
   // Kredi kartında bildirimler PayTR callback'te gönderilir (ödeme onayı sonrası)
@@ -104,10 +163,11 @@ export async function POST(req: NextRequest) {
       supabase.from("profiles").select("phone, notify_delivery_contact").eq("id", user.id).single(),
     ]);
 
-    const itemsText = items.map((item: { productName?: string; productId: string; quantity: number; unitPrice: number; variantSelections?: Record<string, string> }) => {
+    const itemsText = computedItems.map((item) => {
       const name = item.productName ?? item.productId;
-      const variants = item.variantSelections && Object.keys(item.variantSelections).length > 0
-        ? " (" + Object.entries(item.variantSelections).map(([k, v]) => `${k}: ${v}`).join(", ") + ")"
+      const vs = item.variantSelections as Record<string, { label?: string }> | null;
+      const variants = vs && Object.keys(vs).length > 0
+        ? " (" + Object.values(vs).map((v) => v?.label).filter(Boolean).join(", ") + ")"
         : "";
       const unitPrice = item.unitPrice.toLocaleString("tr-TR");
       const lineTotal = (item.unitPrice * item.quantity).toLocaleString("tr-TR");
@@ -135,11 +195,11 @@ export async function POST(req: NextRequest) {
       orderId: order.id,
       customerEmail: user.email!,
       customerName: user.user_metadata?.full_name ?? null,
-      items: items.map((item: { productId: string; variantSelections: Record<string, unknown>; quantity: number; unitPrice: number; uploadedImages?: string[]; productName?: string }) => ({
+      items: computedItems.map((item) => ({
         productName: item.productName ?? item.productId,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
-        uploadedImages: item.uploadedImages ?? [],
+        uploadedImages: item.uploadedImages,
       })),
       subtotal,
       shippingFee,
