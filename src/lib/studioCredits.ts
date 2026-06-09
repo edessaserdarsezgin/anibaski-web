@@ -78,19 +78,18 @@ async function earnedAvailable(userId: string): Promise<number> {
 export type CreditStatus = { dailyFreeRemaining: number; earnedAvailable: number; total: number; trial: boolean };
 
 export async function getCreditStatus(userId: string): Promise<CreditStatus> {
-  const s = await getSettings();
-  const ordered = await hasQualifyingOrder(userId);
+  // Bağımsız sorgular paralel; ücretsiz hak sayımı 'ordered'a bağlı olduğu için ikinci turda.
+  const [s, ordered, earned] = await Promise.all([
+    getSettings(),
+    hasQualifyingOrder(userId),
+    earnedAvailable(userId),
+  ]);
 
-  let dailyFreeRemaining: number;
-  if (ordered) {
-    const usedToday = await todaySuccessCount(userId);
-    dailyFreeRemaining = Math.max(0, s.dailyFree - usedToday);
-  } else {
-    const usedEver = await lifetimeSuccessCount(userId);
-    dailyFreeRemaining = Math.max(0, s.trialCredits - usedEver);
-  }
+  const used = ordered ? await todaySuccessCount(userId) : await lifetimeSuccessCount(userId);
+  const dailyFreeRemaining = ordered
+    ? Math.max(0, s.dailyFree - used)
+    : Math.max(0, s.trialCredits - used);
 
-  const earned = await earnedAvailable(userId);
   return { dailyFreeRemaining, earnedAvailable: earned, total: dailyFreeRemaining + earned, trial: !ordered };
 }
 
