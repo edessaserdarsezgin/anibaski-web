@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -9,7 +9,8 @@ export async function POST(req: NextRequest) {
   const { code, subtotal } = await req.json();
   if (!code?.trim()) return NextResponse.json({ error: "Kupon kodu gerekli" }, { status: 400 });
 
-  const { data: coupon } = await supabase
+  // coupons RLS-korumalı → admin-client ile oku (anon/user erişimi yok)
+  const { data: coupon } = await createAdminClient()
     .from("coupons")
     .select("*")
     .eq("code", code.trim().toUpperCase())

@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
   let discountAmount = 0;
   let validatedCouponCode: string | null = null;
   if (discountCode) {
-    const { data: coupon } = await supabase
+    const { data: coupon } = await adminDb
       .from("coupons").select("*").eq("code", discountCode).eq("is_active", true).single();
 
     const expired = coupon && coupon.expires_at && new Date(coupon.expires_at) < new Date();
