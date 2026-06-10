@@ -10,16 +10,14 @@ const STATUS_LABEL: Record<string, string> = {
   PENDING: "Beklemede", PREPARING: "Hazırlanıyor",
   SHIPPED: "Kargoda", DELIVERED: "Teslim Edildi", CANCELLED: "İptal",
 };
-const STATUS_COLOR: Record<string, string> = {
-  PENDING: "text-yellow-700 bg-yellow-50 border-yellow-200",
-  PREPARING: "text-blue-700 bg-blue-50 border-blue-200",
-  SHIPPED: "text-purple-700 bg-purple-50 border-purple-200",
-  DELIVERED: "text-green-700 bg-green-50 border-green-200",
-  CANCELLED: "text-red-700 bg-red-50 border-red-200",
-};
 
-export default async function AdminSiparislerPage() {
+type Props = { searchParams: Promise<{ status?: string }> };
+
+const VALID_STATUS = ["PENDING", "PREPARING", "SHIPPED", "DELIVERED", "CANCELLED", "CANCEL_REQUESTED"];
+
+export default async function AdminSiparislerPage({ searchParams }: Props) {
   noStore();
+  const { status } = await searchParams;
   const supabase = createAdminClient();
   const { data: allOrders } = await supabase
     .from("orders")
@@ -27,13 +25,25 @@ export default async function AdminSiparislerPage() {
     .order("createdAt", { ascending: false });
 
   // Tamamlanmamış kredi kartı siparişleri admin listesinde de gizlensin
-  const orders = (allOrders ?? []).filter(o =>
+  const completed = (allOrders ?? []).filter(o =>
     o.paymentMethod === "cod" || o.paymentStatus === "paid"
   );
 
+  // Dashboard aksiyon linklerinden gelen ?status= filtresi
+  const activeStatus = status && VALID_STATUS.includes(status) ? status : null;
+  const orders = activeStatus ? completed.filter(o => o.status === activeStatus) : completed;
+
   return (
     <div>
-      <h1 className="font-serif text-3xl text-text mb-8">Siparişler</h1>
+      <h1 className="font-serif text-3xl text-text mb-2">Siparişler</h1>
+      {activeStatus && (
+        <p className="text-sm text-text-light mb-6">
+          Filtre: <span className="font-semibold text-text">{STATUS_LABEL[activeStatus] ?? activeStatus}</span>
+          {" · "}
+          <Link href="/admin/siparisler" className="text-primary hover:underline">Tümünü göster</Link>
+        </p>
+      )}
+      {!activeStatus && <div className="mb-6" />}
 
       <div className="bg-white rounded-2xl border border-border overflow-hidden">
         {!orders?.length ? (

@@ -136,3 +136,153 @@ export function aggregateAi(jobs: JobRow[], grants: GrantRow[]) {
     grantedTotal: [...grantMap.values()].reduce((s, n) => s + n, 0),
   };
 }
+
+// ─── Dashboard (Genel Bakış) ───────────────────────────────────────────
+
+// Seçili dönemin bir öncesinin başlangıcı (KPI delta karşılaştırması için).
+// Pencere: güncel = [fromIso, now], önceki = [prevFromIso, fromIso).
+export function donemToPrevIso(donem: Donem, fromIso: string | null): string | null {
+  if (!fromIso) return null; // tüm zamanlar → karşılaştırma yok
+  const from = new Date(fromIso);
+  const days = donem === "gun" ? 1 : donem === "hafta" ? 7 : 30;
+  from.setDate(from.getDate() - days);
+  return from.toISOString();
+}
+
+type DashOrder = { total: number | string; createdAt: string; paymentMethod: string | null; paymentStatus: string | null };
+type TopItem = { quantity: number; unitPrice: number | string; product: { name: string } | null };
+type AttentionProduct = { id: string; name: string; isActive: boolean | null; images: string[] | null };
+type DashCoupon = { code: string; expires_at: string | null; is_active: boolean; discount_type: string; discount_value: number | string };
+type DashCampaign = { title: string; is_active: boolean; coupon_code: string | null };
+
+export type DashboardData = {
+  current: DashOrder[];
+  previous: DashOrder[];
+  actionCounts: Record<string, number>;
+  series30: { day: string; total: number; count: number }[];
+  topProducts: { name: string; quantity: number; revenue: number }[];
+  ai: { total: number; success: number; granted: number };
+  coupons: DashCoupon[];
+  campaigns: DashCampaign[];
+  attention: AttentionProduct[];
+};
+
+// Tamamlanmış sipariş = cod ∨ paid (mevcut kuralla aynı)
+const isPaid = (o: { paymentMethod: string | null; paymentStatus: string | null }) =>
+  o.paymentMethod === "cod" || o.paymentStatus === "paid";
+
+export async function fetchDashboardData(fromIso: string | null, prevFromIso: string | null): Promise<DashboardData> {
+  const db = createAdminClient();
+  const now = new Date().toISOString();
+  const thirty = new Date(); thirty.setDate(thirty.getDate() - 30);
+  const thirtyIso = thirty.toISOString();
+
+  let curQ = db.from("orders").select(`total, "createdAt", "paymentMethod", "paymentStatus"`).neq("type", "reprint");
+  if (fromIso) curQ = curQ.gte("createdAt", fromIso);
+
+  let prevQ = db.from("orders").select(`total, "createdAt", "paymentMethod", "paymentStatus"`).neq("type", "reprint");
+  if (prevFromIso && fromIso) prevQ = prevQ.gte("createdAt", prevFromIso).lt("createdAt", fromIso);
+  else prevQ = prevQ.gte("createdAt", now); // tüm zamanlar → boş önceki
+
+  const statuses = ["PENDING", "PREPARING", "SHIPPED", "CANCEL_REQUESTED"];
+
+  const [{ data: current }, { data: previous }, ...statusCounts] = await Promise.all([
+    curQ, prevQ,
+    ...statuses.map((s) =>
+      db.from("orders").select("id", { count: "exact", head: true }).eq("type", "sale").eq("status", s)
+    ),
+  ]);
+
+  const [
+    { data: series }, { data: items }, { data: jobs }, { data: grants },
+    { data: coupons }, { data: campaigns }, { data: products },
+  ] = await Promise.all([
+    db.from("orders").select(`total, "createdAt", "paymentMethod", "paymentStatus"`).neq("type", "reprint").gte("createdAt", thirtyIso),
+    db.from("order_items").select(`quantity, "unitPrice", product:products(name), order:orders!inner("createdAt",type)`).eq("order.type", "sale").gte("order.createdAt", fromIso ?? thirtyIso),
+    db.from("studio_jobs").select(`status, "createdAt"`).gte("createdAt", fromIso ?? thirtyIso),
+    db.from("studio_credit_grants").select(`amount, "createdAt"`).gte("createdAt", fromIso ?? thirtyIso),
+    db.from("coupons").select("code, expires_at, is_active, discount_type, discount_value").eq("is_active", true),
+    db.from("campaigns").select("title, is_active, coupon_code").eq("is_active", true),
+    db.from("products").select(`id, name, "isActive", images`),
+  ]);
+
+  const actionCounts: Record<string, number> = {};
+  statuses.forEach((s, i) => { actionCounts[s] = statusCounts[i]?.count ?? 0; });
+
+  return {
+    current: (current ?? []) as DashOrder[],
+    previous: (previous ?? []) as DashOrder[],
+    actionCounts,
+    series30: dailySeries((series ?? []) as DashOrder[], thirtyIso),
+    topProducts: topProducts((items ?? []) as unknown as TopItem[]),
+    ai: {
+      total: (jobs ?? []).length,
+      success: (jobs ?? []).filter((j: { status: string }) => j.status === "success").length,
+      granted: (grants ?? []).reduce((s: number, g: { amount: number | string }) => s + num(g.amount), 0),
+    },
+    coupons: (coupons ?? []) as DashCoupon[],
+    campaigns: (campaigns ?? []) as DashCampaign[],
+    // images default '{}' (null değil) → görselsiz = boş dizi; JS'te süz
+    attention: ((products ?? []) as AttentionProduct[]).filter((p) => p.isActive === false || !(p.images?.length)),
+  };
+}
+
+// KPI: tamamlanmış siparişlerden ciro/adet/ort.sepet + önceki döneme % delta
+export function aggregateKpis(current: DashOrder[], previous: DashOrder[]) {
+  const cur = current.filter(isPaid);
+  const prev = previous.filter(isPaid);
+  const sum = (a: DashOrder[]) => a.reduce((s, o) => s + num(o.total), 0);
+  const revenue = sum(cur), prevRevenue = sum(prev);
+  const count = cur.length, prevCount = prev.length;
+  const avg = count ? revenue / count : 0;
+  const prevAvg = prevCount ? prevRevenue / prevCount : 0;
+  const delta = (c: number, p: number) => (p > 0 ? (c - p) / p : null);
+  return {
+    revenue, count, avg,
+    revenueDelta: delta(revenue, prevRevenue),
+    countDelta: delta(count, prevCount),
+    avgDelta: delta(avg, prevAvg),
+  };
+}
+
+// Son 30 gün: gün başına ciro + adet (boş günler 0 ile doldurulur)
+export function dailySeries(orders: DashOrder[], fromIso: string): { day: string; total: number; count: number }[] {
+  const map = new Map<string, { total: number; count: number }>();
+  for (const o of orders.filter(isPaid)) {
+    const day = o.createdAt.slice(0, 10);
+    const e = map.get(day) ?? { total: 0, count: 0 };
+    e.total += num(o.total); e.count += 1;
+    map.set(day, e);
+  }
+  const out: { day: string; total: number; count: number }[] = [];
+  const today = new Date();
+  for (let cur = new Date(fromIso); cur <= today; cur.setDate(cur.getDate() + 1)) {
+    const key = cur.toISOString().slice(0, 10);
+    const e = map.get(key) ?? { total: 0, count: 0 };
+    out.push({ day: key, total: e.total, count: e.count });
+  }
+  return out;
+}
+
+// En çok satan ilk 5 ürün (adet + ciro)
+export function topProducts(items: TopItem[]): { name: string; quantity: number; revenue: number }[] {
+  const map = new Map<string, { name: string; quantity: number; revenue: number }>();
+  for (const it of items) {
+    const name = it.product?.name ?? "—";
+    const e = map.get(name) ?? { name, quantity: 0, revenue: 0 };
+    e.quantity += it.quantity;
+    e.revenue += it.quantity * num(it.unitPrice);
+    map.set(name, e);
+  }
+  return [...map.values()].sort((a, b) => b.quantity - a.quantity).slice(0, 5);
+}
+
+// Pazarlama: 14 gün içinde dolacak VEYA dolmuş ama hâlâ aktif kuponlar
+export function expiringCoupons(coupons: DashCoupon[]): { code: string; expires_at: string | null; expired: boolean }[] {
+  const limit = new Date(); limit.setDate(limit.getDate() + 14);
+  const now = new Date();
+  return coupons
+    .filter((c) => c.expires_at && new Date(c.expires_at) <= limit)
+    .map((c) => ({ code: c.code, expires_at: c.expires_at, expired: !!c.expires_at && new Date(c.expires_at) < now }))
+    .sort((a, b) => (a.expires_at ?? "").localeCompare(b.expires_at ?? ""));
+}

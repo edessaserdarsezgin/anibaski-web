@@ -1,92 +1,68 @@
-import { createAdminClient } from "@/lib/supabase/server";
+import { unstable_noStore as noStore } from "next/cache";
+import {
+  parseDonem, donemToFromIso, donemToPrevIso,
+  fetchDashboardData, aggregateKpis, expiringCoupons,
+} from "@/lib/adminStats";
+import DonemSecici from "./istatistik/DonemSecici";
+import TrendChart from "./_dashboard/TrendChart";
+import { StatCard, ActionBar, TopProducts, AiActivityCard, MarketingCard, AttentionCard } from "./_dashboard/cards";
 
-export const metadata = { title: "Admin | AnıBaskı" };
+export const metadata = { title: "Genel Bakış | Admin" };
 
-const STATUS_LABEL: Record<string, string> = {
-  PENDING: "Beklemede", PREPARING: "Hazırlanıyor",
-  SHIPPED: "Kargoda", DELIVERED: "Teslim Edildi", CANCELLED: "İptal",
-};
-const STATUS_COLOR: Record<string, string> = {
-  PENDING: "text-yellow-700 bg-yellow-50 border-yellow-200",
-  PREPARING: "text-blue-700 bg-blue-50 border-blue-200",
-  SHIPPED: "text-purple-700 bg-purple-50 border-purple-200",
-  DELIVERED: "text-green-700 bg-green-50 border-green-200",
-  CANCELLED: "text-red-700 bg-red-50 border-red-200",
-};
+const tl = (n: number) => `${n.toLocaleString("tr-TR", { maximumFractionDigits: 0 })} ₺`;
 
-export default async function AdminPage() {
-  const supabase = createAdminClient();
+type Props = { searchParams: Promise<{ donem?: string }> };
 
-  const [
-    { count: orderCount },
-    { count: productCount },
-    { count: pendingCount },
-    { data: revenueData },
-    { data: recentOrders },
-  ] = await Promise.all([
-    supabase.from("orders").select("*", { count: "exact", head: true }),
-    supabase.from("products").select("*", { count: "exact", head: true }),
-    supabase.from("orders").select("*", { count: "exact", head: true }).eq("status", "PENDING"),
-    supabase.from("orders").select("total").neq("status", "CANCELLED"),
-    supabase.from("orders").select("id, status, total, createdAt, items:order_items(id)").order("createdAt", { ascending: false }).limit(5),
-  ]);
+export default async function AdminPage({ searchParams }: Props) {
+  noStore();
+  const { donem: raw } = await searchParams;
+  const donem = parseDonem(raw);
+  const fromIso = donemToFromIso(donem);
+  const prevFromIso = donemToPrevIso(donem, fromIso);
 
-  const revenue = revenueData?.reduce((sum, o) => sum + Number(o.total), 0) ?? 0;
-
-  const stats = [
-    { label: "Toplam Sipariş", value: orderCount ?? 0 },
-    { label: "Bekleyen Sipariş", value: pendingCount ?? 0 },
-    { label: "Toplam Ürün", value: productCount ?? 0 },
-    { label: "Toplam Ciro", value: `${revenue.toLocaleString("tr-TR")} ₺` },
-  ];
+  const data = await fetchDashboardData(fromIso, prevFromIso);
+  const kpi = aggregateKpis(data.current, data.previous);
+  const coupons = expiringCoupons(data.coupons);
 
   return (
     <div>
-      <h1 className="font-serif text-3xl text-text mb-8">Genel Bakış</h1>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-        {stats.map((s) => (
-          <div key={s.label} className="bg-white rounded-2xl border border-border p-5">
-            <p className="text-sm text-text-light mb-1">{s.label}</p>
-            <p className="font-serif text-2xl text-text">{s.value}</p>
-          </div>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
+        <h1 className="font-serif text-3xl text-text">Genel Bakış</h1>
+        <DonemSecici active={donem} />
       </div>
 
-      <div className="bg-white rounded-2xl border border-border p-6">
-        <h2 className="font-serif text-xl text-text mb-4">Son Siparişler</h2>
-        {!recentOrders?.length ? (
-          <p className="text-sm text-text-light">Henüz sipariş yok.</p>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-text-light">
-                <th className="text-left pb-3 font-semibold">Sipariş No</th>
-                <th className="text-left pb-3 font-semibold">Tarih</th>
-                <th className="text-left pb-3 font-semibold">Durum</th>
-                <th className="text-right pb-3 font-semibold">Toplam</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentOrders.map((order) => (
-                <tr key={order.id} className="border-b border-border last:border-0">
-                  <td className="py-3 font-mono text-text-light">#{order.id.slice(0, 8).toUpperCase()}</td>
-                  <td className="py-3 text-text-light">
-                    {new Date(order.createdAt).toLocaleDateString("tr-TR")}
-                  </td>
-                  <td className="py-3">
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${STATUS_COLOR[order.status]}`}>
-                      {STATUS_LABEL[order.status]}
-                    </span>
-                  </td>
-                  <td className="py-3 text-right font-semibold text-primary">
-                    {Number(order.total).toLocaleString("tr-TR")} ₺
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      {/* KPI */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <StatCard label="Sipariş" value={String(kpi.count)} delta={kpi.countDelta} />
+        <StatCard label="Ciro" value={tl(kpi.revenue)} delta={kpi.revenueDelta} />
+        <StatCard label="Ort. Sepet" value={tl(kpi.avg)} delta={kpi.avgDelta} />
+        <StatCard label="AI İşlem" value={String(data.ai.total)} />
+      </div>
+
+      {/* Aksiyon */}
+      <h2 className="font-serif text-lg text-text mb-3">Aksiyon Bekleyen</h2>
+      <div className="mb-8"><ActionBar counts={data.actionCounts} /></div>
+
+      {/* Trend */}
+      <div className="bg-white rounded-2xl border border-border p-6 mb-8">
+        <h2 className="font-serif text-lg text-text mb-4">Son 30 Gün</h2>
+        <TrendChart data={data.series30} />
+        <div className="flex gap-4 mt-2 text-xs text-text-light">
+          <span><span className="inline-block w-3 h-1.5 bg-primary rounded-sm align-middle" /> Ciro</span>
+          <span><span className="inline-block w-3 h-3 bg-accent/60 rounded-sm align-middle" /> Sipariş</span>
+        </div>
+      </div>
+
+      {/* 2 kolon: en çok satan + AI */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+        <TopProducts items={data.topProducts} />
+        <AiActivityCard ai={data.ai} />
+      </div>
+
+      {/* 2 kolon: pazarlama + dikkat */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <MarketingCard campaigns={data.campaigns} coupons={coupons} />
+        <AttentionCard products={data.attention} />
       </div>
     </div>
   );
