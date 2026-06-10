@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 type Params = { params: Promise<{ id: string }> };
 
@@ -37,5 +38,8 @@ export async function PUT(req: NextRequest, { params }: Params) {
     if (insError) return NextResponse.json({ error: insError.message }, { status: 500 });
   }
 
+  // ürün↔etiket eşlemesi değişti → katalog cache invalidate
+  revalidateTag("products", "max");
+  revalidateTag("tags", "max");
   return NextResponse.json({ ok: true });
 }

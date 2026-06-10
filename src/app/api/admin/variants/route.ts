@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 export async function GET(req: NextRequest) {
   const admin = await requireAdmin();
@@ -30,6 +31,7 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  revalidateTag("products", "max"); // varyant değişti → ürün detay cache invalidate
   return NextResponse.json(data, { status: 201 });
 }
 
@@ -41,5 +43,6 @@ export async function DELETE(req: NextRequest) {
 
   const { error } = await admin.supabase.from("product_variants").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  revalidateTag("products", "max"); // varyant silindi → ürün detay cache invalidate
   return NextResponse.json({ ok: true });
 }

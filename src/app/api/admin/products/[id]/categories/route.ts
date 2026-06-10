@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 type Params = { params: Promise<{ id: string }> };
 
@@ -30,5 +31,8 @@ export async function PUT(req: NextRequest, { params }: Params) {
     const { error: insError } = await admin.supabase.from("product_categories").insert(rows);
     if (insError) return NextResponse.json({ error: insError.message }, { status: 500 });
   }
+  // ürün↔kategori eşlemesi değişti → katalog cache invalidate
+  revalidateTag("categories", "max");
+  revalidateTag("products", "max");
   return NextResponse.json({ ok: true });
 }
