@@ -194,10 +194,14 @@ export async function fetchDashboardData(fromIso: string | null, prevFromIso: st
 
   const statuses = ["PENDING", "PREPARING", "SHIPPED", "CANCEL_REQUESTED"];
 
+  // Aksiyon şeridi = operasyonel fulfillment kuyruğu (ciro değil): reprint de
+  // basılmayı bekleyen iştir → type filtresi YOK (ciro/KPI sorguları reprint'i
+  // ayrıca neq('type','reprint') ile dışlar). Tıklama /admin/siparisler?status=
+  // de tüm türleri gösterdiği için tutarlı.
   const [{ data: current }, { data: previous }, ...statusCounts] = await Promise.all([
     curQ, prevQ,
     ...statuses.map((s) =>
-      db.from("orders").select("id", { count: "exact", head: true }).eq("type", "sale").eq("status", s)
+      db.from("orders").select("id", { count: "exact", head: true }).eq("status", s)
     ),
   ]);
 

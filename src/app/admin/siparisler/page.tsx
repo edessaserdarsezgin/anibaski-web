@@ -21,7 +21,7 @@ export default async function AdminSiparislerPage({ searchParams }: Props) {
   const supabase = createAdminClient();
   const { data: allOrders } = await supabase
     .from("orders")
-    .select(`id, status, total, createdAt, "trackingCode", "paymentMethod", "paymentStatus", items:order_items(id, quantity, variantSelections, product:products(name)), address:addresses!orders_addressId_fkey(fullName, city), buyer:profiles!orders_userId_fkey(fullName, email)`)
+    .select(`id, type, status, total, createdAt, "trackingCode", "paymentMethod", "paymentStatus", items:order_items(id, quantity, variantSelections, product:products(name)), address:addresses!orders_addressId_fkey(fullName, city), buyer:profiles!orders_userId_fkey(fullName, email)`)
     .order("createdAt", { ascending: false });
 
   // Tamamlanmamış kredi kartı siparişleri admin listesinde de gizlensin
@@ -69,6 +69,11 @@ export default async function AdminSiparislerPage({ searchParams }: Props) {
                     <p className="text-xs text-text-light mt-0.5">
                       {new Date(order.createdAt).toLocaleDateString("tr-TR")}
                     </p>
+                    {(order as unknown as { type?: string }).type === "reprint" && (
+                      <span className="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-accent/40 text-text">
+                        Yeniden Baskı
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-4 text-text-light">
                     {(() => {
