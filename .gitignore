@@ -10,6 +10,11 @@
 !.yarn/releases
 !.yarn/versions
 
+# n8n-as-code VSCode eklentisi (makineye/instance'a özel: ngrok URL, sync stub'ları)
+/.n8nac
+/n8nac-config.json
+/workflows
+
 # testing
 /coverage
 
