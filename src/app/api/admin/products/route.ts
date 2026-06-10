@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseDiscountInput } from "@/lib/pricing";
 import { requireAdmin } from "@/lib/auth";
+import { revalidateTag } from "next/cache";
 
 export async function GET() {
   const admin = await requireAdmin();
@@ -51,5 +52,6 @@ export async function POST(req: NextRequest) {
     if (variantError) return NextResponse.json({ error: "Ürün eklendi ama varyantlar kaydedilemedi: " + variantError.message }, { status: 500 });
   }
 
+  revalidateTag("products", "max");
   return NextResponse.json(product, { status: 201 });
 }

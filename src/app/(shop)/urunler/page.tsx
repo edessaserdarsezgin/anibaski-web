@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { createAdminClient } from "@/lib/supabase/server";
 import ProductCard from "@/components/product/ProductCard";
 import SortSelect from "@/components/product/SortSelect";
 import TagFilter from "@/components/product/TagFilter";
 import { getReadyMadeCategoryIds } from "@/lib/readyMade";
+import {
+  getTags,
+  getProductIdsByTag,
+  getProductsForCatalog
+} from "@/lib/catalog";
 
 type Props = { searchParams: Promise<{ sort?: string; tag?: string }> };
 
@@ -26,30 +30,14 @@ export const metadata = {
 export default async function UrunlerPage({ searchParams }: Props) {
   const { sort = "newest", tag } = await searchParams;
   const { column, ascending } = getSortOrder(sort);
-  const adminDb = createAdminClient();
 
-  const [{ data: allTags }, tagIdsResult, readyMadeIds] = await Promise.all([
-    adminDb.from("tags").select("id, name, color").order("name"),
-    tag
-      ? adminDb.from("product_tags").select("productId").eq("tagId", tag)
-      : Promise.resolve({ data: null }),
+  const [allTags, tagProductIds, readyMadeIds] = await Promise.all([
+    getTags(),
+    tag ? getProductIdsByTag(tag) : Promise.resolve(null),
     getReadyMadeCategoryIds(),
   ]);
 
-  const tagProductIds = (tagIdsResult.data as { productId: string }[] | null)?.map(r => r.productId) ?? null;
-  let baseQuery = adminDb
-    .from("products_with_order_count")
-    .select("id, name, slug, description, basePrice, images, discount_percent, discount_starts_at, discount_ends_at, category:categories!products_categoryId_fkey(name, slug), productTags:product_tags(tagId, position, tag:tags(name, color))")
-    .eq("isActive", true)
-    .order(column, { ascending });
-  if (readyMadeIds.length > 0) {
-    baseQuery = baseQuery.not("categoryId", "in", `(${readyMadeIds.join(",")})`);
-  }
-  const { data: products } = tag
-    ? (tagProductIds && tagProductIds.length > 0
-        ? await baseQuery.in("id", tagProductIds)
-        : { data: [] })
-    : await baseQuery;
+  const products = await getProductsForCatalog(column, ascending, tagProductIds, readyMadeIds);
 
   return (
     <>

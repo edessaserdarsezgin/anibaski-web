@@ -7,17 +7,19 @@ import RelatedProducts, { type RelatedProduct } from "@/components/product/Relat
 import { activeDiscountPercent } from "@/lib/pricing";
 import ProductGallery from "./ProductGallery";
 import ProductDetailsTabs from "./ProductDetailsTabs";
+import { getShippingSettings } from "@/lib/shipping";
+import {
+  getProductBySlug,
+  getProductVariants,
+  getRelatedProductsSameCategory,
+  getRelatedProductsFallback
+} from "@/lib/catalog";
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
-  const supabase = await createClient();
-  const { data: product } = await supabase
-    .from("products")
-    .select("name, description, images")
-    .eq("slug", slug)
-    .single();
+  const product = await getProductBySlug(slug);
   if (!product) return {};
   const description = product.description
     ? String(product.description).slice(0, 155)
@@ -38,35 +40,26 @@ export default async function UrunDetayPage({ params }: Props) {
   const { slug } = await params;
   const supabase = await createClient();
 
-  const [{ data: product }, { data: { user } }] = await Promise.all([
-    supabase.from("products").select("*, category:categories!products_categoryId_fkey(id, name, slug), productTags:product_tags(tagId, position, tag:tags(name, color))").eq("slug", slug).eq("isActive", true).single(),
+  const [product, { data: { user } }] = await Promise.all([
+    getProductBySlug(slug),
     supabase.auth.getUser(),
   ]);
 
   if (!product) notFound();
 
   const adminDb = createAdminClient();
-  const RELATED_COLS = "id, name, slug, basePrice, images, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color))";
 
-  // product elde edildikten sonra kalan sorgular birbirinden bağımsız → ardışık (waterfall) yerine tek turda paralel.
-  const [favRes, shipRes, sameCatRes, variantsRes] = await Promise.all([
+  // product elde edildikten sonra kalan sorgular paralel.
+  const [favRes, shippingInfo, sameCatProds, variants] = await Promise.all([
     user
       ? adminDb.from("favorites").select("id").eq("userId", user.id).eq("productId", product.id).maybeSingle()
       : Promise.resolve({ data: null }),
-    adminDb.from("shipping_settings").select("*").eq("id", 1).single(),
-    adminDb.from("products_with_order_count").select(RELATED_COLS)
-      .eq("categoryId", product.categoryId).eq("isActive", true).neq("id", product.id).limit(24),
-    supabase.from("product_variants").select("id, type, label, value, priceAddon").eq("productId", product.id).order("type"),
+    getShippingSettings(),
+    getRelatedProductsSameCategory(product.categoryId, product.id),
+    getProductVariants(product.id),
   ]);
 
   const isFavorited = !!favRes.data;
-  const shipRow = shipRes.data;
-  const shippingInfo = {
-    productionTime: shipRow?.production_time?.trim() || "2–3 iş günü",
-    shippingTime: shipRow?.shipping_time?.trim() || "1–3 iş günü",
-    freeShippingThreshold: shipRow?.free_shipping_threshold != null ? Number(shipRow.free_shipping_threshold) : 500,
-    orderCutoffNote: shipRow?.order_cutoff_note?.trim() || "Siparişler hafta içi 14:00'a kadar verilirse aynı gün üretime alınır.",
-  };
 
   function shuffle<T>(arr: T[]): T[] {
     const a = [...arr];
@@ -80,22 +73,15 @@ export default async function UrunDetayPage({ params }: Props) {
     }
     return a;
   }
-  const related: RelatedProduct[] = shuffle((sameCatRes.data ?? []) as unknown as RelatedProduct[]).slice(0, 8);
+  const related: RelatedProduct[] = shuffle((sameCatProds ?? []) as unknown as RelatedProduct[]).slice(0, 8);
   if (related.length < 8) {
     const have = new Set<string>([product.id, ...related.map((r) => r.id)]);
-    const { data: fill } = await adminDb
-      .from("products_with_order_count")
-      .select(RELATED_COLS)
-      .eq("isActive", true).neq("id", product.id)
-      .order("is_featured", { ascending: false }).order("createdAt", { ascending: false })
-      .limit(16);
+    const fill = await getRelatedProductsFallback(product.id);
     for (const p of (fill ?? []) as unknown as RelatedProduct[]) {
       if (related.length >= 8) break;
       if (!have.has(p.id)) { related.push(p); have.add(p.id); }
     }
   }
-
-  const variants = variantsRes.data;
 
   type RawVariant = { id: string; type: string; label: string; value: string; priceAddon?: unknown };
 

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { revalidateTag } from "next/cache";
+
 export async function GET() {
   if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -49,5 +51,7 @@ export async function PATCH(req: Request) {
     });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  
+  revalidateTag("shipping", "max");
   return NextResponse.json({ ok: true });
 }

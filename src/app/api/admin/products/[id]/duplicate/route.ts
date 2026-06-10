@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { revalidateTag } from "next/cache";
+
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!(await requireAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
@@ -58,5 +60,6 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     );
   }
 
+  revalidateTag("products", "max");
   return NextResponse.json({ id: copy.id });
 }

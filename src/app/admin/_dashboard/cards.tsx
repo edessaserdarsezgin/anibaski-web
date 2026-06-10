@@ -2,8 +2,24 @@ import Link from "next/link";
 
 const tl = (n: number) => `${n.toLocaleString("tr-TR", { maximumFractionDigits: 0 })} ₺`;
 
-// KPI kartı — delta null ise rozet gizli
-export function StatCard({ label, value, delta }: { label: string; value: string; delta?: number | null }) {
+// KPI kartı içi mini-trend (son 14 gün) — eksensiz SVG sparkline
+function Sparkline({ data }: { data: number[] }) {
+  if (data.length < 2) return null;
+  const W = 100, H = 28;
+  const max = Math.max(...data), min = Math.min(...data);
+  const range = max - min || 1;
+  const x = (i: number) => (i * W) / (data.length - 1);
+  const y = (v: number) => H - 2 - ((v - min) / range) * (H - 4);
+  const line = data.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-7 mt-2" preserveAspectRatio="none" aria-hidden="true">
+      <path d={line} fill="none" stroke="#e07a5f" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+// KPI kartı — delta null ise rozet gizli; series varsa sparkline
+export function StatCard({ label, value, delta, series }: { label: string; value: string; delta?: number | null; series?: number[] }) {
   const up = (delta ?? 0) >= 0;
   return (
     <div className="bg-white rounded-2xl border border-border p-5">
@@ -15,6 +31,7 @@ export function StatCard({ label, value, delta }: { label: string; value: string
           <span className="text-text-light font-normal"> önceki döneme göre</span>
         </p>
       )}
+      {series && series.length > 1 && <Sparkline data={series} />}
     </div>
   );
 }
@@ -100,6 +117,43 @@ export function MarketingCard({ campaigns, coupons }: {
           ))}
         </ul>
       ) : <p className="text-sm text-text-light">Yakında dolacak kupon yok.</p>}
+    </div>
+  );
+}
+
+const ACT_LABEL: Record<string, string> = {
+  PENDING: "Beklemede", PREPARING: "Hazırlanıyor", SHIPPED: "Kargoda",
+  DELIVERED: "Teslim", CANCELLED: "İptal", CANCEL_REQUESTED: "İptal Talebi",
+};
+const ACT_CLS: Record<string, string> = {
+  PENDING: "text-yellow-700 bg-yellow-50", PREPARING: "text-blue-700 bg-blue-50",
+  SHIPPED: "text-purple-700 bg-purple-50", DELIVERED: "text-green-700 bg-green-50",
+  CANCELLED: "text-red-700 bg-red-50", CANCEL_REQUESTED: "text-orange-700 bg-orange-50",
+};
+
+// Son aktivite feed'i (glean deseni): zaman damgası + durum rozeti + tutar, tıklanır
+export function RecentActivity({ orders }: { orders: { id: string; status: string; total: number | string; createdAt: string }[] }) {
+  return (
+    <div className="bg-white rounded-2xl border border-border p-6">
+      <h2 className="font-serif text-lg text-text mb-4">Son Aktivite</h2>
+      {!orders.length ? <p className="text-sm text-text-light">Henüz sipariş yok.</p> : (
+        <ul className="flex flex-col divide-y divide-border">
+          {orders.map((o) => (
+            <li key={o.id} className="py-2.5 first:pt-0 last:pb-0">
+              <Link href={`/siparisler/${o.id}`} className="flex items-center justify-between gap-3 hover:opacity-80">
+                <span className="flex items-center gap-2 min-w-0">
+                  <span className="font-mono text-xs text-text-light">#{o.id.slice(0, 8).toUpperCase()}</span>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ACT_CLS[o.status] ?? "text-text-light bg-bg"}`}>{ACT_LABEL[o.status] ?? o.status}</span>
+                </span>
+                <span className="flex items-center gap-3 whitespace-nowrap">
+                  <span className="text-xs text-text-light">{new Date(o.createdAt).toLocaleDateString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+                  <span className="text-sm font-semibold text-primary">{Number(o.total).toLocaleString("tr-TR")} ₺</span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

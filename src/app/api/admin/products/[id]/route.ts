@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseDiscountInput } from "@/lib/pricing";
 import { requireAdmin } from "@/lib/auth";
+import { revalidateTag } from "next/cache";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const admin = await requireAdmin();
@@ -40,5 +41,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .eq("id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  
+  revalidateTag("products", "max");
   return NextResponse.json({ ok: true });
 }

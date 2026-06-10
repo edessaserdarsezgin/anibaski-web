@@ -5,7 +5,10 @@ import {
 } from "@/lib/adminStats";
 import DonemSecici from "./istatistik/DonemSecici";
 import TrendChart from "./_dashboard/TrendChart";
-import { StatCard, ActionBar, TopProducts, AiActivityCard, MarketingCard, AttentionCard } from "./_dashboard/cards";
+import {
+  StatCard, ActionBar, TopProducts, AiActivityCard,
+  MarketingCard, AttentionCard, RecentActivity,
+} from "./_dashboard/cards";
 
 export const metadata = { title: "Genel Bakış | Admin" };
 
@@ -24,6 +27,11 @@ export default async function AdminPage({ searchParams }: Props) {
   const kpi = aggregateKpis(data.current, data.previous);
   const coupons = expiringCoupons(data.coupons);
 
+  // Sparkline verileri
+  const orderSeries = data.series30.map((s) => s.count);
+  const revenueSeries = data.series30.map((s) => s.total);
+  const avgBasketSeries = data.series30.map((s) => (s.count ? s.total / s.count : 0));
+
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
@@ -33,9 +41,9 @@ export default async function AdminPage({ searchParams }: Props) {
 
       {/* KPI */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard label="Sipariş" value={String(kpi.count)} delta={kpi.countDelta} />
-        <StatCard label="Ciro" value={tl(kpi.revenue)} delta={kpi.revenueDelta} />
-        <StatCard label="Ort. Sepet" value={tl(kpi.avg)} delta={kpi.avgDelta} />
+        <StatCard label="Sipariş" value={String(kpi.count)} delta={kpi.countDelta} series={orderSeries} />
+        <StatCard label="Ciro" value={tl(kpi.revenue)} delta={kpi.revenueDelta} series={revenueSeries} />
+        <StatCard label="Ort. Sepet" value={tl(kpi.avg)} delta={kpi.avgDelta} series={avgBasketSeries} />
         <StatCard label="AI İşlem" value={String(data.ai.total)} />
       </div>
 
@@ -53,10 +61,13 @@ export default async function AdminPage({ searchParams }: Props) {
         </div>
       </div>
 
-      {/* 2 kolon: en çok satan + AI */}
+      {/* 2 kolon: son aktivite + en çok satanlar/AI */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
-        <TopProducts items={data.topProducts} />
-        <AiActivityCard ai={data.ai} />
+        <RecentActivity orders={data.recent} />
+        <div className="flex flex-col gap-4">
+          <TopProducts items={data.topProducts} />
+          <AiActivityCard ai={data.ai} />
+        </div>
       </div>
 
       {/* 2 kolon: pazarlama + dikkat */}

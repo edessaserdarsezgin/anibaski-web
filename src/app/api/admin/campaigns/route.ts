@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { revalidateTag } from "next/cache";
+
 export async function POST(req: NextRequest) {
   if (!(await requireAdmin())) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
 
@@ -30,5 +32,7 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  
+  revalidateTag("campaigns", "max");
   return NextResponse.json(data);
 }

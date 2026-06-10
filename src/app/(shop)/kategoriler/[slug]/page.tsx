@@ -1,10 +1,18 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
 import SortSelect from "@/components/product/SortSelect";
 import TagFilter from "@/components/product/TagFilter";
 import ProductCard from "@/components/product/ProductCard";
+import {
+  getCategoryBySlug,
+  getSubCategories,
+  getCategoryById,
+  getTags,
+  getProductIdsByTag,
+  getProductCategoriesJoin,
+  getProductsInCategory
+} from "@/lib/catalog";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -23,12 +31,7 @@ function getSortOrder(sort: string): { column: string; ascending: boolean } {
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
-  const supabase = await createClient();
-  const { data: category } = await supabase
-    .from("categories")
-    .select("name, description")
-    .eq("slug", slug)
-    .single();
+  const category = await getCategoryBySlug(slug);
   if (!category) return {};
   const description = category.description
     ? String(category.description).slice(0, 155)
@@ -43,60 +46,31 @@ export async function generateMetadata({ params }: Props) {
 export default async function KategoriPage({ params, searchParams }: Props) {
   const [{ slug }, { sort = "newest", tag }] = await Promise.all([params, searchParams]);
   const { column, ascending } = getSortOrder(sort);
-  const adminDb = createAdminClient();
 
-  const { data: category } = await adminDb
-    .from("categories")
-    .select("id, name, slug, description, parentId")
-    .eq("slug", slug)
-    .single();
-
+  const category = await getCategoryBySlug(slug);
   if (!category) notFound();
 
-  // Alt kategoriler (bu bir ana kategori ise)
-  const { data: subCategories } = await adminDb
-    .from("categories")
-    .select("id, name, slug")
-    .eq("parentId", category.id)
-    .order("name");
-
-  // Ana kategori (bu bir alt kategori ise)
-  const { data: parentCategory } = category.parentId
-    ? await adminDb.from("categories").select("id, name, slug").eq("id", category.parentId).single()
-    : { data: null };
+  // Alt kategoriler, parent kategori, etiketler ve filtre eşleşmeleri paralel
+  const [subCategories, parentCategory, allTags, tagProductIds] = await Promise.all([
+    getSubCategories(category.id),
+    category.parentId ? getCategoryById(category.parentId) : Promise.resolve(null),
+    getTags(),
+    tag ? getProductIdsByTag(tag) : Promise.resolve(null),
+  ]);
 
   // Ürünler: bu kategorinin ürünleri + alt kategorilerinin ürünleri
   const subCategoryIds = (subCategories ?? []).map(s => s.id);
   const allCategoryIds = [category.id, ...subCategoryIds];
 
-  const [{ data: allTags }, tagIdsResult] = await Promise.all([
-    adminDb.from("tags").select("id, name, color").order("name"),
-    tag
-      ? adminDb.from("product_tags").select("productId").eq("tagId", tag)
-      : Promise.resolve({ data: null }),
-  ]);
+  const joinProductIds = await getProductCategoriesJoin(allCategoryIds);
 
-  const tagProductIds = (tagIdsResult.data as { productId: string }[] | null)?.map(r => r.productId) ?? null;
-  const { data: pcRows } = await adminDb
-    .from("product_categories")
-    .select("productId")
-    .in("categoryId", allCategoryIds);
-  const joinProductIds = Array.from(new Set((pcRows ?? []).map((r) => r.productId)));
-
-  let baseQuery = adminDb
-    .from("products_with_order_count")
-    .select("id, name, slug, description, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color))")
-    .eq("isActive", true)
-    .order(column, { ascending });
-
-  baseQuery = joinProductIds.length
-    ? baseQuery.or(`categoryId.in.(${allCategoryIds.join(",")}),id.in.(${joinProductIds.join(",")})`)
-    : baseQuery.in("categoryId", allCategoryIds);
-  const { data: products } = tag
-    ? (tagProductIds && tagProductIds.length > 0
-        ? await baseQuery.in("id", tagProductIds)
-        : { data: [] })
-    : await baseQuery;
+  const products = await getProductsInCategory(
+    allCategoryIds,
+    joinProductIds,
+    column,
+    ascending,
+    tagProductIds
+  );
 
   return (
     <>

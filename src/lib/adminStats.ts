@@ -165,6 +165,7 @@ export type DashboardData = {
   coupons: DashCoupon[];
   campaigns: DashCampaign[];
   attention: AttentionProduct[];
+  recent: { id: string; status: string; total: number | string; createdAt: string }[];
 };
 
 // Tamamlanmış sipariş = cod ∨ paid (mevcut kuralla aynı)
@@ -195,7 +196,7 @@ export async function fetchDashboardData(fromIso: string | null, prevFromIso: st
 
   const [
     { data: series }, { data: items }, { data: jobs }, { data: grants },
-    { data: coupons }, { data: campaigns }, { data: products },
+    { data: coupons }, { data: campaigns }, { data: products }, { data: recentRaw },
   ] = await Promise.all([
     db.from("orders").select(`total, "createdAt", "paymentMethod", "paymentStatus"`).neq("type", "reprint").gte("createdAt", thirtyIso),
     db.from("order_items").select(`quantity, "unitPrice", product:products(name), order:orders!inner("createdAt",type)`).eq("order.type", "sale").gte("order.createdAt", fromIso ?? thirtyIso),
@@ -204,6 +205,7 @@ export async function fetchDashboardData(fromIso: string | null, prevFromIso: st
     db.from("coupons").select("code, expires_at, is_active, discount_type, discount_value").eq("is_active", true),
     db.from("campaigns").select("title, is_active, coupon_code").eq("is_active", true),
     db.from("products").select(`id, name, "isActive", images`),
+    db.from("orders").select(`id, status, total, "createdAt", "paymentMethod", "paymentStatus"`).neq("type", "reprint").order("createdAt", { ascending: false }).limit(12),
   ]);
 
   const actionCounts: Record<string, number> = {};
@@ -224,6 +226,9 @@ export async function fetchDashboardData(fromIso: string | null, prevFromIso: st
     campaigns: (campaigns ?? []) as DashCampaign[],
     // images default '{}' (null değil) → görselsiz = boş dizi; JS'te süz
     attention: ((products ?? []) as AttentionProduct[]).filter((p) => p.isActive === false || !(p.images?.length)),
+    // son aktivite: tamamlanmış (cod ∨ paid) son 6 sipariş
+    recent: ((recentRaw ?? []) as ({ id: string; status: string; total: number | string; createdAt: string } & { paymentMethod: string | null; paymentStatus: string | null })[])
+      .filter(isPaid).slice(0, 6),
   };
 }
 

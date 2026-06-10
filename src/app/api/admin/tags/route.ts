@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import { revalidateTag } from "next/cache";
+
 export async function GET() {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -26,6 +28,9 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  
+  revalidateTag("tags", "max");
+  revalidateTag("products", "max");
   return NextResponse.json(data, { status: 201 });
 }
 
@@ -41,6 +46,9 @@ export async function PATCH(req: NextRequest) {
     .eq("id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  
+  revalidateTag("tags", "max");
+  revalidateTag("products", "max");
   return NextResponse.json({ ok: true });
 }
 
@@ -52,5 +60,8 @@ export async function DELETE(req: NextRequest) {
 
   const { error } = await admin.supabase.from("tags").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  
+  revalidateTag("tags", "max");
+  revalidateTag("products", "max");
   return NextResponse.json({ ok: true });
 }
