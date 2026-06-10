@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { signUploadedImages } from "@/lib/uploads";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -50,13 +51,18 @@ export async function sendOrderNotification(params: Params) {
     </tr>
   `).join("");
 
-  const photoLinks = photoItems.flatMap(item =>
-    item.uploadedImages.map((url, i) =>
-      `<a href="${url}" style="display:inline-block;margin:4px;padding:6px 12px;background:#fdfbf7;border:1px solid #ece8e1;border-radius:6px;font-size:12px;color:#3d405b;text-decoration:none">
+  // uploadedImages stabil path tutar → e-posta için 7 gün geçerli imzalı URL üret
+  const EMAIL_LINK_TTL = 60 * 60 * 24 * 7;
+  const photoLinks = (await Promise.all(
+    photoItems.map(async item => {
+      const signed = await signUploadedImages(item.uploadedImages, EMAIL_LINK_TTL);
+      return signed.map((url, i) =>
+        `<a href="${url}" style="display:inline-block;margin:4px;padding:6px 12px;background:#fdfbf7;border:1px solid #ece8e1;border-radius:6px;font-size:12px;color:#3d405b;text-decoration:none">
         ${item.productName} – Fotoğraf ${i + 1}
       </a>`
-    )
-  ).join("");
+      ).join("");
+    })
+  )).join("");
 
   const html = `
 <!DOCTYPE html>

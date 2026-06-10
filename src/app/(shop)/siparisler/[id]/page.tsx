@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { signUploadedImages } from "@/lib/uploads";
 import { getCompanyInfo, sellerForContracts } from "@/lib/company";
 import LegalAccordion from "@/components/legal/LegalAccordion";
 import OrderStatusSelect from "./OrderStatusSelect";
@@ -70,6 +71,10 @@ export default async function SiparisDetayPage({ params }: Props) {
   const displayStatus = isCancelRequested ? "PENDING" : order.status;
   const currentStep = isCancelled ? -1 : STATUS_STEPS.indexOf(displayStatus);
   const items: OrderItem[] = order.items ?? [];
+  // uploads bucket private → saklı path'leri okuma anında imzalı URL'e çevir
+  await Promise.all(items.map(async (it) => {
+    it.uploadedImages = await signUploadedImages(it.uploadedImages);
+  }));
 
   return (
     <div className="max-w-4xl mx-auto px-8 py-12">

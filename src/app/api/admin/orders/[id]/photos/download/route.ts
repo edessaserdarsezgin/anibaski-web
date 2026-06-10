@@ -20,16 +20,27 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       .replace(/[^a-zA-Z0-9ğüşıöçĞÜŞİÖÇ\s]/g, "").trim().replace(/\s+/g, "_");
 
     const images: string[] = item.uploadedImages ?? [];
-    for (const url of images) {
+    for (const value of images) {
       try {
-        const res = await fetch(url);
-        if (!res.ok) continue;
-        const buffer = await res.arrayBuffer();
-        const ext = url.split("?")[0].split(".").pop() ?? "jpg";
+        let buffer: ArrayBuffer | null = null;
+        let ext = "jpg";
+        if (/^https?:\/\//i.test(value)) {
+          // Stüdyo çıktısı / eski tam URL → doğrudan indir
+          const res = await fetch(value);
+          if (!res.ok) continue;
+          buffer = await res.arrayBuffer();
+          ext = value.split("?")[0].split(".").pop() ?? "jpg";
+        } else {
+          // Stabil path → admin client ile storage'tan indir (imzaya gerek yok)
+          const { data, error } = await admin.supabase.storage.from("uploads").download(value);
+          if (error || !data) continue;
+          buffer = await data.arrayBuffer();
+          ext = value.split(".").pop() ?? "jpg";
+        }
         zip.file(`${String(fileIndex).padStart(3, "0")}_${productName}.${ext}`, buffer);
         fileIndex++;
       } catch {
-        // URL süresi dolmuş olabilir, atla
+        // erişilemedi, atla
       }
     }
   }

@@ -295,7 +295,8 @@ export default function FotografYuklePage() {
   /* ── Sepete ekle ──────────────────────────────── */
   function handleAddToCart() {
     const existing: Record<string, unknown>[] = JSON.parse(localStorage.getItem("cart") ?? "[]");
-    existing.push({ ...item, uploadedImages: photos.map(p => p.url) });
+    // Stabil storage path'i sakla (signed URL değil); stüdyo görselinde path yok → url.
+    existing.push({ ...item, uploadedImages: photos.map(p => p.path || p.url) });
     localStorage.setItem("cart", JSON.stringify(existing));
     window.dispatchEvent(new Event("cart-updated"));
     syncCartSnapshot();

@@ -24,9 +24,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!current) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const prevStatus = current.status;
 
+  // DELIVERED'a ilk geçişte teslim zamanını işaretle (retention tetiği — teslim + 30 gün).
+  const patch: { status: string; deliveredAt?: string } =
+    status === "DELIVERED" && prevStatus !== "DELIVERED"
+      ? { status, deliveredAt: new Date().toISOString() }
+      : { status };
+
   const { data: order, error } = await admin.supabase
     .from("orders")
-    .update({ status })
+    .update(patch)
     .eq("id", id)
     .select()
     .single();

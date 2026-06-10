@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import { signUploadedImages } from "@/lib/uploads";
 // Siparişe ait tüm fotoğraf URL'lerini JSON olarak döner
 // Admin bu URL'leri kullanarak fotoğrafları indirebilir
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -15,12 +16,14 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const result = (items ?? [])
-    .filter(item => item.uploadedImages?.length > 0)
-    .map(item => ({
-      productName: (item.product as unknown as { name: string } | null)?.name ?? "Ürün",
-      photos: item.uploadedImages as string[],
-    }));
+  const result = await Promise.all(
+    (items ?? [])
+      .filter(item => item.uploadedImages?.length > 0)
+      .map(async item => ({
+        productName: (item.product as unknown as { name: string } | null)?.name ?? "Ürün",
+        photos: await signUploadedImages(item.uploadedImages as string[]),
+      }))
+  );
 
   return NextResponse.json({ orderId: id, items: result });
 }
