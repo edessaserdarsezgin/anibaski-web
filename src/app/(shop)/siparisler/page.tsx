@@ -27,7 +27,7 @@ export default async function SiparislerPage() {
   const [{ data: allOrders }, { data: buyerProfile }] = await Promise.all([
     supabase
       .from("orders")
-      .select("id, status, total, createdAt, paymentMethod, paymentStatus, items:order_items(id, quantity, variantSelections, product:products(name, images)), address:addresses!orders_addressId_fkey(fullName)")
+      .select("id, type, status, total, createdAt, paymentMethod, paymentStatus, items:order_items(id, quantity, variantSelections, product:products(name, images)), address:addresses!orders_addressId_fkey(fullName)")
       .eq("userId", user.id)
       .order("createdAt", { ascending: false }),
     supabase.from("profiles").select("fullName").eq("id", user.id).single(),
@@ -66,6 +66,9 @@ export default async function SiparislerPage() {
                     {new Date(order.createdAt).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}
                   </p>
                   <p className="text-sm font-mono text-text-light">#{order.id.slice(0, 8).toUpperCase()}</p>
+                  {(order as unknown as { type?: string }).type === "reprint" && (
+                    <p className="text-xs font-semibold text-primary mt-1">🔁 Yeniden Baskı (Ücretsiz)</p>
+                  )}
                   {(() => {
                     const recipient = (order.address as unknown as { fullName: string } | null)?.fullName;
                     const sameRecipient = buyerName && recipient &&
@@ -109,7 +112,9 @@ export default async function SiparislerPage() {
               <div className="flex justify-between items-center pt-4 border-t border-border">
                 <span className="text-sm text-text-light">{order.items?.length} ürün</span>
                 <span className="font-semibold text-primary">
-                  {Number(order.total).toLocaleString("tr-TR")} ₺
+                  {(order as unknown as { type?: string }).type === "reprint"
+                    ? "Ücretsiz"
+                    : `${Number(order.total).toLocaleString("tr-TR")} ₺`}
                 </span>
               </div>
             </Link>
