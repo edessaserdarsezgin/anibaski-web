@@ -149,8 +149,9 @@ export function donemToPrevIso(donem: Donem, fromIso: string | null): string | n
   return from.toISOString();
 }
 
-type DashOrder = { total: number | string; createdAt: string; paymentMethod: string | null; paymentStatus: string | null };
+type DashOrder = { total: number | string; createdAt: string; paymentMethod: string | null; paymentStatus: string | null; userId?: string | null };
 type TopItem = { quantity: number; unitPrice: number | string; product: { name: string } | null };
+type JobRowFull = { status: string; userId: string | null; tool: string | null };
 type AttentionProduct = { id: string; name: string; isActive: boolean | null; images: string[] | null };
 type DashCoupon = { code: string; expires_at: string | null; is_active: boolean; discount_type: string; discount_value: number | string };
 type DashCampaign = { title: string; is_active: boolean; coupon_code: string | null };
@@ -166,6 +167,10 @@ export type DashboardData = {
   campaigns: DashCampaign[];
   attention: AttentionProduct[];
   recent: { id: string; status: string; total: number | string; createdAt: string }[];
+  leastSold: { name: string; slug: string; orderCount: number }[];
+  trending: { name: string; quantity: number }[];
+  reprint: { total: number; reasons: { reason: string; count: number }[]; rate: number };
+  aiFunnel: { studioUsers: number; converted: number; conversion: number | null; byTool: { tool: string; count: number }[] };
 };
 
 // Tamamlanmış sipariş = cod ∨ paid (mevcut kuralla aynı)
@@ -177,8 +182,10 @@ export async function fetchDashboardData(fromIso: string | null, prevFromIso: st
   const now = new Date().toISOString();
   const thirty = new Date(); thirty.setDate(thirty.getDate() - 30);
   const thirtyIso = thirty.toISOString();
+  const seven = new Date(); seven.setDate(seven.getDate() - 7);
+  const sevenIso = seven.toISOString();
 
-  let curQ = db.from("orders").select(`total, "createdAt", "paymentMethod", "paymentStatus"`).neq("type", "reprint");
+  let curQ = db.from("orders").select(`total, "createdAt", "paymentMethod", "paymentStatus", "userId"`).neq("type", "reprint");
   if (fromIso) curQ = curQ.gte("createdAt", fromIso);
 
   let prevQ = db.from("orders").select(`total, "createdAt", "paymentMethod", "paymentStatus"`).neq("type", "reprint");
@@ -197,19 +204,27 @@ export async function fetchDashboardData(fromIso: string | null, prevFromIso: st
   const [
     { data: series }, { data: items }, { data: jobs }, { data: grants },
     { data: coupons }, { data: campaigns }, { data: products }, { data: recentRaw },
+    { data: leastSoldRaw }, { data: trendItems }, { data: reprintRows }, { count: saleCount },
   ] = await Promise.all([
     db.from("orders").select(`total, "createdAt", "paymentMethod", "paymentStatus"`).neq("type", "reprint").gte("createdAt", thirtyIso),
     db.from("order_items").select(`quantity, "unitPrice", product:products(name), order:orders!inner("createdAt",type)`).eq("order.type", "sale").gte("order.createdAt", fromIso ?? thirtyIso),
-    db.from("studio_jobs").select(`status, "createdAt"`).gte("createdAt", fromIso ?? thirtyIso),
+    db.from("studio_jobs").select(`status, "userId", tool`).gte("createdAt", fromIso ?? thirtyIso),
     db.from("studio_credit_grants").select(`amount, "createdAt"`).gte("createdAt", fromIso ?? thirtyIso),
     db.from("coupons").select("code, expires_at, is_active, discount_type, discount_value").eq("is_active", true),
     db.from("campaigns").select("title, is_active, coupon_code").eq("is_active", true),
     db.from("products").select(`id, name, "isActive", images`),
     db.from("orders").select(`id, status, total, "createdAt", "paymentMethod", "paymentStatus"`).neq("type", "reprint").order("createdAt", { ascending: false }).limit(12),
+    db.from("products_with_order_count").select(`name, slug, "orderCount"`).eq("isActive", true).order("orderCount", { ascending: true }).limit(5),
+    db.from("order_items").select(`quantity, "unitPrice", product:products(name), order:orders!inner("createdAt",type)`).eq("order.type", "sale").gte("order.createdAt", sevenIso),
+    db.from("orders").select(`"reprintReason"`).eq("type", "reprint"),
+    db.from("orders").select("id", { count: "exact", head: true }).eq("type", "sale"),
   ]);
 
   const actionCounts: Record<string, number> = {};
   statuses.forEach((s, i) => { actionCounts[s] = statusCounts[i]?.count ?? 0; });
+
+  // AI Stüdyo → sipariş: studio kullanıcıları ∩ sipariş veren (tamamlanmış) kullanıcılar
+  const orderUserIds = new Set(((current ?? []) as DashOrder[]).filter(isPaid).map((o) => o.userId).filter(Boolean) as string[]);
 
   return {
     current: (current ?? []) as DashOrder[],
@@ -229,6 +244,10 @@ export async function fetchDashboardData(fromIso: string | null, prevFromIso: st
     // son aktivite: tamamlanmış (cod ∨ paid) son 6 sipariş
     recent: ((recentRaw ?? []) as ({ id: string; status: string; total: number | string; createdAt: string } & { paymentMethod: string | null; paymentStatus: string | null })[])
       .filter(isPaid).slice(0, 6),
+    leastSold: (leastSoldRaw ?? []) as { name: string; slug: string; orderCount: number }[],
+    trending: trendingProducts((trendItems ?? []) as unknown as TopItem[]),
+    reprint: reprintStats((reprintRows ?? []) as { reprintReason: string | null }[], saleCount ?? 0),
+    aiFunnel: aiFunnel((jobs ?? []) as unknown as JobRowFull[], orderUserIds),
   };
 }
 
@@ -290,4 +309,40 @@ export function expiringCoupons(coupons: DashCoupon[]): { code: string; expires_
     .filter((c) => c.expires_at && new Date(c.expires_at) <= limit)
     .map((c) => ({ code: c.code, expires_at: c.expires_at, expired: !!c.expires_at && new Date(c.expires_at) < now }))
     .sort((a, b) => (a.expires_at ?? "").localeCompare(b.expires_at ?? ""));
+}
+
+// Trend olan ürünler: son 7 günde adet bazında en çok sipariş edilen ilk 5
+export function trendingProducts(items: TopItem[]): { name: string; quantity: number }[] {
+  const map = new Map<string, number>();
+  for (const it of items) {
+    const name = it.product?.name ?? "—";
+    map.set(name, (map.get(name) ?? 0) + it.quantity);
+  }
+  return [...map.entries()]
+    .map(([name, quantity]) => ({ name, quantity }))
+    .sort((a, b) => b.quantity - a.quantity)
+    .slice(0, 5);
+}
+
+// Reprint istatistikleri: toplam + sebep dağılımı + satışa oran
+export function reprintStats(rows: { reprintReason: string | null }[], saleCount: number) {
+  const total = rows.length;
+  const rmap = new Map<string, number>();
+  for (const r of rows) {
+    const reason = r.reprintReason?.trim() || "Belirtilmemiş";
+    rmap.set(reason, (rmap.get(reason) ?? 0) + 1);
+  }
+  const reasons = [...rmap.entries()].map(([reason, count]) => ({ reason, count })).sort((a, b) => b.count - a.count);
+  return { total, reasons, rate: saleCount > 0 ? total / saleCount : 0 };
+}
+
+// AI Stüdyo → sipariş dönüşümü: studio kullanan kullanıcılar ∩ sipariş veren + araç bazında işlem
+export function aiFunnel(jobs: JobRowFull[], orderUserIds: Set<string>) {
+  const studioUserIds = new Set(jobs.map((j) => j.userId).filter(Boolean) as string[]);
+  const converted = [...studioUserIds].filter((id) => orderUserIds.has(id)).length;
+  const studioUsers = studioUserIds.size;
+  const tmap = new Map<string, number>();
+  for (const j of jobs) { const t = j.tool ?? "—"; tmap.set(t, (tmap.get(t) ?? 0) + 1); }
+  const byTool = [...tmap.entries()].map(([tool, count]) => ({ tool, count })).sort((a, b) => b.count - a.count);
+  return { studioUsers, converted, conversion: studioUsers > 0 ? converted / studioUsers : null, byTool };
 }

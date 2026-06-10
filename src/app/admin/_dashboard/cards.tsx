@@ -178,3 +178,81 @@ export function AttentionCard({ products }: { products: { id: string; name: stri
     </div>
   );
 }
+
+export function LeastSold({ items }: { items: { name: string; slug: string; orderCount: number }[] }) {
+  return (
+    <div className="bg-white rounded-2xl border border-border p-6">
+      <h2 className="font-serif text-lg text-text mb-4">En Az Satanlar</h2>
+      {!items.length ? <p className="text-sm text-text-light">Veri yok.</p> : (
+        <ul className="flex flex-col gap-3">
+          {items.map((p) => (
+            <li key={p.slug} className="flex items-center justify-between gap-3">
+              <span className="text-sm text-text truncate">{p.name}</span>
+              <span className="text-sm text-text-light whitespace-nowrap">{p.orderCount} sipariş</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export function Trending({ items }: { items: { name: string; quantity: number }[] }) {
+  return (
+    <div className="bg-white rounded-2xl border border-border p-6">
+      <h2 className="font-serif text-lg text-text mb-4">Trend Olanlar <span className="text-xs font-normal text-text-light">· son 7 gün</span></h2>
+      {!items.length ? <p className="text-sm text-text-light">Son 7 günde sipariş yok.</p> : (
+        <ul className="flex flex-col gap-3">
+          {items.map((p, i) => (
+            <li key={p.name} className="flex items-center justify-between gap-3">
+              <span className="flex items-center gap-2 min-w-0">
+                <span className="text-xs font-bold text-text-light w-4">{i + 1}</span>
+                <span className="text-sm text-text truncate">{p.name}</span>
+              </span>
+              <span className="text-sm font-semibold text-primary whitespace-nowrap">{p.quantity} adet</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export function ReprintStats({ stats }: { stats: { total: number; reasons: { reason: string; count: number }[]; rate: number } }) {
+  return (
+    <div className="bg-white rounded-2xl border border-border p-6">
+      <h2 className="font-serif text-lg text-text mb-4">Tekrar Baskı</h2>
+      <div className="flex items-baseline gap-6 mb-3">
+        <span><span className="font-serif text-2xl text-text">{stats.total}</span> <span className="text-xs text-text-light">toplam</span></span>
+        <span><span className="font-serif text-2xl text-text">%{(stats.rate * 100).toLocaleString("tr-TR", { maximumFractionDigits: 1 })}</span> <span className="text-xs text-text-light">satışa oran</span></span>
+      </div>
+      {stats.reasons.length ? (
+        <ul className="text-sm flex flex-col gap-1 pt-3 border-t border-border">
+          {stats.reasons.map((r) => (
+            <li key={r.reason} className="flex justify-between gap-3"><span className="text-text-light truncate">{r.reason}</span><span className="text-text font-semibold">{r.count}</span></li>
+          ))}
+        </ul>
+      ) : <p className="text-sm text-text-light">Henüz tekrar baskı yok.</p>}
+    </div>
+  );
+}
+
+export function AiFunnel({ data }: { data: { studioUsers: number; converted: number; conversion: number | null; byTool: { tool: string; count: number }[] } }) {
+  return (
+    <div className="bg-white rounded-2xl border border-border p-6">
+      <h2 className="font-serif text-lg text-text mb-4">AI Stüdyo → Sipariş</h2>
+      <div className="grid grid-cols-3 gap-3 text-center">
+        <div><p className="font-serif text-2xl text-text">{data.studioUsers}</p><p className="text-xs text-text-light">AI kullanan</p></div>
+        <div><p className="font-serif text-2xl text-text">{data.converted}</p><p className="text-xs text-text-light">sipariş verdi</p></div>
+        <div><p className="font-serif text-2xl text-text">{data.conversion != null ? `%${Math.round(data.conversion * 100)}` : "—"}</p><p className="text-xs text-text-light">dönüşüm</p></div>
+      </div>
+      {data.byTool.length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-3 mt-3 border-t border-border">
+          {data.byTool.map((t) => (
+            <span key={t.tool} className="text-xs px-2 py-1 rounded-lg bg-bg text-text-light">{t.tool}: <span className="text-text font-semibold">{t.count}</span></span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

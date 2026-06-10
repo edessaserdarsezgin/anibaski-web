@@ -8,6 +8,7 @@ import TrendChart from "./_dashboard/TrendChart";
 import {
   StatCard, ActionBar, TopProducts, AiActivityCard,
   MarketingCard, AttentionCard, RecentActivity,
+  LeastSold, Trending, ReprintStats, AiFunnel,
 } from "./_dashboard/cards";
 
 export const metadata = { title: "Genel Bakış | Admin" };
@@ -71,9 +72,21 @@ export default async function AdminPage({ searchParams }: Props) {
       </div>
 
       {/* 2 kolon: pazarlama + dikkat */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
         <MarketingCard campaigns={data.campaigns} coupons={coupons} />
         <AttentionCard products={data.attention} />
+      </div>
+
+      {/* 2 kolon: trend olanlar + en az satanlar */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+        <Trending items={data.trending} />
+        <LeastSold items={data.leastSold} />
+      </div>
+
+      {/* 2 kolon: reprint istatistikleri + AI Stüdyo dönüşümü */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <ReprintStats stats={data.reprint} />
+        <AiFunnel data={data.aiFunnel} />
       </div>
     </div>
   );
