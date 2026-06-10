@@ -40,7 +40,8 @@ export type StatsData = {
 
 export async function fetchAdminStats(fromIso: string | null): Promise<StatsData> {
   const db = createAdminClient();
-  let ordersQ = db.from("orders").select(`total, "discountCode", "discountAmount", source, "paymentMethod", "paymentStatus", "createdAt"`);
+  // type='reprint' = ücretsiz iş tekrarı → ciroya dahil edilmez (yalnız satış)
+  let ordersQ = db.from("orders").select(`total, "discountCode", "discountAmount", source, "paymentMethod", "paymentStatus", "createdAt"`).neq("type", "reprint");
   let jobsQ = db.from("studio_jobs").select(`tool, status, "createdAt"`);
   let grantsQ = db.from("studio_credit_grants").select(`amount, source, "createdAt"`);
   if (fromIso) {

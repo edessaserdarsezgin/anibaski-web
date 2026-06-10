@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
   const { data: orders, error } = await adminClient
     .from("orders")
     .select("id, items:order_items(uploadedImages)")
+    .eq("type", "sale") // foto'ları yalnız satış siparişi 'sahiplenir'; reprint'ler paylaşılan path'lere dokunmaz
     .eq("status", "DELIVERED")
     .lt("deliveredAt", cutoff)
     .is("photosPurgedAt", null)
@@ -48,6 +49,17 @@ export async function GET(req: NextRequest) {
   let deletedFiles = 0;
 
   for (const order of (orders ?? []) as OrderRow[]) {
+    // Açık (henüz teslim+30g olmamış) reprint çocuğu varsa foto'lar hâlâ gerekli → atla.
+    // Reprint teslim olup 30 günü geçince bu kontrol düşer, foto'lar doğal temizlenir.
+    const { data: children } = await adminClient
+      .from("orders")
+      .select('status, "deliveredAt"')
+      .eq("parentOrderId", order.id);
+    const hasOpenReprint = (children ?? []).some(
+      (c) => c.status !== "DELIVERED" || !c.deliveredAt || c.deliveredAt >= cutoff
+    );
+    if (hasOpenReprint) continue;
+
     // Tüm kalemlerin path'lerini topla; http/data passthrough değerlerini ele
     const paths = Array.from(
       new Set(

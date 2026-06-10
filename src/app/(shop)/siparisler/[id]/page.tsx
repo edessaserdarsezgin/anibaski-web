@@ -7,6 +7,7 @@ import { getCompanyInfo, sellerForContracts } from "@/lib/company";
 import LegalAccordion from "@/components/legal/LegalAccordion";
 import OrderStatusSelect from "./OrderStatusSelect";
 import CancelRequestButton from "./CancelRequestButton";
+import ReprintButton from "./ReprintButton";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -94,9 +95,31 @@ export default async function SiparisDetayPage({ params }: Props) {
             <p className="text-sm text-text-light mt-1">
               {new Date(order.createdAt).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
             </p>
+            {order.type === "reprint" && (
+              <p className="text-xs font-semibold text-primary mt-1.5">
+                🔁 Yeniden Baskı
+                {order.parentOrderId && (
+                  <>
+                    {" — "}
+                    <Link href={`/siparisler/${order.parentOrderId}`} className="underline hover:opacity-80">
+                      Orijinal #{String(order.parentOrderId).slice(0, 8).toUpperCase()}
+                    </Link>
+                  </>
+                )}
+                {order.reprintReason ? ` · ${order.reprintReason}` : ""}
+              </p>
+            )}
           </div>
           {isAdmin ? (
-            <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
+            <div className="flex items-center gap-3">
+              <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
+              {order.type === "sale" && !order.photosPurgedAt && (
+                <ReprintButton
+                  orderId={order.id}
+                  items={items.map((it) => ({ id: it.id, productName: it.product?.name ?? "Ürün", quantity: it.quantity }))}
+                />
+              )}
+            </div>
           ) : (
             <div className="flex flex-col items-end gap-2">
               <div className="flex items-center gap-2">
