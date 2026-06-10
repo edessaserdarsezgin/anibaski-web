@@ -28,7 +28,7 @@ export default async function AdminUyelerPage() {
 
   const [{ data: profiles }, { data: orders }, { data: jobs }] = await Promise.all([
     supabase.from("profiles").select(`id, email, "fullName", phone, role, "createdAt"`).order("createdAt", { ascending: false }),
-    supabase.from("orders").select(`"userId", total, "discountCode", "discountAmount", "paymentMethod", "paymentStatus"`),
+    supabase.from("orders").select(`"userId", total, discountCode:discount_code, discountAmount:discount_amount, "paymentMethod", "paymentStatus"`),
     supabase.from("studio_jobs").select(`"userId", status`),
   ]);
 
