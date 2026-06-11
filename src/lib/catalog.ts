@@ -1,5 +1,36 @@
 import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
+import { getActiveItemPromotions } from "@/lib/promotions";
+import { bestItemDiscount } from "@/lib/promotionsCalc";
+import { activeDiscountPercent } from "@/lib/pricing";
+
+type DiscountableRow = {
+  id: string; basePrice: number; categoryId?: string | null;
+  discount_percent?: number | null; discount_starts_at?: string | null; discount_ends_at?: string | null;
+};
+
+/**
+ * Ürün-seviyesi indirimi (products.discount_percent) kategori/tüm otomatik promotion'larla
+ * birleştirir; daha büyüğünü efektif `discount_percent` olarak yazar (PriceTag değişmeden gösterir).
+ * Item-promotion yoksa satırlar aynen döner (ürün-own indirim korunur).
+ */
+async function withItemPromotions<T extends DiscountableRow>(rows: T[]): Promise<T[]> {
+  if (!rows.length) return rows;
+  const promos = await getActiveItemPromotions();
+  if (!promos.length) return rows;
+  return rows.map((r) => {
+    const base = Number(r.basePrice);
+    const ownPct = activeDiscountPercent({
+      discount_percent: r.discount_percent ?? null,
+      discount_starts_at: r.discount_starts_at ?? null,
+      discount_ends_at: r.discount_ends_at ?? null,
+    });
+    const { unitPrice } = bestItemDiscount({ productId: r.id, categoryId: r.categoryId ?? null, unitPrice: base }, promos);
+    const promoPct = base > 0 && unitPrice < base ? Math.round((1 - unitPrice / base) * 100) : 0;
+    const pct = Math.max(ownPct, promoPct);
+    return { ...r, discount_percent: pct > 0 ? pct : null, discount_starts_at: null, discount_ends_at: null };
+  });
+}
 
 // 1. Home Categories
 export const getHomeCategories = unstable_cache(
@@ -27,10 +58,10 @@ export const getCategoryProductsForHome = unstable_cache(
       .in("categoryId", categoryIds)
       .eq("isActive", true)
       .order("createdAt", { ascending: false });
-    return data ?? [];
+    return withItemPromotions(data ?? []);
   },
   ["home-category-products"],
-  { tags: ["products"] }
+  { tags: ["products", "promotions"] }
 );
 
 // 3. Featured Products
@@ -39,16 +70,16 @@ export const getFeaturedProducts = unstable_cache(
     const db = createAdminClient();
     const { data } = await db
       .from("products_with_order_count")
-      .select("id, name, slug, basePrice, images, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color))")
+      .select("id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color))")
       .eq("is_featured", true)
       .eq("isActive", true)
       .order("featured_position", { ascending: true })
       .order("createdAt", { ascending: false })
       .limit(limit);
-    return data ?? [];
+    return withItemPromotions(data ?? []);
   },
   ["featured-products"],
-  { tags: ["products"] }
+  { tags: ["products", "promotions"] }
 );
 
 // 4. Hero Banners
@@ -101,7 +132,7 @@ export const getProductsForCatalog = unstable_cache(
     const db = createAdminClient();
     let baseQuery = db
       .from("products_with_order_count")
-      .select("id, name, slug, description, basePrice, images, discount_percent, discount_starts_at, discount_ends_at, category:categories!products_categoryId_fkey(name, slug), productTags:product_tags(tagId, position, tag:tags(name, color))")
+      .select("id, name, slug, description, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, category:categories!products_categoryId_fkey(name, slug), productTags:product_tags(tagId, position, tag:tags(name, color))")
       .eq("isActive", true)
       .order(column, { ascending });
 
@@ -118,10 +149,10 @@ export const getProductsForCatalog = unstable_cache(
     }
 
     const { data } = await baseQuery;
-    return data ?? [];
+    return withItemPromotions(data ?? []);
   },
   ["catalog-products"],
-  { tags: ["products"] }
+  { tags: ["products", "promotions"] }
 );
 
 // 8. Category by slug
@@ -215,10 +246,10 @@ export const getProductsInCategory = unstable_cache(
     }
 
     const { data } = await baseQuery;
-    return data ?? [];
+    return withItemPromotions(data ?? []);
   },
   ["products-in-category"],
-  { tags: ["products"] }
+  { tags: ["products", "promotions"] }
 );
 
 // 13. Product by slug (for product details page)
@@ -231,10 +262,11 @@ export const getProductBySlug = unstable_cache(
       .eq("slug", slug)
       .eq("isActive", true)
       .single();
-    return data;
+    if (!data) return data;
+    return (await withItemPromotions([data as unknown as DiscountableRow]))[0] as typeof data;
   },
   ["product-by-slug"],
-  { tags: ["products"] }
+  { tags: ["products", "promotions"] }
 );
 
 // 14. Product variants
@@ -256,7 +288,7 @@ export const getProductVariants = unstable_cache(
 export const getRelatedProductsSameCategory = unstable_cache(
   async (categoryId: string, productId: string) => {
     const db = createAdminClient();
-    const RELATED_COLS = "id, name, slug, basePrice, images, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color))";
+    const RELATED_COLS = "id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color))";
     const { data } = await db
       .from("products_with_order_count")
       .select(RELATED_COLS)
@@ -264,17 +296,17 @@ export const getRelatedProductsSameCategory = unstable_cache(
       .eq("isActive", true)
       .neq("id", productId)
       .limit(24);
-    return data ?? [];
+    return withItemPromotions(data ?? []);
   },
   ["related-products-same-category"],
-  { tags: ["products"] }
+  { tags: ["products", "promotions"] }
 );
 
 // 16. Related products fallback (featured/newest)
 export const getRelatedProductsFallback = unstable_cache(
   async (productId: string) => {
     const db = createAdminClient();
-    const RELATED_COLS = "id, name, slug, basePrice, images, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color))";
+    const RELATED_COLS = "id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color))";
     const { data } = await db
       .from("products_with_order_count")
       .select(RELATED_COLS)
@@ -283,8 +315,8 @@ export const getRelatedProductsFallback = unstable_cache(
       .order("is_featured", { ascending: false })
       .order("createdAt", { ascending: false })
       .limit(16);
-    return data ?? [];
+    return withItemPromotions(data ?? []);
   },
   ["related-products-fallback"],
-  { tags: ["products"] }
+  { tags: ["products", "promotions"] }
 );

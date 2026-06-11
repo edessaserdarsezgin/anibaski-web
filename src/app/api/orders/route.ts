@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { sendOrderNotification } from "@/lib/email/orderNotification";
 import { notifyOrderCreated } from "@/lib/whatsapp/notify";
-import { activeDiscountPercent, applyDiscount } from "@/lib/pricing";
 import { getShippingSettings } from "@/lib/shipping";
-import { hasPriorOrder } from "@/lib/coupons";
-import { bestCartDiscount, getCartDiscountTiers } from "@/lib/cartDiscount";
+import { activeDiscountPercent, applyDiscount } from "@/lib/pricing";
+import { getActiveItemPromotions, getActiveCartAutoPromotions, validateCoupon } from "@/lib/promotions";
+import { bestItemDiscount, cartPromoAmount, isDateValid } from "@/lib/promotionsCalc";
 
 type IncomingItem = {
   productId: string;
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
   )];
 
   const [{ data: products }, { data: variants }] = await Promise.all([
-    adminDb.from("products").select("id, basePrice, discount_percent, discount_starts_at, discount_ends_at, isActive").in("id", productIds),
+    adminDb.from("products").select('id, basePrice, "categoryId", discount_percent, discount_starts_at, discount_ends_at, isActive').in("id", productIds),
     variantIds.length
       ? adminDb.from("product_variants").select("id, productId, priceAddon").in("id", variantIds)
       : Promise.resolve({ data: [] as { id: string; productId: string; priceAddon: number }[] }),
@@ -53,7 +53,10 @@ export async function POST(req: NextRequest) {
   const productMap = new Map((products ?? []).map((p) => [p.id, p]));
   const variantMap = new Map((variants ?? []).map((v) => [v.id, v]));
 
-  const computedItems: { productId: string; productName?: string; variantSelections: Record<string, unknown>; quantity: number; unitPrice: number; uploadedImages: string[] }[] = [];
+  // Katman A: aktif otomatik item indirimleri (ürün/kategori/tüm) — en iyisi kaleme uygulanır
+  const itemPromos = await getActiveItemPromotions();
+
+  const computedItems: { productId: string; categoryId: string | null; productName?: string; variantSelections: Record<string, unknown>; quantity: number; unitPrice: number; uploadedImages: string[] }[] = [];
   for (const item of items) {
     const product = productMap.get(item.productId);
     if (!product || product.isActive === false) {
@@ -70,10 +73,15 @@ export async function POST(req: NextRequest) {
     }
 
     const fullUnit = Number(product.basePrice) + addons;
-    const unitPrice = applyDiscount(fullUnit, activeDiscountPercent(product));
+    const categoryId = (product as { categoryId?: string | null }).categoryId ?? null;
+    // Ürün-seviyesi indirim (products.discount_percent) ile kategori/tüm otomatik promotion'dan İYİSİ
+    const ownPrice = applyDiscount(fullUnit, activeDiscountPercent(product as Parameters<typeof activeDiscountPercent>[0]));
+    const promoPrice = bestItemDiscount({ productId: item.productId, categoryId, unitPrice: fullUnit }, itemPromos).unitPrice;
+    const unitPrice = Math.min(ownPrice, promoPrice);
 
     computedItems.push({
       productId: item.productId,
+      categoryId,
       productName: item.productName,
       variantSelections: (item.variantSelections as Record<string, unknown>) ?? {},
       quantity,
@@ -90,54 +98,42 @@ export async function POST(req: NextRequest) {
   const codFee = paymentMethod === "cod" ? ship.codFee : 0;
   const shippingFee = baseShipping + codFee;
 
-  // İndirim — sunucu subtotal'ı ile. Kupon (varsa) vs sepet eşikli otomatik indirim;
-  // müşteriye ikisinden BÜYÜĞÜ uygulanır (çift indirim yok).
-  type CouponRow = { id: string; code: string; used_count: number; max_uses: number | null };
-  let couponDiscount = 0;
-  let couponRow: CouponRow | null = null;
+  // Katman B — kupon (kod) vs sepet eşikli otomatik; müşteriye BÜYÜĞÜ uygulanır (çift indirim yok).
+  // Kapsam-kısmi: yalnız eşleşen kalemlerin (Katman A sonrası) tutarına.
+  const pricedItems = computedItems.map((it) => ({
+    productId: it.productId, categoryId: it.categoryId, unitPrice: it.unitPrice, quantity: it.quantity,
+  }));
+
+  let couponAmount = 0;
+  let couponWin: { id: string; code: string; usedCount: number; maxUses: number | null } | null = null;
   if (discountCode) {
-    const { data: coupon } = await adminDb
-      .from("coupons").select("*").eq("code", discountCode).eq("is_active", true).single();
-
-    const expired = coupon && coupon.expires_at && new Date(coupon.expires_at) < new Date();
-    if (expired) {
-      createAdminClient().from("coupons").update({ is_active: false }).eq("id", coupon.id);
-    }
-
-    // İlk-sipariş kuponu: üyenin önceki tamamlanmış siparişi varsa geçersiz
-    const firstOrderViolation = !!(coupon && coupon.first_order_only) && await hasPriorOrder(user.id);
-
-    if (coupon && !expired && !firstOrderViolation &&
-      !(coupon.max_uses !== null && coupon.used_count >= coupon.max_uses) &&
-      !(coupon.min_order_amount && subtotal < Number(coupon.min_order_amount))
-    ) {
-      couponDiscount = coupon.discount_type === "percentage"
-        ? Math.round(subtotal * (Number(coupon.discount_value) / 100) * 100) / 100
-        : Math.min(Number(coupon.discount_value), subtotal);
-      couponRow = coupon;
-    }
+    const res = await validateCoupon(discountCode, pricedItems, subtotal, user.id);
+    if (res.ok) { couponAmount = res.amount; couponWin = { id: res.promo.id, code: res.promo.code!, usedCount: res.promo.usedCount, maxUses: res.promo.maxUses }; }
   }
 
-  // Sepet eşikli otomatik indirim (ana anahtar kapalıysa tier listesi boş → 0)
-  const autoDiscount = bestCartDiscount(subtotal, await getCartDiscountTiers()).amount;
+  // Sepet eşikli (auto cart): koşul (min_subtotal, tarih) geçenlerden en yüksek tutar
+  let autoAmount = 0;
+  for (const p of await getActiveCartAutoPromotions()) {
+    if (!isDateValid(p)) continue;
+    if (p.minSubtotal && subtotal < p.minSubtotal) continue;
+    const amt = cartPromoAmount(p, pricedItems);
+    if (amt > autoAmount) autoAmount = amt;
+  }
 
   let discountAmount = 0;
   let validatedCouponCode: string | null = null;
-  if (couponRow && couponDiscount >= autoDiscount) {
-    // Kupon kazandı
-    discountAmount = couponDiscount;
-    validatedCouponCode = couponRow.code;
+  if (couponWin && couponAmount >= autoAmount) {
+    discountAmount = couponAmount;
+    validatedCouponCode = couponWin.code;
     if (paymentMethod === "cod") {
-      const newCount = couponRow.used_count + 1;
-      const limitReached = couponRow.max_uses !== null && newCount >= couponRow.max_uses;
-      await createAdminClient().from("coupons").update({
-        used_count: newCount,
-        ...(limitReached && { is_active: false }),
-      }).eq("id", couponRow.id);
+      const newCount = couponWin.usedCount + 1;
+      const limitReached = couponWin.maxUses !== null && newCount >= couponWin.maxUses;
+      await createAdminClient().from("promotions").update({
+        used_count: newCount, ...(limitReached && { is_active: false }),
+      }).eq("id", couponWin.id);
     }
   } else {
-    // Otomatik sepet indirimi kazandı (veya kupon yok/geçersiz) — kupon sayacı artmaz
-    discountAmount = autoDiscount;
+    discountAmount = autoAmount; // sepet-eşikli kazandı (veya kupon yok) — kupon sayacı artmaz
   }
 
   const total = Math.round((subtotal + shippingFee - discountAmount) * 100) / 100;

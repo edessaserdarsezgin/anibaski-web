@@ -80,11 +80,12 @@ export async function POST(req: NextRequest) {
       // Kupon used_count'u ödeme onayı sonrası artır; limit dolunca pasife al
       if (order.discount_code) {
         const { data: coupon } = await adminClient
-          .from("coupons").select("id, used_count, max_uses").eq("code", order.discount_code).single();
+          .from("promotions").select("id, used_count, max_uses")
+          .eq("code", order.discount_code).eq("trigger", "code").single();
         if (coupon) {
           const newCount = coupon.used_count + 1;
           const limitReached = coupon.max_uses !== null && newCount >= coupon.max_uses;
-          await adminClient.from("coupons").update({
+          await adminClient.from("promotions").update({
             used_count: newCount,
             ...(limitReached && { is_active: false }),
           }).eq("id", coupon.id);

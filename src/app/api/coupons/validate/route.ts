@@ -1,51 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
-import { hasPriorOrder } from "@/lib/coupons";
+import { createClient } from "@/lib/supabase/server";
+import { validateCoupon } from "@/lib/promotions";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { code, subtotal } = await req.json();
+  const { code, items } = (await req.json()) as {
+    code?: string;
+    items?: { productId: string; categoryId: string | null; unitPrice: number; quantity: number }[];
+  };
   if (!code?.trim()) return NextResponse.json({ error: "Kupon kodu gerekli" }, { status: 400 });
 
-  // coupons RLS-korumalı → admin-client ile oku (anon/user erişimi yok)
-  const { data: coupon } = await createAdminClient()
-    .from("coupons")
-    .select("*")
-    .eq("code", code.trim().toUpperCase())
-    .eq("is_active", true)
-    .single();
-
-  if (!coupon) return NextResponse.json({ error: "Geçersiz veya kullanılmış kupon kodu." }, { status: 404 });
-
-  if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
-    return NextResponse.json({ error: "Bu kuponun süresi dolmuş." }, { status: 400 });
-  }
-
-  if (coupon.max_uses !== null && coupon.used_count >= coupon.max_uses) {
-    return NextResponse.json({ error: "Bu kupon kullanım limitine ulaşmış." }, { status: 400 });
-  }
-
-  if (coupon.min_order_amount && subtotal < Number(coupon.min_order_amount)) {
-    return NextResponse.json({
-      error: `Bu kupon için minimum sipariş tutarı ${Number(coupon.min_order_amount).toLocaleString("tr-TR")} ₺.`,
-    }, { status: 400 });
-  }
-
-  if (coupon.first_order_only && await hasPriorOrder(user.id)) {
-    return NextResponse.json({ error: "Bu kupon yalnızca ilk siparişte geçerli." }, { status: 400 });
-  }
-
-  const discountAmount = coupon.discount_type === "percentage"
-    ? Math.round(subtotal * (Number(coupon.discount_value) / 100) * 100) / 100
-    : Math.min(Number(coupon.discount_value), subtotal);
-
-  return NextResponse.json({
-    code: coupon.code,
-    discountType: coupon.discount_type,
-    discountValue: Number(coupon.discount_value),
-    discountAmount,
-  });
+  const list = items ?? [];
+  const subtotal = list.reduce((s, it) => s + it.unitPrice * it.quantity, 0);
+  const res = await validateCoupon(code, list, subtotal, user.id);
+  if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
+  return NextResponse.json({ code: res.promo.code, discountAmount: res.amount });
 }
