@@ -4,6 +4,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
 import { isoToLocalInput, localInputToIso } from "@/lib/pricing";
 import Image from "next/image";
+import ProductPromotions from "./ProductPromotions";
 
 type Category = { id: string; name: string; slug: string; parentId?: string | null };
 type SavedVariant = { id: string; type: string; label: string; value: string; priceAddon: number };
@@ -551,6 +552,10 @@ export default function UrunDuzenle() {
               </button>
             </div>
           )}
+        </div>
+
+        <div className="border-t border-border pt-4">
+          <ProductPromotions productId={id} />
         </div>
 
         {error && <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-lg px-4 py-2.5">{error}</p>}
