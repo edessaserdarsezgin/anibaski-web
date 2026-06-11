@@ -10,6 +10,7 @@ import OnBilgilendirmeDoc from "@/components/legal/OnBilgilendirmeDoc";
 import MesafeliSatisDoc from "@/components/legal/MesafeliSatisDoc";
 import type { LegalDocBuyer, LegalDocItem } from "@/components/legal/types";
 import type { CompanyInfo } from "@/lib/company";
+import { bestCartDiscount, type CartTier } from "@/lib/cartDiscountCalc";
 
 type Address = {
   id: string; title: string; fullName: string; phone: string;
@@ -157,6 +158,11 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
     const saved = sessionStorage.getItem("appliedCoupon");
     if (saved) setAppliedCoupon(JSON.parse(saved));
   }, []);
+
+  const [tiers, setTiers] = useState<CartTier[]>([]);
+  useEffect(() => {
+    fetch("/api/cart-discount").then(r => r.json()).then(d => setTiers(d.tiers ?? [])).catch(() => {});
+  }, []);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // PayTR iframe'den gelen yükseklik mesajlarını dinle
@@ -197,7 +203,11 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
 
   const shippingFee = total >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
   const codFee = paymentMethod === "cod" ? COD_FEE : 0;
-  const discountAmount = appliedCoupon?.discountAmount ?? 0;
+  // Kupon vs sepet eşikli otomatik indirim — müşteriye büyüğü (sunucu da aynı kuralı uygular)
+  const couponDiscount = appliedCoupon?.discountAmount ?? 0;
+  const autoDiscount = bestCartDiscount(total, tiers).amount;
+  const discountAmount = Math.max(couponDiscount, autoDiscount);
+  const couponWins = !!appliedCoupon && couponDiscount >= autoDiscount;
   const grandTotal = total + shippingFee + codFee - discountAmount;
 
   const shippingAddress = addresses.find(a => a.id === shippingId) ?? null;
@@ -222,7 +232,7 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
     items: legalItems,
     subtotal: total,
     shippingFee: shippingFee + codFee,
-    discountCode: appliedCoupon?.code,
+    discountCode: couponWins ? appliedCoupon?.code : (autoDiscount > 0 ? "Sepet indirimi" : undefined),
     discountAmount,
     total: grandTotal,
     date: today,
@@ -455,9 +465,9 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
                   <span className="text-text-light">Ara toplam</span>
                   <span className="font-semibold">{total.toLocaleString("tr-TR")} ₺</span>
                 </div>
-                {appliedCoupon && (
+                {discountAmount > 0 && (
                   <div className="flex justify-between text-green-700">
-                    <span>İndirim ({appliedCoupon.code})</span>
+                    <span>{couponWins ? `İndirim (${appliedCoupon!.code})` : "Sepet indirimi"}</span>
                     <span className="font-semibold">−{discountAmount.toLocaleString("tr-TR")} ₺</span>
                   </div>
                 )}

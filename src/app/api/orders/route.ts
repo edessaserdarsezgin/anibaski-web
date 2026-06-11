@@ -5,6 +5,7 @@ import { notifyOrderCreated } from "@/lib/whatsapp/notify";
 import { activeDiscountPercent, applyDiscount } from "@/lib/pricing";
 import { getShippingSettings } from "@/lib/shipping";
 import { hasPriorOrder } from "@/lib/coupons";
+import { bestCartDiscount, getCartDiscountTiers } from "@/lib/cartDiscount";
 
 type IncomingItem = {
   productId: string;
@@ -89,9 +90,11 @@ export async function POST(req: NextRequest) {
   const codFee = paymentMethod === "cod" ? ship.codFee : 0;
   const shippingFee = baseShipping + codFee;
 
-  // Kupon — server-side doğrulama (sunucu subtotal'ı ile)
-  let discountAmount = 0;
-  let validatedCouponCode: string | null = null;
+  // İndirim — sunucu subtotal'ı ile. Kupon (varsa) vs sepet eşikli otomatik indirim;
+  // müşteriye ikisinden BÜYÜĞÜ uygulanır (çift indirim yok).
+  type CouponRow = { id: string; code: string; used_count: number; max_uses: number | null };
+  let couponDiscount = 0;
+  let couponRow: CouponRow | null = null;
   if (discountCode) {
     const { data: coupon } = await adminDb
       .from("coupons").select("*").eq("code", discountCode).eq("is_active", true).single();
@@ -108,20 +111,33 @@ export async function POST(req: NextRequest) {
       !(coupon.max_uses !== null && coupon.used_count >= coupon.max_uses) &&
       !(coupon.min_order_amount && subtotal < Number(coupon.min_order_amount))
     ) {
-      discountAmount = coupon.discount_type === "percentage"
+      couponDiscount = coupon.discount_type === "percentage"
         ? Math.round(subtotal * (Number(coupon.discount_value) / 100) * 100) / 100
         : Math.min(Number(coupon.discount_value), subtotal);
-      validatedCouponCode = coupon.code;
-
-      if (paymentMethod === "cod") {
-        const newCount = coupon.used_count + 1;
-        const limitReached = coupon.max_uses !== null && newCount >= coupon.max_uses;
-        await createAdminClient().from("coupons").update({
-          used_count: newCount,
-          ...(limitReached && { is_active: false }),
-        }).eq("id", coupon.id);
-      }
+      couponRow = coupon;
     }
+  }
+
+  // Sepet eşikli otomatik indirim (ana anahtar kapalıysa tier listesi boş → 0)
+  const autoDiscount = bestCartDiscount(subtotal, await getCartDiscountTiers()).amount;
+
+  let discountAmount = 0;
+  let validatedCouponCode: string | null = null;
+  if (couponRow && couponDiscount >= autoDiscount) {
+    // Kupon kazandı
+    discountAmount = couponDiscount;
+    validatedCouponCode = couponRow.code;
+    if (paymentMethod === "cod") {
+      const newCount = couponRow.used_count + 1;
+      const limitReached = couponRow.max_uses !== null && newCount >= couponRow.max_uses;
+      await createAdminClient().from("coupons").update({
+        used_count: newCount,
+        ...(limitReached && { is_active: false }),
+      }).eq("id", couponRow.id);
+    }
+  } else {
+    // Otomatik sepet indirimi kazandı (veya kupon yok/geçersiz) — kupon sayacı artmaz
+    discountAmount = autoDiscount;
   }
 
   const total = Math.round((subtotal + shippingFee - discountAmount) * 100) / 100;

@@ -9,6 +9,7 @@ import BackButton from "@/components/ui/BackButton";
 import CardScroller from "@/components/ui/CardScroller";
 import ProductCard from "@/components/product/ProductCard";
 import EmptyState from "@/components/ui/EmptyState";
+import { bestCartDiscount, nextTier, type CartTier } from "@/lib/cartDiscountCalc";
 
 type AppliedCoupon = { code: string; discountAmount: number; discountType: string; discountValue: number };
 
@@ -42,6 +43,14 @@ export default function SepetPage() {
       .catch(() => {});
   }, []);
 
+  const [tiers, setTiers] = useState<CartTier[]>([]);
+  useEffect(() => {
+    fetch("/api/cart-discount")
+      .then(r => r.json())
+      .then(d => setTiers(d.tiers ?? []))
+      .catch(() => {});
+  }, []);
+
   const [couponInput, setCouponInput] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(() => {
@@ -50,11 +59,16 @@ export default function SepetPage() {
     return saved ? JSON.parse(saved) : null;
   });
 
-  const discountAmount = appliedCoupon
+  const couponDiscount = appliedCoupon
     ? appliedCoupon.discountType === "percentage"
       ? Math.round(total * (appliedCoupon.discountValue / 100) * 100) / 100
       : Math.min(appliedCoupon.discountValue, total)
     : 0;
+  // Sepet eşikli otomatik indirim — kuponla çakışmaz, müşteriye büyüğü uygulanır
+  const autoDiscount = bestCartDiscount(total, tiers).amount;
+  const couponWins = !!appliedCoupon && couponDiscount >= autoDiscount;
+  const discountAmount = Math.max(couponDiscount, autoDiscount);
+  const upcomingTier = nextTier(total, tiers);
   const shippingFee = total >= freeShippingThreshold ? 0 : shippingFeeVal;
   const grandTotal = total + shippingFee - discountAmount;
 
@@ -74,12 +88,12 @@ export default function SepetPage() {
   const cartProductIds = new Set(items.map((i) => i.productId));
   const filteredSuggestions = suggestions.filter((p) => !cartProductIds.has(p.id)).slice(0, 10);
 
-  // Adet değişince sessionStorage'daki indirim tutarını güncelle
+  // Adet değişince sessionStorage'daki KUPON indirim tutarını güncelle (oto indirim ayrı hesaplanır)
   useEffect(() => {
     if (!appliedCoupon) return;
-    const updated = { ...appliedCoupon, discountAmount };
+    const updated = { ...appliedCoupon, discountAmount: couponDiscount };
     sessionStorage.setItem("appliedCoupon", JSON.stringify(updated));
-  }, [total, appliedCoupon, discountAmount]);
+  }, [total, appliedCoupon, couponDiscount]);
 
   async function handleApplyCoupon() {
     if (!couponInput.trim()) return;
@@ -255,14 +269,21 @@ export default function SepetPage() {
               </div>
             )}
 
+            {upcomingTier && (
+              <p className="text-xs font-semibold text-primary bg-orange-50 border border-orange-200 rounded-xl px-3 py-2 mb-4">
+                🎁 {(upcomingTier.minSubtotal - total).toLocaleString("tr-TR")} ₺ daha ekle →{" "}
+                {upcomingTier.discountType === "percentage" ? `%${upcomingTier.discountValue}` : `${Number(upcomingTier.discountValue).toLocaleString("tr-TR")} ₺`} sepet indirimi kazan!
+              </p>
+            )}
+
             <div className="flex flex-col gap-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-text-light">Ara toplam</span>
                 <span className="font-semibold">{total.toLocaleString("tr-TR")} ₺</span>
               </div>
-              {appliedCoupon && (
+              {discountAmount > 0 && (
                 <div className="flex justify-between text-green-700">
-                  <span>İndirim ({appliedCoupon.code})</span>
+                  <span>{couponWins ? `İndirim (${appliedCoupon!.code})` : "Sepet indirimi"}</span>
                   <span className="font-semibold">−{discountAmount.toLocaleString("tr-TR")} ₺</span>
                 </div>
               )}
