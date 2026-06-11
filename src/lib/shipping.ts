@@ -10,6 +10,7 @@ export type ShippingSettings = {
   orderCutoffNote: string;
   dispatchCutoffHour: number;    // hafta içi bu saatten önceki siparişler aynı gün kabul (TR saati)
   dispatchBusinessDays: number;  // kabul gününden kargoya verilişe kaç iş günü
+  extraHolidays: string;         // ek tatil günleri (dini bayram/özel), YYYY-MM-DD satır ayrılmış
 };
 
 export const SHIPPING_DEFAULTS: ShippingSettings = {
@@ -21,6 +22,7 @@ export const SHIPPING_DEFAULTS: ShippingSettings = {
   orderCutoffNote: "Siparişler hafta içi 14:00'a kadar verilirse aynı gün üretime alınır.",
   dispatchCutoffHour: 14,
   dispatchBusinessDays: 1,
+  extraHolidays: "",
 };
 
 export const getShippingSettings = unstable_cache(
@@ -29,7 +31,7 @@ export const getShippingSettings = unstable_cache(
       const supabase = await createAdminClient();
       const { data } = await supabase
         .from("shipping_settings")
-        .select("shipping_fee, free_shipping_threshold, cod_fee, production_time, shipping_time, order_cutoff_note, dispatch_cutoff_hour, dispatch_business_days")
+        .select("shipping_fee, free_shipping_threshold, cod_fee, production_time, shipping_time, order_cutoff_note, dispatch_cutoff_hour, dispatch_business_days, extra_holidays")
         .eq("id", 1)
         .single();
       if (!data) return SHIPPING_DEFAULTS;
@@ -42,6 +44,7 @@ export const getShippingSettings = unstable_cache(
         orderCutoffNote: data.order_cutoff_note?.trim() || SHIPPING_DEFAULTS.orderCutoffNote,
         dispatchCutoffHour: data.dispatch_cutoff_hour ?? SHIPPING_DEFAULTS.dispatchCutoffHour,
         dispatchBusinessDays: data.dispatch_business_days ?? SHIPPING_DEFAULTS.dispatchBusinessDays,
+        extraHolidays: data.extra_holidays?.trim() || "",
       };
     } catch {
       return SHIPPING_DEFAULTS;

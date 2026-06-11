@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { isNonWorkingDay, parseHolidaySet } from "@/lib/holidays";
 
 type Estimate = { acceptedToday: boolean; cutoffHour: number; label: string };
 
@@ -13,20 +14,25 @@ type Estimate = { acceptedToday: boolean; cutoffHour: number; label: string };
 export default function ShippingEstimate({
   cutoffHour = 14,
   dispatchBusinessDays = 1,
+  extraHolidays = "",
 }: {
   cutoffHour?: number;
   dispatchBusinessDays?: number;
+  extraHolidays?: string;
 }) {
   const [est, setEst] = useState<Estimate | null>(null);
 
   useEffect(() => {
+    const holidays = parseHolidaySet(extraHolidays);
+    // İş günü = hafta sonu değil + resmî tatil değil + ek tatil değil (kargo çalışır)
+    const isBiz = (d: Date) => !isNonWorkingDay(d, holidays);
+
     // TR duvar saatini al (kullanıcının cihaz saat dilimi ne olursa olsun)
     const trNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Istanbul" }));
-    const isBiz = (d: Date) => d.getDay() !== 0 && d.getDay() !== 6;
 
     const acceptedToday = isBiz(trNow) && trNow.getHours() < cutoffHour;
 
-    // Kabul günü: bugün (hafta içi + cutoff öncesi) ya da bir sonraki iş günü
+    // Kabul günü: bugün (iş günü + cutoff öncesi) ya da bir sonraki iş günü
     const acceptance = new Date(trNow);
     acceptance.setHours(0, 0, 0, 0);
     if (!acceptedToday) {
@@ -55,7 +61,7 @@ export default function ShippingEstimate({
     const label = isTomorrow ? `yarın (${dateLong} ${dayName})` : `${dayName} (${dateLong})`;
 
     setEst({ acceptedToday, cutoffHour, label });
-  }, [cutoffHour, dispatchBusinessDays]);
+  }, [cutoffHour, dispatchBusinessDays, extraHolidays]);
 
   return (
     <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 flex items-start gap-3">

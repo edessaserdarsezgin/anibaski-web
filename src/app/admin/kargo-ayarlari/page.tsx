@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/ToastProvider";
 
-type Settings = { shippingFee: number; freeShippingThreshold: number; codFee: number; productionTime: string; shippingTime: string; orderCutoffNote: string; dispatchCutoffHour: number; dispatchBusinessDays: number };
+type Settings = { shippingFee: number; freeShippingThreshold: number; codFee: number; productionTime: string; shippingTime: string; orderCutoffNote: string; dispatchCutoffHour: number; dispatchBusinessDays: number; extraHolidays: string };
 
 export default function KargoAyarlariPage() {
-  const [form, setForm] = useState<Settings>({ shippingFee: 49, freeShippingThreshold: 500, codFee: 30, productionTime: "", shippingTime: "", orderCutoffNote: "", dispatchCutoffHour: 14, dispatchBusinessDays: 1 });
+  const [form, setForm] = useState<Settings>({ shippingFee: 49, freeShippingThreshold: 500, codFee: 30, productionTime: "", shippingTime: "", orderCutoffNote: "", dispatchCutoffHour: 14, dispatchBusinessDays: 1, extraHolidays: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -121,6 +121,14 @@ export default function KargoAyarlariPage() {
             />
             <p className="text-xs text-text-light">Kabul gününden kargoya verilişe kaç iş günü. 1 = ertesi iş günü.</p>
           </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text">Ek Tatil Günleri (dini bayram / özel)</label>
+          <textarea value={form.extraHolidays}
+            onChange={e => setForm(f => ({ ...f, extraHolidays: e.target.value }))}
+            rows={4} className={`${inputCls} resize-none font-mono`} placeholder={"2026-03-20\n2026-03-21\n2026-03-22\n2026-05-27"} />
+          <p className="text-xs text-text-light">Her satıra bir tarih (YYYY-MM-DD). Ramazan/Kurban Bayramı ve özel tatiller — kargo çalışmadığı günler tahminden çıkarılır. Resmî tatiller (1 Ocak, 23 Nisan, 1/19 Mayıs, 15 Temmuz, 30 Ağustos, 29 Ekim) zaten otomatik.</p>
         </div>
 
         <div className="pt-2 border-t border-border">

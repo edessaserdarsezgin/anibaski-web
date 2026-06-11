@@ -192,6 +192,7 @@ export default async function UrunDetayPage({ params }: Props) {
             <ShippingEstimate
               cutoffHour={shippingInfo.dispatchCutoffHour}
               dispatchBusinessDays={shippingInfo.dispatchBusinessDays}
+              extraHolidays={shippingInfo.extraHolidays}
             />
 
             {/* Kargo & Teslimat */}
