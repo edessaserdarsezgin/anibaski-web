@@ -14,10 +14,11 @@ const STATUS_LABEL: Record<string, string> = {
 // dropdown'dan seçilmez — bildirim yalnızca kargo kodu kaydında gider.
 
 export default function OrderStatusSelect({
-  orderId, currentStatus,
+  orderId, currentStatus, currentCode,
 }: {
   orderId: string;
   currentStatus: string;
+  currentCode?: string | null;
 }) {
   const isCancelRequested = currentStatus === "CANCEL_REQUESTED";
   const isShipped = currentStatus === "SHIPPED";
@@ -29,6 +30,13 @@ export default function OrderStatusSelect({
 
   async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const next = e.target.value;
+    // Kargo kodu girilmeden teslim işaretlenebilir, ama önce uyar (elden teslim/özel durum esnekliği)
+    if (next === "DELIVERED" && !currentCode?.trim()) {
+      if (!confirm("Bu siparişe kargo kodu girilmemiş. Yine de 'Teslim Edildi' olarak işaretlensin mi?")) {
+        e.target.value = status; // seçimi geri al
+        return;
+      }
+    }
     setSaving(true);
     const res = await fetch(`/api/admin/orders/${orderId}`, {
       method: "PATCH",

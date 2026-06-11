@@ -5,7 +5,6 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { signUploadedImages } from "@/lib/uploads";
 import { getCompanyInfo, sellerForContracts } from "@/lib/company";
 import LegalAccordion from "@/components/legal/LegalAccordion";
-import OrderStatusSelect from "./OrderStatusSelect";
 import CancelRequestButton from "./CancelRequestButton";
 import ReprintButton from "./ReprintButton";
 
@@ -112,7 +111,7 @@ export default async function SiparisDetayPage({ params }: Props) {
           </div>
           {isAdmin ? (
             <div className="flex items-center gap-3">
-              <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
+              {/* Durum değiştirme yalnız /admin'de — müşteri-tarafı sayfada operasyonel kontrol yok */}
               {order.type === "sale" && !order.photosPurgedAt && (
                 <ReprintButton
                   orderId={order.id}

@@ -112,7 +112,7 @@ export default async function AdminSiparislerPage({ searchParams }: Props) {
                     })}
                   </td>
                   <td className="px-4 py-4">
-                    <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
+                    <OrderStatusSelect orderId={order.id} currentStatus={order.status} currentCode={(order as unknown as { trackingCode: string | null }).trackingCode} />
                   </td>
                   <td className="px-4 py-4">
                     <OrderTrackingInput orderId={order.id} currentCode={(order as unknown as { trackingCode: string | null }).trackingCode} />
