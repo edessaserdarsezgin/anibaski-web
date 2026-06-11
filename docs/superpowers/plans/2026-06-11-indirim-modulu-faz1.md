@@ -10,6 +10,13 @@
 
 **Referans spec:** `docs/superpowers/specs/2026-06-11-indirim-modulu-faz1-design.md`
 
+## İLERLEME (2026-06-11)
+- ✅ **Task 1** — şema (promotions + join + campaigns.promotion_id + RLS) uygulandı (Supabase).
+- ✅ **Task 2** — `src/lib/promotionsCalc.ts` (commit 4a7202e), node testi geçti.
+- ✅ **Task 3** — `src/lib/promotions.ts` (commit 3c9b46b).
+- ✅ **Task 4** — veri göçü uygulandı: 3 kupon→code/cart, 1 ürün indirimi→auto/item/products (Supabase).
+- ⏭️ **SIRADAKİ: Task 5** — `/api/orders` motor cutover. **DİKKAT:** Task 5-12 birbirine bağlı CUTOVER; yarım bırakılırsa checkout/katalog bozulur → taze context ile 5'ten 12'ye kadar tek seferde tamamlanmalı. Şu an app ESKİ yollarda çalışıyor (promotions verisi hazır ama kullanılmıyor), bozuk değil.
+
 **Sıralama mantığı:** Önce additive (yeni tablo+lib+admin, app eski yollarda çalışmaya devam eder) → sonra cutover (fiyat motoru + kart + sepet/ödeme atomik geçiş) → sonra eski yolların kaldırılması → en son eski tablo DROP (ayrı migration).
 
 ---
