@@ -51,7 +51,15 @@ async function lifetimeSuccessCount(userId: string): Promise<number> {
 }
 
 function startOfTodayIso(): string {
-  const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString();
+  // Günlük ücretsiz kredi TÜRKİYE saatine göre gece 00:00'da yenilenir.
+  // createdAt UTC saklandığı için İstanbul'daki bugünün 00:00'ını UTC instant'a çevir.
+  // (setHours sunucu yerel saatini kullanır → Vercel UTC'de 03:00 TR'ye kayardı.)
+  // Türkiye 2016'dan beri kalıcı UTC+3, yaz saati yok.
+  const ymd = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Istanbul",
+    year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(new Date());
+  return new Date(`${ymd}T00:00:00+03:00`).toISOString();
 }
 
 async function todaySuccessCount(userId: string): Promise<number> {
