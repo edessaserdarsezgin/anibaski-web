@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
+import { expandRange } from "@/lib/holidays";
 
 export type ShippingSettings = {
   shippingFee: number;
@@ -21,7 +22,7 @@ export const SHIPPING_DEFAULTS: ShippingSettings = {
   shippingTime: "1–3 iş günü",
   orderCutoffNote: "Siparişler hafta içi 14:00'a kadar verilirse aynı gün üretime alınır.",
   dispatchCutoffHour: 14,
-  dispatchBusinessDays: 1,
+  dispatchBusinessDays: 0,
   extraHolidays: "",
 };
 
@@ -31,10 +32,15 @@ export const getShippingSettings = unstable_cache(
       const supabase = await createAdminClient();
       const { data } = await supabase
         .from("shipping_settings")
-        .select("shipping_fee, free_shipping_threshold, cod_fee, production_time, shipping_time, order_cutoff_note, dispatch_cutoff_hour, dispatch_business_days, extra_holidays")
+        .select("shipping_fee, free_shipping_threshold, cod_fee, production_time, shipping_time, order_cutoff_note, dispatch_cutoff_hour, dispatch_business_days, ramazan_start, ramazan_end, kurban_start, kurban_end")
         .eq("id", 1)
         .single();
       if (!data) return SHIPPING_DEFAULTS;
+      // Bayram aralıklarını tatil tarih listesine aç (component bu listeyi tüketir)
+      const extraHolidays = [
+        ...expandRange(data.ramazan_start, data.ramazan_end),
+        ...expandRange(data.kurban_start, data.kurban_end),
+      ].join("\n");
       return {
         shippingFee: Number(data.shipping_fee),
         freeShippingThreshold: Number(data.free_shipping_threshold),
@@ -44,7 +50,7 @@ export const getShippingSettings = unstable_cache(
         orderCutoffNote: data.order_cutoff_note?.trim() || SHIPPING_DEFAULTS.orderCutoffNote,
         dispatchCutoffHour: data.dispatch_cutoff_hour ?? SHIPPING_DEFAULTS.dispatchCutoffHour,
         dispatchBusinessDays: data.dispatch_business_days ?? SHIPPING_DEFAULTS.dispatchBusinessDays,
-        extraHolidays: data.extra_holidays?.trim() || "",
+        extraHolidays,
       };
     } catch {
       return SHIPPING_DEFAULTS;

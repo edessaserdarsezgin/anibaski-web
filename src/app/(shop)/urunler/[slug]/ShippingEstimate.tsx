@@ -39,26 +39,27 @@ export default function ShippingEstimate({
       do { acceptance.setDate(acceptance.getDate() + 1); } while (!isBiz(acceptance));
     }
 
-    // Kargoya veriliş: kabul gününden N iş günü sonra
+    // Kargoya veriliş: kabul gününden N iş günü sonra (0 = aynı gün → kabul günü)
     const ship = new Date(acceptance);
     let added = 0;
-    const target = Math.max(1, dispatchBusinessDays);
+    const target = Math.max(0, dispatchBusinessDays);
     while (added < target) {
       ship.setDate(ship.getDate() + 1);
       if (isBiz(ship)) added++;
     }
 
-    const tomorrow = new Date(trNow);
-    tomorrow.setHours(0, 0, 0, 0);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const isTomorrow =
-      ship.getFullYear() === tomorrow.getFullYear() &&
-      ship.getMonth() === tomorrow.getMonth() &&
-      ship.getDate() === tomorrow.getDate();
+    const sameYMD = (a: Date, b: Date) =>
+      a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    const today0 = new Date(trNow); today0.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today0); tomorrow.setDate(tomorrow.getDate() + 1);
 
     const dateLong = ship.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
     const dayName = ship.toLocaleDateString("tr-TR", { weekday: "long" });
-    const label = isTomorrow ? `yarın (${dateLong} ${dayName})` : `${dayName} (${dateLong})`;
+    const label = sameYMD(ship, today0)
+      ? "bugün"
+      : sameYMD(ship, tomorrow)
+        ? `yarın (${dateLong} ${dayName})`
+        : `${dayName} (${dateLong})`;
 
     setEst({ acceptedToday, cutoffHour, label });
   }, [cutoffHour, dispatchBusinessDays, extraHolidays]);
@@ -73,7 +74,7 @@ export default function ShippingEstimate({
         {est ? (
           est.acceptedToday ? (
             <p className="text-text-light mt-0.5">
-              Bugün <span className="font-semibold text-text">{String(est.cutoffHour).padStart(2, "0")}:00</span>&apos;dan önce sipariş ver →{" "}
+              Bugün saat <span className="font-semibold text-text">{String(est.cutoffHour).padStart(2, "0")}:00</span>&apos;a kadar sipariş ver →{" "}
               <span className="font-semibold text-primary">{est.label}</span> kargoda
             </p>
           ) : (

@@ -18,7 +18,8 @@ export async function GET() {
       shippingFee: 49, freeShippingThreshold: 500, codFee: 30,
       productionTime: "2–3 iş günü", shippingTime: "1–3 iş günü",
       orderCutoffNote: "Siparişler hafta içi 14:00'a kadar verilirse aynı gün üretime alınır.",
-      dispatchCutoffHour: 14, dispatchBusinessDays: 1, extraHolidays: "",
+      dispatchCutoffHour: 14, dispatchBusinessDays: 0,
+      ramazanStart: "", ramazanEnd: "", kurbanStart: "", kurbanEnd: "",
     });
   }
 
@@ -30,8 +31,11 @@ export async function GET() {
     shippingTime: data.shipping_time?.trim() || "1–3 iş günü",
     orderCutoffNote: data.order_cutoff_note?.trim() || "Siparişler hafta içi 14:00'a kadar verilirse aynı gün üretime alınır.",
     dispatchCutoffHour: data.dispatch_cutoff_hour ?? 14,
-    dispatchBusinessDays: data.dispatch_business_days ?? 1,
-    extraHolidays: data.extra_holidays?.trim() || "",
+    dispatchBusinessDays: data.dispatch_business_days ?? 0,
+    ramazanStart: data.ramazan_start ?? "",
+    ramazanEnd: data.ramazan_end ?? "",
+    kurbanStart: data.kurban_start ?? "",
+    kurbanEnd: data.kurban_end ?? "",
   });
 }
 
@@ -39,18 +43,14 @@ export async function PATCH(req: Request) {
   if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { shippingFee, freeShippingThreshold, codFee, productionTime, shippingTime, orderCutoffNote, dispatchCutoffHour, dispatchBusinessDays, extraHolidays } = body;
+  const { shippingFee, freeShippingThreshold, codFee, productionTime, shippingTime, orderCutoffNote, dispatchCutoffHour, dispatchBusinessDays, ramazanStart, ramazanEnd, kurbanStart, kurbanEnd } = body;
 
-  // cutoff saat 0–23, iş günü 1–10 ile sınırla (geçersiz girdi takvim hesabını bozmasın)
+  // cutoff saat 0–23, iş günü 0–10 ile sınırla (0 = aynı gün; geçersiz girdi takvim hesabını bozmasın)
   const cutoffHour = Math.min(23, Math.max(0, Math.floor(Number(dispatchCutoffHour))));
-  const bizDays = Math.min(10, Math.max(1, Math.floor(Number(dispatchBusinessDays))));
+  const bizDays = Math.min(10, Math.max(0, Math.floor(Number(dispatchBusinessDays))));
 
-  // Ek tatil günleri: yalnız geçerli YYYY-MM-DD satırlarını sakla, sırala, tekille
-  const cleanedHolidays = typeof extraHolidays === "string"
-    ? Array.from(new Set(
-        extraHolidays.split(/[\n,;]+/).map((s: string) => s.trim()).filter((s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s))
-      )).sort().join("\n")
-    : "";
+  // Bayram tarihleri: yalnız geçerli YYYY-MM-DD, değilse null
+  const asDate = (v: unknown) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
 
   const supabase = await createAdminClient();
   const { error } = await supabase
@@ -64,8 +64,11 @@ export async function PATCH(req: Request) {
       shipping_time: (typeof shippingTime === "string" && shippingTime.trim()) ? shippingTime.trim() : null,
       order_cutoff_note: (typeof orderCutoffNote === "string" && orderCutoffNote.trim()) ? orderCutoffNote.trim() : null,
       dispatch_cutoff_hour: Number.isFinite(cutoffHour) ? cutoffHour : 14,
-      dispatch_business_days: Number.isFinite(bizDays) ? bizDays : 1,
-      extra_holidays: cleanedHolidays || null,
+      dispatch_business_days: Number.isFinite(bizDays) ? bizDays : 0,
+      ramazan_start: asDate(ramazanStart),
+      ramazan_end: asDate(ramazanEnd),
+      kurban_start: asDate(kurbanStart),
+      kurban_end: asDate(kurbanEnd),
     });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

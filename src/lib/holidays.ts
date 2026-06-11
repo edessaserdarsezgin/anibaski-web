@@ -23,6 +23,27 @@ export function isNationalHoliday(d: Date): boolean {
   return FIXED_MMDD.includes(mmdd);
 }
 
+/**
+ * Başlangıç–bitiş tarih aralığını (dahil) YYYY-MM-DD listesine açar.
+ * Ramazan/Kurban Bayramı admin tarih seçicilerinden gelir. Bitiş boşsa tek gün,
+ * ters/geçersizse boş. Güvenlik için en fazla 40 gün.
+ */
+export function expandRange(start?: string | null, end?: string | null): string[] {
+  if (!start || !/^\d{4}-\d{2}-\d{2}$/.test(start)) return [];
+  const s = new Date(`${start}T00:00:00`);
+  const e = end && /^\d{4}-\d{2}-\d{2}$/.test(end) ? new Date(`${end}T00:00:00`) : s;
+  if (isNaN(s.getTime()) || isNaN(e.getTime()) || e < s) return [start];
+  const out: string[] = [];
+  const cur = new Date(s);
+  let guard = 0;
+  while (cur <= e && guard < 40) {
+    out.push(toYMD(cur));
+    cur.setDate(cur.getDate() + 1);
+    guard++;
+  }
+  return out;
+}
+
 /** "YYYY-MM-DD" satır/virgül/noktalı virgülle ayrılmış metni geçerli tarih Set'ine çevirir. */
 export function parseHolidaySet(raw: string | null | undefined): Set<string> {
   if (!raw) return new Set();

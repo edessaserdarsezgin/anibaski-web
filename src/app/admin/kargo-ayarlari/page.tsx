@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/ToastProvider";
 
-type Settings = { shippingFee: number; freeShippingThreshold: number; codFee: number; productionTime: string; shippingTime: string; orderCutoffNote: string; dispatchCutoffHour: number; dispatchBusinessDays: number; extraHolidays: string };
+type Settings = { shippingFee: number; freeShippingThreshold: number; codFee: number; productionTime: string; shippingTime: string; orderCutoffNote: string; dispatchCutoffHour: number; dispatchBusinessDays: number; ramazanStart: string; ramazanEnd: string; kurbanStart: string; kurbanEnd: string };
 
 export default function KargoAyarlariPage() {
-  const [form, setForm] = useState<Settings>({ shippingFee: 49, freeShippingThreshold: 500, codFee: 30, productionTime: "", shippingTime: "", orderCutoffNote: "", dispatchCutoffHour: 14, dispatchBusinessDays: 1, extraHolidays: "" });
+  const [form, setForm] = useState<Settings>({ shippingFee: 49, freeShippingThreshold: 500, codFee: 30, productionTime: "", shippingTime: "", orderCutoffNote: "", dispatchCutoffHour: 14, dispatchBusinessDays: 0, ramazanStart: "", ramazanEnd: "", kurbanStart: "", kurbanEnd: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -114,21 +114,42 @@ export default function KargoAyarlariPage() {
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-text">Kargoya Veriliş (iş günü)</label>
             <input
-              type="number" min="1" max="10" step="1" required
+              type="number" min="0" max="10" step="1" required
               value={form.dispatchBusinessDays}
               onChange={e => setForm(f => ({ ...f, dispatchBusinessDays: Number(e.target.value) }))}
               className={inputCls}
             />
-            <p className="text-xs text-text-light">Kabul gününden kargoya verilişe kaç iş günü. 1 = ertesi iş günü.</p>
+            <p className="text-xs text-text-light"><strong>0 = aynı gün</strong> (cutoff öncesi sipariş bugün kargoda), 1 = ertesi iş günü.</p>
           </div>
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-text">Ek Tatil Günleri (dini bayram / özel)</label>
-          <textarea value={form.extraHolidays}
-            onChange={e => setForm(f => ({ ...f, extraHolidays: e.target.value }))}
-            rows={4} className={`${inputCls} resize-none font-mono`} placeholder={"2026-03-20\n2026-03-21\n2026-03-22\n2026-05-27"} />
-          <p className="text-xs text-text-light">Her satıra bir tarih (YYYY-MM-DD). Ramazan/Kurban Bayramı ve özel tatiller — kargo çalışmadığı günler tahminden çıkarılır. Resmî tatiller (1 Ocak, 23 Nisan, 1/19 Mayıs, 15 Temmuz, 30 Ağustos, 29 Ekim) zaten otomatik.</p>
+        <div className="flex flex-col gap-3 rounded-xl border border-border p-4">
+          <div>
+            <p className="text-sm font-semibold text-text">Dini Bayram Tatilleri</p>
+            <p className="text-xs text-text-light mt-0.5">Seçilen tarih aralıkları (başlangıç–bitiş dahil) kargo kapalı sayılır, &quot;Ne zaman kargoda&quot; tahmininden çıkarılır. Diyanet&apos;in resmî tarihlerini gir. Resmî tatiller (1 Ocak, 23 Nisan, 1/19 Mayıs, 15 Temmuz, 30 Ağustos, 29 Ekim) zaten otomatik.</p>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-text">Ramazan Bayramı</label>
+            <div className="flex items-center gap-2">
+              <input type="date" value={form.ramazanStart}
+                onChange={e => setForm(f => ({ ...f, ramazanStart: e.target.value }))} className={inputCls} />
+              <span className="text-text-light text-sm shrink-0">→</span>
+              <input type="date" value={form.ramazanEnd} min={form.ramazanStart || undefined}
+                onChange={e => setForm(f => ({ ...f, ramazanEnd: e.target.value }))} className={inputCls} />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-text">Kurban Bayramı</label>
+            <div className="flex items-center gap-2">
+              <input type="date" value={form.kurbanStart}
+                onChange={e => setForm(f => ({ ...f, kurbanStart: e.target.value }))} className={inputCls} />
+              <span className="text-text-light text-sm shrink-0">→</span>
+              <input type="date" value={form.kurbanEnd} min={form.kurbanStart || undefined}
+                onChange={e => setForm(f => ({ ...f, kurbanEnd: e.target.value }))} className={inputCls} />
+            </div>
+          </div>
         </div>
 
         <div className="pt-2 border-t border-border">
