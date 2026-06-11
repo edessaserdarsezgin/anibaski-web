@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { hasPriorOrder } from "@/lib/coupons";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -31,6 +32,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       error: `Bu kupon için minimum sipariş tutarı ${Number(coupon.min_order_amount).toLocaleString("tr-TR")} ₺.`,
     }, { status: 400 });
+  }
+
+  if (coupon.first_order_only && await hasPriorOrder(user.id)) {
+    return NextResponse.json({ error: "Bu kupon yalnızca ilk siparişte geçerli." }, { status: 400 });
   }
 
   const discountAmount = coupon.discount_type === "percentage"

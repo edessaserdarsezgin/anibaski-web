@@ -22,6 +22,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if ("minOrderAmount" in body) mapped.min_order_amount = body.minOrderAmount;
   if ("maxUses" in body) mapped.max_uses = body.maxUses;
   if ("expiresAt" in body) mapped.expires_at = body.expiresAt;
+  if ("firstOrderOnly" in body) mapped.first_order_only = body.firstOrderOnly;
 
   const { data, error } = await admin.supabase
     .from("coupons")

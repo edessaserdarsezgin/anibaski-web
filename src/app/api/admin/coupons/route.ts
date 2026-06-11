@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();
-  const { code, discountType, discountValue, minOrderAmount, maxUses, expiresAt } = body;
+  const { code, discountType, discountValue, minOrderAmount, maxUses, expiresAt, firstOrderOnly } = body;
 
   if (!code?.trim() || !discountType || !discountValue) {
     return NextResponse.json({ error: "Kod, tür ve değer zorunlu" }, { status: 400 });
@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
       min_order_amount: minOrderAmount ? Number(minOrderAmount) : null,
       max_uses: maxUses ? Number(maxUses) : null,
       expires_at: expiresAt || null,
+      first_order_only: !!firstOrderOnly,
     })
     .select()
     .single();

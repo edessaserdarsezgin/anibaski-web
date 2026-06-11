@@ -13,6 +13,7 @@ type Coupon = {
   used_count: number;
   expires_at: string | null;
   is_active: boolean;
+  first_order_only: boolean;
 };
 
 type EditForm = {
@@ -22,6 +23,7 @@ type EditForm = {
   maxUses: string;
   expiresAt: string;
   isActive: boolean;
+  firstOrderOnly: boolean;
 };
 
 function isExpired(coupon: Coupon) {
@@ -44,14 +46,14 @@ export default function KuponlarPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     code: "", discountType: "percentage", discountValue: "",
-    minOrderAmount: "", maxUses: "", expiresAt: "",
+    minOrderAmount: "", maxUses: "", expiresAt: "", firstOrderOnly: false,
   });
   const [saving, setSaving] = useState(false);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EditForm>({
     discountType: "percentage", discountValue: "", minOrderAmount: "",
-    maxUses: "", expiresAt: "", isActive: true,
+    maxUses: "", expiresAt: "", isActive: true, firstOrderOnly: false,
   });
   const [editSaving, setEditSaving] = useState(false);
 
@@ -76,7 +78,7 @@ export default function KuponlarPage() {
     if (res.ok) {
       toast("Kupon oluşturuldu.");
       setShowForm(false);
-      setForm({ code: "", discountType: "percentage", discountValue: "", minOrderAmount: "", maxUses: "", expiresAt: "" });
+      setForm({ code: "", discountType: "percentage", discountValue: "", minOrderAmount: "", maxUses: "", expiresAt: "", firstOrderOnly: false });
       fetchCoupons();
     } else {
       const data = await res.json();
@@ -93,6 +95,7 @@ export default function KuponlarPage() {
       maxUses: c.max_uses ? String(c.max_uses) : "",
       expiresAt: toDateInputValue(c.expires_at),
       isActive: c.is_active,
+      firstOrderOnly: c.first_order_only,
     });
   }
 
@@ -110,6 +113,7 @@ export default function KuponlarPage() {
         maxUses: editForm.maxUses ? Number(editForm.maxUses) : null,
         expiresAt: editForm.expiresAt || null,
         isActive: editForm.isActive,
+        firstOrderOnly: editForm.firstOrderOnly,
       }),
     });
     setEditSaving(false);
@@ -193,6 +197,12 @@ export default function KuponlarPage() {
                 className="px-3 py-2 text-sm rounded-lg border border-border outline-none focus:border-primary" />
             </div>
           </div>
+          <label className="flex items-center gap-2 mt-4 cursor-pointer select-none">
+            <input type="checkbox" checked={form.firstOrderOnly}
+              onChange={e => setForm(p => ({ ...p, firstOrderOnly: e.target.checked }))}
+              className="w-4 h-4 accent-primary" />
+            <span className="text-sm text-text">Yalnız ilk sipariş <span className="text-text-light font-normal">— üyenin daha önce tamamlanmış siparişi yoksa geçerli</span></span>
+          </label>
           <div className="flex gap-3 mt-5">
             <button type="submit" disabled={saving}
               className="px-6 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-semibold rounded-full transition-colors">
@@ -231,7 +241,12 @@ export default function KuponlarPage() {
                 const inactive = expired || usedUp;
                 return [
                   <tr key={c.id} className={`border-b border-border last:border-0 hover:bg-bg transition-colors ${inactive ? "opacity-60" : ""}`}>
-                    <td className="px-6 py-4 font-mono font-semibold text-text">{c.code}</td>
+                    <td className="px-6 py-4 font-mono font-semibold text-text">
+                      {c.code}
+                      {c.first_order_only && (
+                        <span className="block mt-1 w-fit text-[10px] font-sans font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">İlk sipariş</span>
+                      )}
+                    </td>
                     <td className="px-4 py-4 text-primary font-semibold">
                       {c.discount_type === "percentage" ? `%${c.discount_value}` : `${Number(c.discount_value).toLocaleString("tr-TR")} ₺`}
                     </td>
@@ -318,6 +333,15 @@ export default function KuponlarPage() {
                                   onChange={e => setEditForm(p => ({ ...p, isActive: e.target.checked }))}
                                   className="w-4 h-4 accent-primary" />
                                 <span className="text-sm text-text">Aktif</span>
+                              </label>
+                            </div>
+                            <div className="flex flex-col gap-1.5 justify-end">
+                              <label className="text-xs font-semibold text-text">İlk Sipariş</label>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" checked={editForm.firstOrderOnly}
+                                  onChange={e => setEditForm(p => ({ ...p, firstOrderOnly: e.target.checked }))}
+                                  className="w-4 h-4 accent-primary" />
+                                <span className="text-sm text-text">Yalnız ilk sipariş</span>
                               </label>
                             </div>
                           </div>

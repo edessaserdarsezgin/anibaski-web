@@ -4,6 +4,7 @@ import { sendOrderNotification } from "@/lib/email/orderNotification";
 import { notifyOrderCreated } from "@/lib/whatsapp/notify";
 import { activeDiscountPercent, applyDiscount } from "@/lib/pricing";
 import { getShippingSettings } from "@/lib/shipping";
+import { hasPriorOrder } from "@/lib/coupons";
 
 type IncomingItem = {
   productId: string;
@@ -100,7 +101,10 @@ export async function POST(req: NextRequest) {
       createAdminClient().from("coupons").update({ is_active: false }).eq("id", coupon.id);
     }
 
-    if (coupon && !expired &&
+    // İlk-sipariş kuponu: üyenin önceki tamamlanmış siparişi varsa geçersiz
+    const firstOrderViolation = !!(coupon && coupon.first_order_only) && await hasPriorOrder(user.id);
+
+    if (coupon && !expired && !firstOrderViolation &&
       !(coupon.max_uses !== null && coupon.used_count >= coupon.max_uses) &&
       !(coupon.min_order_amount && subtotal < Number(coupon.min_order_amount))
     ) {
