@@ -15,7 +15,9 @@
 - ✅ **Task 2** — `src/lib/promotionsCalc.ts` (commit 4a7202e), node testi geçti.
 - ✅ **Task 3** — `src/lib/promotions.ts` (commit 3c9b46b).
 - ✅ **Task 4** — veri göçü uygulandı: 3 kupon→code/cart, 1 ürün indirimi→auto/item/products (Supabase).
-- ⏭️ **SIRADAKİ: Task 5** — `/api/orders` motor cutover. **DİKKAT:** Task 5-12 birbirine bağlı CUTOVER; yarım bırakılırsa checkout/katalog bozulur → taze context ile 5'ten 12'ye kadar tek seferde tamamlanmalı. Şu an app ESKİ yollarda çalışıyor (promotions verisi hazır ama kullanılmıyor), bozuk değil.
+- ✅ **Task 5-10, 12 BİTTİ + push'landı (cutover tamam):** orders iki-katman motor (ürün-own + kategori/tüm item = min; kupon vs sepet-eşikli = max) · PayTR callback promotions sayacı · coupons/validate kapsam-aware · catalog kart promotion-aware (withItemPromotions) · public /api/promotions · sepet/ödeme promotions gösterim · admin promotions CRUD · tek /admin/indirim sayfası+menü · eski yollar silindi (kuponlar/sepet-indirimi/coupons/cartDiscall). Karar: ürün-seviyesi indirim products.discount_percent'te kaldı (tek kaynak), promotions = kategori/tüm + kupon + sepet-eşikli. prod-<id> migrate promotion'ları silindi. src tsc 0 hata.
+- ⏭️ **ERTELENDİ (bozucu değil):** Task 11 (kampanya formu promotion seçici — şu an coupon_code vestigial duruyor) · Task 13 (eski tablo/kolon DROP — coupons/cart_discount_*/products.discount_percent intact; canlı test geçince yapılır).
+- 🧪 **KALAN: canlı test** (kullanıcı, preview): admin /indirim'den otomatik(ürün/kategori/tüm)+kupon+sepet-eşikli oluştur → kartta üstü-çizili + sepet/ödeme + sipariş doğru mu.
 
 **Sıralama mantığı:** Önce additive (yeni tablo+lib+admin, app eski yollarda çalışmaya devam eder) → sonra cutover (fiyat motoru + kart + sepet/ödeme atomik geçiş) → sonra eski yolların kaldırılması → en son eski tablo DROP (ayrı migration).
 
