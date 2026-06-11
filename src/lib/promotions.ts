@@ -51,6 +51,12 @@ export const getActiveCartAutoPromotions = unstable_cache(
   ["promotions-cart-auto"], { tags: ["promotions"] }
 );
 
+/** Aktif kuponlar (kart rozeti için: ürün/kategori-kapsamlı olanlar filtrelenir). Cache tag: "promotions". */
+export const getActiveCouponPromotions = unstable_cache(
+  () => loadPromotions({ applyLevel: "cart", trigger: "code" }),
+  ["promotions-coupons"], { tags: ["promotions"] }
+);
+
 /** İndirim çakışma modu: false = en iyisi (max), true = topla (stack). Cache tag: "promotions". */
 export const getDiscountStacking = unstable_cache(
   async (): Promise<boolean> => {

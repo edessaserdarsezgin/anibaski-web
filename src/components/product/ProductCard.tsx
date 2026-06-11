@@ -21,6 +21,7 @@ type Props = {
     discount_percent?: number | null;
     discount_starts_at?: string | null;
     discount_ends_at?: string | null;
+    couponBadge?: { code: string; label: string } | null;
   };
   priority?: boolean;
   showDescription?: boolean;
@@ -104,6 +105,11 @@ export default function ProductCard({ product, priority = false, showDescription
             }}
             suffix="den itibaren"
           />
+          {product.couponBadge && (
+            <p className="mt-1.5 text-[11px] font-semibold text-primary bg-primary/10 border border-primary/20 rounded-full px-2 py-0.5 w-fit">
+              🎟️ {product.couponBadge.code} ile {product.couponBadge.label}
+            </p>
+          )}
         </div>
       </div>
     </Link>

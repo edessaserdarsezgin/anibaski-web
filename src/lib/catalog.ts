@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
-import { getActiveItemPromotions } from "@/lib/promotions";
-import { bestItemDiscount } from "@/lib/promotionsCalc";
+import { getActiveItemPromotions, getActiveCouponPromotions } from "@/lib/promotions";
+import { bestItemDiscount, itemInScope, isDateValid } from "@/lib/promotionsCalc";
 import { activeDiscountPercent } from "@/lib/pricing";
 
 type DiscountableRow = {
@@ -16,8 +16,9 @@ type DiscountableRow = {
  */
 async function withItemPromotions<T extends DiscountableRow>(rows: T[]): Promise<T[]> {
   if (!rows.length) return rows;
-  const promos = await getActiveItemPromotions();
-  if (!promos.length) return rows;
+  const [promos, coupons] = await Promise.all([getActiveItemPromotions(), getActiveCouponPromotions()]);
+  const scopedCoupons = coupons.filter((c) => c.scope !== "all" && isDateValid(c) && c.code);
+  if (!promos.length && !scopedCoupons.length) return rows;
   return rows.map((r) => {
     const base = Number(r.basePrice);
     const ownPct = activeDiscountPercent({
@@ -28,7 +29,9 @@ async function withItemPromotions<T extends DiscountableRow>(rows: T[]): Promise
     const { unitPrice } = bestItemDiscount({ productId: r.id, categoryId: r.categoryId ?? null, unitPrice: base }, promos);
     const promoPct = base > 0 && unitPrice < base ? Math.round((1 - unitPrice / base) * 100) : 0;
     const pct = Math.max(ownPct, promoPct);
-    return { ...r, discount_percent: pct > 0 ? pct : null, discount_starts_at: null, discount_ends_at: null };
+    const cb = scopedCoupons.find((c) => itemInScope(c, { productId: r.id, categoryId: r.categoryId ?? null }));
+    const couponBadge = cb ? { code: cb.code as string, label: cb.valueType === "percentage" ? `%${cb.value}` : `${cb.value} ₺` } : null;
+    return { ...r, discount_percent: pct > 0 ? pct : null, discount_starts_at: null, discount_ends_at: null, couponBadge };
   });
 }
 
