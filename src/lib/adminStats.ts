@@ -8,16 +8,19 @@ export function parseDonem(raw: string | undefined): Donem {
   return raw === "gun" || raw === "hafta" || raw === "tum" ? raw : "ay";
 }
 
+/** Bir anın Türkiye saatindeki takvim günü (YYYY-MM-DD). TR kalıcı UTC+3, yaz saati yok. */
+function istanbulDay(at: string | Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Istanbul", year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(new Date(at));
+}
+
 /** gun → bugün 00:00 (TR saati); hafta → son 7 gün; ay → son 30 gün; tum → null */
 export function donemToFromIso(donem: Donem): string | null {
   if (donem === "tum") return null;
   if (donem === "gun") {
-    // "Bugün" Türkiye saatine göre 00:00'da başlamalı. setHours sunucu yerel saatini
-    // kullanır → Vercel UTC'de sınır 03:00 TR'ye kayardı. TR = kalıcı UTC+3.
-    const ymd = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Europe/Istanbul", year: "numeric", month: "2-digit", day: "2-digit",
-    }).format(new Date());
-    return new Date(`${ymd}T00:00:00+03:00`).toISOString();
+    // "Bugün" TR saatine göre 00:00'da başlar (setHours sunucu yerelini kullanır → UTC'de 03:00 TR'ye kayardı).
+    return new Date(`${istanbulDay(new Date())}T00:00:00+03:00`).toISOString();
   }
   const d = new Date();
   d.setDate(d.getDate() - (donem === "hafta" ? 7 : 30));
@@ -284,17 +287,19 @@ export function aggregateKpis(current: DashOrder[], previous: DashOrder[]) {
 export function dailySeries(orders: DashOrder[], fromIso: string): { day: string; total: number; count: number }[] {
   const map = new Map<string, { total: number; count: number }>();
   for (const o of orders.filter(isPaid)) {
-    const day = o.createdAt.slice(0, 10);
+    const day = istanbulDay(o.createdAt); // TR takvim gününe göre kümele (00:00–03:00 TR siparişi doğru güne yazılsın)
     const e = map.get(day) ?? { total: 0, count: 0 };
     e.total += num(o.total); e.count += 1;
     map.set(day, e);
   }
   const out: { day: string; total: number; count: number }[] = [];
-  const today = new Date();
-  for (let cur = new Date(fromIso); cur <= today; cur.setDate(cur.getDate() + 1)) {
-    const key = cur.toISOString().slice(0, 10);
+  const todayKey = istanbulDay(new Date());
+  // TR offset sabit → setDate(+1) her adımda tam bir TR günü ilerletir; eksen TR tarihine göre
+  for (let cur = new Date(fromIso), guard = 0; guard < 400; cur.setDate(cur.getDate() + 1), guard++) {
+    const key = istanbulDay(cur);
     const e = map.get(key) ?? { total: 0, count: 0 };
     out.push({ day: key, total: e.total, count: e.count });
+    if (key >= todayKey) break;
   }
   return out;
 }
