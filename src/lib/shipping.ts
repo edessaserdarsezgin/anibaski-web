@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
-import { expandRange } from "@/lib/holidays";
+import { expandRange, parseHolidaySet } from "@/lib/holidays";
 
 export type ShippingSettings = {
   shippingFee: number;
@@ -32,15 +32,16 @@ export const getShippingSettings = unstable_cache(
       const supabase = await createAdminClient();
       const { data } = await supabase
         .from("shipping_settings")
-        .select("shipping_fee, free_shipping_threshold, cod_fee, production_time, shipping_time, order_cutoff_note, dispatch_cutoff_hour, dispatch_business_days, ramazan_start, ramazan_end, kurban_start, kurban_end")
+        .select("shipping_fee, free_shipping_threshold, cod_fee, production_time, shipping_time, order_cutoff_note, dispatch_cutoff_hour, dispatch_business_days, ramazan_start, ramazan_end, kurban_start, kurban_end, extra_holidays")
         .eq("id", 1)
         .single();
       if (!data) return SHIPPING_DEFAULTS;
-      // Bayram aralıklarını tatil tarih listesine aç (component bu listeyi tüketir)
-      const extraHolidays = [
+      // Bayram aralıkları + serbest özel tatilleri tek tatil listesine birleştir (component bunu tüketir)
+      const extraHolidays = Array.from(new Set([
         ...expandRange(data.ramazan_start, data.ramazan_end),
         ...expandRange(data.kurban_start, data.kurban_end),
-      ].join("\n");
+        ...parseHolidaySet(data.extra_holidays),
+      ])).sort().join("\n");
       return {
         shippingFee: Number(data.shipping_fee),
         freeShippingThreshold: Number(data.free_shipping_threshold),

@@ -19,7 +19,7 @@ export async function GET() {
       productionTime: "2–3 iş günü", shippingTime: "1–3 iş günü",
       orderCutoffNote: "Siparişler hafta içi 14:00'a kadar verilirse aynı gün üretime alınır.",
       dispatchCutoffHour: 14, dispatchBusinessDays: 0,
-      ramazanStart: "", ramazanEnd: "", kurbanStart: "", kurbanEnd: "",
+      ramazanStart: "", ramazanEnd: "", kurbanStart: "", kurbanEnd: "", extraHolidays: "",
     });
   }
 
@@ -36,6 +36,7 @@ export async function GET() {
     ramazanEnd: data.ramazan_end ?? "",
     kurbanStart: data.kurban_start ?? "",
     kurbanEnd: data.kurban_end ?? "",
+    extraHolidays: data.extra_holidays?.trim() || "",
   });
 }
 
@@ -43,7 +44,7 @@ export async function PATCH(req: Request) {
   if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { shippingFee, freeShippingThreshold, codFee, productionTime, shippingTime, orderCutoffNote, dispatchCutoffHour, dispatchBusinessDays, ramazanStart, ramazanEnd, kurbanStart, kurbanEnd } = body;
+  const { shippingFee, freeShippingThreshold, codFee, productionTime, shippingTime, orderCutoffNote, dispatchCutoffHour, dispatchBusinessDays, ramazanStart, ramazanEnd, kurbanStart, kurbanEnd, extraHolidays } = body;
 
   // cutoff saat 0–23, iş günü 0–10 ile sınırla (0 = aynı gün; geçersiz girdi takvim hesabını bozmasın)
   const cutoffHour = Math.min(23, Math.max(0, Math.floor(Number(dispatchCutoffHour))));
@@ -51,6 +52,13 @@ export async function PATCH(req: Request) {
 
   // Bayram tarihleri: yalnız geçerli YYYY-MM-DD, değilse null
   const asDate = (v: unknown) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
+
+  // Diğer özel tatiller: yalnız geçerli YYYY-MM-DD satırları, sıralı + tekil
+  const cleanedHolidays = typeof extraHolidays === "string"
+    ? Array.from(new Set(
+        extraHolidays.split(/[\n,;]+/).map((s: string) => s.trim()).filter((s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s))
+      )).sort().join("\n")
+    : "";
 
   const supabase = await createAdminClient();
   const { error } = await supabase
@@ -69,6 +77,7 @@ export async function PATCH(req: Request) {
       ramazan_end: asDate(ramazanEnd),
       kurban_start: asDate(kurbanStart),
       kurban_end: asDate(kurbanEnd),
+      extra_holidays: cleanedHolidays || null,
     });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/ToastProvider";
 
-type Settings = { shippingFee: number; freeShippingThreshold: number; codFee: number; productionTime: string; shippingTime: string; orderCutoffNote: string; dispatchCutoffHour: number; dispatchBusinessDays: number; ramazanStart: string; ramazanEnd: string; kurbanStart: string; kurbanEnd: string };
+type Settings = { shippingFee: number; freeShippingThreshold: number; codFee: number; productionTime: string; shippingTime: string; orderCutoffNote: string; dispatchCutoffHour: number; dispatchBusinessDays: number; ramazanStart: string; ramazanEnd: string; kurbanStart: string; kurbanEnd: string; extraHolidays: string };
 
 export default function KargoAyarlariPage() {
-  const [form, setForm] = useState<Settings>({ shippingFee: 49, freeShippingThreshold: 500, codFee: 30, productionTime: "", shippingTime: "", orderCutoffNote: "", dispatchCutoffHour: 14, dispatchBusinessDays: 0, ramazanStart: "", ramazanEnd: "", kurbanStart: "", kurbanEnd: "" });
+  const [form, setForm] = useState<Settings>({ shippingFee: 49, freeShippingThreshold: 500, codFee: 30, productionTime: "", shippingTime: "", orderCutoffNote: "", dispatchCutoffHour: 14, dispatchBusinessDays: 0, ramazanStart: "", ramazanEnd: "", kurbanStart: "", kurbanEnd: "", extraHolidays: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -149,6 +149,14 @@ export default function KargoAyarlariPage() {
               <input type="date" value={form.kurbanEnd} min={form.kurbanStart || undefined}
                 onChange={e => setForm(f => ({ ...f, kurbanEnd: e.target.value }))} className={inputCls} />
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5 border-t border-border pt-3">
+            <label className="text-xs font-semibold text-text">Diğer Özel Tatil Günleri</label>
+            <textarea value={form.extraHolidays}
+              onChange={e => setForm(f => ({ ...f, extraHolidays: e.target.value }))}
+              rows={3} className={`${inputCls} resize-none font-mono`} placeholder={"2026-12-31\n2027-01-04"} />
+            <p className="text-xs text-text-light">Bayram dışı tek seferlik kapanışlar (envanter, taşınma vb.). Her satıra bir tarih (YYYY-MM-DD).</p>
           </div>
         </div>
 
