@@ -127,9 +127,19 @@ function AddressPicker({
   );
 }
 
-export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING_FEE, freeShippingThreshold: FREE_SHIPPING_THRESHOLD, codFee: COD_FEE, userEmail, userFullName, seller }: { initialAddresses: Address[]; shippingFee: number; freeShippingThreshold: number; codFee: number; userEmail: string; userFullName: string; seller: CompanyInfo }) {
+export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING_FEE, freeShippingThreshold: FREE_SHIPPING_THRESHOLD, codFee: COD_FEE, userEmail, userFullName, seller, paymentFailed = false }: { initialAddresses: Address[]; shippingFee: number; freeShippingThreshold: number; codFee: number; userEmail: string; userFullName: string; seller: CompanyInfo; paymentFailed?: boolean }) {
   const router = useRouter();
   const { items, total, clearCart } = useCart();
+
+  // PayTR başarısız ödemede iframe'i /odeme?fail=1'e yönlendirir → ana pencereye çık (yoksa
+  // küçük iframe içinde ödeme sayfası açılır). Çıktıktan sonra başarısız uyarısı gösterilir.
+  const [breakingOut, setBreakingOut] = useState(false);
+  useEffect(() => {
+    if (paymentFailed && window.top && window.top !== window.self) {
+      setBreakingOut(true);
+      window.top.location.href = "/odeme?fail=1";
+    }
+  }, [paymentFailed]);
 
   const [addresses, setAddresses] = useState<Address[]>(initialAddresses);
   const [shippingId, setShippingId] = useState<string | null>(initialAddresses[0]?.id ?? null);
@@ -288,6 +298,15 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
     }
   }
 
+  // iframe'den ana pencereye çıkılırken kısa "yönlendiriliyor" ekranı (form flash'ını engeller)
+  if (breakingOut) {
+    return (
+      <div className="max-w-6xl mx-auto px-8 py-24 text-center text-text-light">
+        Yönlendiriliyorsunuz...
+      </div>
+    );
+  }
+
   if (items.length === 0 && !paytrToken) {
     return (
       <div className="max-w-6xl mx-auto px-8 py-24 text-center">
@@ -323,6 +342,18 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
   return (
     <div className="max-w-6xl mx-auto px-8 py-12">
       <h1 className="font-serif text-3xl text-text mb-8">Ödeme</h1>
+
+      {paymentFailed && (
+        <div className="mb-6 flex items-start gap-3 rounded-xl bg-red-50 border border-red-200 px-4 py-3.5">
+          <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          <div className="text-sm">
+            <p className="font-semibold text-red-700">Ödeme tamamlanamadı</p>
+            <p className="text-red-600">Kartınızdan çekim yapılmadı. Bilgilerinizi kontrol edip tekrar deneyebilirsiniz.</p>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

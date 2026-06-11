@@ -7,10 +7,13 @@ import { getCompanyInfo, sellerForContracts } from "@/lib/company";
 
 export const metadata = { title: "Ödeme", robots: { index: false, follow: false } };
 
-export default async function OdemePage() {
+export default async function OdemePage({ searchParams }: { searchParams: Promise<{ fail?: string }> }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/giris?redirect=/odeme");
+
+  // PayTR başarısız ödemede merchant_fail_url=/odeme?fail=1'e döner
+  const paymentFailed = (await searchParams).fail === "1";
 
   const [{ data: addresses }, { data: profile }, shippingSettings, company] = await Promise.all([
     supabase.from("addresses").select("*").eq("userId", user.id).order("title", { ascending: true }),
@@ -47,5 +50,6 @@ export default async function OdemePage() {
     userEmail={user.email ?? ""}
     userFullName={(profile as { fullName?: string | null })?.fullName ?? ""}
     seller={sellerForContracts(company)}
+    paymentFailed={paymentFailed}
   />;
 }
