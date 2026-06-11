@@ -8,11 +8,18 @@ export function parseDonem(raw: string | undefined): Donem {
   return raw === "gun" || raw === "hafta" || raw === "tum" ? raw : "ay";
 }
 
-/** gun → bugün 00:00; hafta → son 7 gün; ay → son 30 gün; tum → null */
+/** gun → bugün 00:00 (TR saati); hafta → son 7 gün; ay → son 30 gün; tum → null */
 export function donemToFromIso(donem: Donem): string | null {
   if (donem === "tum") return null;
+  if (donem === "gun") {
+    // "Bugün" Türkiye saatine göre 00:00'da başlamalı. setHours sunucu yerel saatini
+    // kullanır → Vercel UTC'de sınır 03:00 TR'ye kayardı. TR = kalıcı UTC+3.
+    const ymd = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Istanbul", year: "numeric", month: "2-digit", day: "2-digit",
+    }).format(new Date());
+    return new Date(`${ymd}T00:00:00+03:00`).toISOString();
+  }
   const d = new Date();
-  if (donem === "gun") { d.setHours(0, 0, 0, 0); return d.toISOString(); }
   d.setDate(d.getDate() - (donem === "hafta" ? 7 : 30));
   return d.toISOString();
 }
