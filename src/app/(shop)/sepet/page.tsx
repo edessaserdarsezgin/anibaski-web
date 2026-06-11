@@ -9,9 +9,9 @@ import BackButton from "@/components/ui/BackButton";
 import CardScroller from "@/components/ui/CardScroller";
 import ProductCard from "@/components/product/ProductCard";
 import EmptyState from "@/components/ui/EmptyState";
-import { bestCartDiscount, nextTier, type CartTier } from "@/lib/cartDiscountCalc";
+import { cartPromoAmount, nextThreshold, isDateValid, type Promotion } from "@/lib/promotionsCalc";
 
-type AppliedCoupon = { code: string; discountAmount: number; discountType: string; discountValue: number };
+type AppliedCoupon = { code: string; discountAmount: number };
 
 type SuggestionProduct = {
   id: string; name: string; slug: string; basePrice: number; images: string[] | null;
@@ -43,13 +43,21 @@ export default function SepetPage() {
       .catch(() => {});
   }, []);
 
-  const [tiers, setTiers] = useState<CartTier[]>([]);
+  const [cartAutos, setCartAutos] = useState<Promotion[]>([]);
   useEffect(() => {
-    fetch("/api/cart-discount")
+    fetch("/api/promotions")
       .then(r => r.json())
-      .then(d => setTiers(d.tiers ?? []))
+      .then(d => setCartAutos(d.cartAutos ?? []))
       .catch(() => {});
   }, []);
+
+  // Kapsam-kısmi hesap için kalemler (kategori bilgisi varsa)
+  const pricedItems = items.map((it) => ({
+    productId: it.productId,
+    categoryId: (it as { categoryId?: string | null }).categoryId ?? null,
+    unitPrice: it.unitPrice,
+    quantity: it.quantity,
+  }));
 
   const [couponInput, setCouponInput] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
@@ -59,16 +67,18 @@ export default function SepetPage() {
     return saved ? JSON.parse(saved) : null;
   });
 
-  const couponDiscount = appliedCoupon
-    ? appliedCoupon.discountType === "percentage"
-      ? Math.round(total * (appliedCoupon.discountValue / 100) * 100) / 100
-      : Math.min(appliedCoupon.discountValue, total)
-    : 0;
+  const couponDiscount = appliedCoupon?.discountAmount ?? 0;
   // Sepet eşikli otomatik indirim — kuponla çakışmaz, müşteriye büyüğü uygulanır
-  const autoDiscount = bestCartDiscount(total, tiers).amount;
+  let autoDiscount = 0;
+  for (const p of cartAutos) {
+    if (!isDateValid(p)) continue;
+    if (p.minSubtotal && total < p.minSubtotal) continue;
+    const amt = cartPromoAmount(p, pricedItems);
+    if (amt > autoDiscount) autoDiscount = amt;
+  }
   const couponWins = !!appliedCoupon && couponDiscount >= autoDiscount;
   const discountAmount = Math.max(couponDiscount, autoDiscount);
-  const upcomingTier = nextTier(total, tiers);
+  const upcomingTier = nextThreshold(total, cartAutos);
   const shippingFee = total >= freeShippingThreshold ? 0 : shippingFeeVal;
   const grandTotal = total + shippingFee - discountAmount;
 
@@ -101,7 +111,7 @@ export default function SepetPage() {
     const res = await fetch("/api/coupons/validate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: couponInput, subtotal: total }),
+      body: JSON.stringify({ code: couponInput, items: pricedItems }),
     });
     const data = await res.json();
     setCouponLoading(false);
@@ -239,11 +249,7 @@ export default function SepetPage() {
               <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4">
                 <div>
                   <p className="text-xs font-semibold text-green-700">{appliedCoupon.code}</p>
-                  <p className="text-xs text-green-600">
-                    {appliedCoupon.discountType === "percentage"
-                      ? `%${appliedCoupon.discountValue} indirim`
-                      : `${appliedCoupon.discountValue} ₺ indirim`}
-                  </p>
+                  <p className="text-xs text-green-600">−{appliedCoupon.discountAmount.toLocaleString("tr-TR")} ₺ indirim</p>
                 </div>
                 <button onClick={handleRemoveCoupon} className="text-xs text-red-500 hover:text-red-700 font-semibold">
                   Kaldır
@@ -271,8 +277,8 @@ export default function SepetPage() {
 
             {upcomingTier && (
               <p className="text-xs font-semibold text-primary bg-orange-50 border border-orange-200 rounded-xl px-3 py-2 mb-4">
-                🎁 {(upcomingTier.minSubtotal - total).toLocaleString("tr-TR")} ₺ daha ekle →{" "}
-                {upcomingTier.discountType === "percentage" ? `%${upcomingTier.discountValue}` : `${Number(upcomingTier.discountValue).toLocaleString("tr-TR")} ₺`} sepet indirimi kazan!
+                🎁 {(upcomingTier.minSubtotal! - total).toLocaleString("tr-TR")} ₺ daha ekle →{" "}
+                {upcomingTier.valueType === "percentage" ? `%${upcomingTier.value}` : `${Number(upcomingTier.value).toLocaleString("tr-TR")} ₺`} sepet indirimi kazan!
               </p>
             )}
 

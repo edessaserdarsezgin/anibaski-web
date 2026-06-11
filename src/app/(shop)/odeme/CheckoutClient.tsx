@@ -10,7 +10,7 @@ import OnBilgilendirmeDoc from "@/components/legal/OnBilgilendirmeDoc";
 import MesafeliSatisDoc from "@/components/legal/MesafeliSatisDoc";
 import type { LegalDocBuyer, LegalDocItem } from "@/components/legal/types";
 import type { CompanyInfo } from "@/lib/company";
-import { bestCartDiscount, type CartTier } from "@/lib/cartDiscountCalc";
+import { cartPromoAmount, isDateValid, type Promotion } from "@/lib/promotionsCalc";
 
 type Address = {
   id: string; title: string; fullName: string; phone: string;
@@ -159,9 +159,9 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
     if (saved) setAppliedCoupon(JSON.parse(saved));
   }, []);
 
-  const [tiers, setTiers] = useState<CartTier[]>([]);
+  const [cartAutos, setCartAutos] = useState<Promotion[]>([]);
   useEffect(() => {
-    fetch("/api/cart-discount").then(r => r.json()).then(d => setTiers(d.tiers ?? [])).catch(() => {});
+    fetch("/api/promotions").then(r => r.json()).then(d => setCartAutos(d.cartAutos ?? [])).catch(() => {});
   }, []);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -205,7 +205,18 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
   const codFee = paymentMethod === "cod" ? COD_FEE : 0;
   // Kupon vs sepet eşikli otomatik indirim — müşteriye büyüğü (sunucu da aynı kuralı uygular)
   const couponDiscount = appliedCoupon?.discountAmount ?? 0;
-  const autoDiscount = bestCartDiscount(total, tiers).amount;
+  const checkoutItems = items.map((it) => ({
+    productId: it.productId,
+    categoryId: (it as { categoryId?: string | null }).categoryId ?? null,
+    unitPrice: it.unitPrice, quantity: it.quantity,
+  }));
+  let autoDiscount = 0;
+  for (const p of cartAutos) {
+    if (!isDateValid(p)) continue;
+    if (p.minSubtotal && total < p.minSubtotal) continue;
+    const amt = cartPromoAmount(p, checkoutItems);
+    if (amt > autoDiscount) autoDiscount = amt;
+  }
   const discountAmount = Math.max(couponDiscount, autoDiscount);
   const couponWins = !!appliedCoupon && couponDiscount >= autoDiscount;
   const grandTotal = total + shippingFee + codFee - discountAmount;
