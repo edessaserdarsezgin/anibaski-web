@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/ToastProvider";
 
-type Settings = { shippingFee: number; freeShippingThreshold: number; codFee: number; productionTime: string; shippingTime: string; orderCutoffNote: string };
+type Settings = { shippingFee: number; freeShippingThreshold: number; codFee: number; productionTime: string; shippingTime: string; orderCutoffNote: string; dispatchCutoffHour: number; dispatchBusinessDays: number };
 
 export default function KargoAyarlariPage() {
-  const [form, setForm] = useState<Settings>({ shippingFee: 49, freeShippingThreshold: 500, codFee: 30, productionTime: "", shippingTime: "", orderCutoffNote: "" });
+  const [form, setForm] = useState<Settings>({ shippingFee: 49, freeShippingThreshold: 500, codFee: 30, productionTime: "", shippingTime: "", orderCutoffNote: "", dispatchCutoffHour: 14, dispatchBusinessDays: 1 });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -98,6 +98,29 @@ export default function KargoAyarlariPage() {
             onChange={e => setForm(f => ({ ...f, orderCutoffNote: e.target.value }))}
             rows={2} className={`${inputCls} resize-none`} placeholder="Siparişler hafta içi 14:00'a kadar verilirse aynı gün üretime alınır." />
           <p className="text-xs text-text-light">Ürün detayı kargo kutusunun altındaki not. Boş = varsayılan.</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text">Sipariş Cutoff Saati</label>
+            <input
+              type="number" min="0" max="23" step="1" required
+              value={form.dispatchCutoffHour}
+              onChange={e => setForm(f => ({ ...f, dispatchCutoffHour: Number(e.target.value) }))}
+              className={inputCls}
+            />
+            <p className="text-xs text-text-light">Hafta içi bu saatten (TR) önceki siparişler aynı gün kabul. Örn: 14.</p>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text">Kargoya Veriliş (iş günü)</label>
+            <input
+              type="number" min="1" max="10" step="1" required
+              value={form.dispatchBusinessDays}
+              onChange={e => setForm(f => ({ ...f, dispatchBusinessDays: Number(e.target.value) }))}
+              className={inputCls}
+            />
+            <p className="text-xs text-text-light">Kabul gününden kargoya verilişe kaç iş günü. 1 = ertesi iş günü.</p>
+          </div>
         </div>
 
         <div className="pt-2 border-t border-border">

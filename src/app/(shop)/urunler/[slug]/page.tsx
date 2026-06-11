@@ -7,6 +7,7 @@ import RelatedProducts, { type RelatedProduct } from "@/components/product/Relat
 import { activeDiscountPercent } from "@/lib/pricing";
 import ProductGallery from "./ProductGallery";
 import ProductDetailsTabs from "./ProductDetailsTabs";
+import ShippingEstimate from "./ShippingEstimate";
 import { getShippingSettings } from "@/lib/shipping";
 import {
   getProductBySlug,
@@ -185,6 +186,12 @@ export default async function UrunDetayPage({ params }: Props) {
                   priceAddon: Number(v.priceAddon ?? 0),
                 })),
               }))}
+            />
+
+            {/* Ne zaman kargoda? — dinamik tahmin */}
+            <ShippingEstimate
+              cutoffHour={shippingInfo.dispatchCutoffHour}
+              dispatchBusinessDays={shippingInfo.dispatchBusinessDays}
             />
 
             {/* Kargo & Teslimat */}

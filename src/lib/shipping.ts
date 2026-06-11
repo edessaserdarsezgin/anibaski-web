@@ -8,6 +8,8 @@ export type ShippingSettings = {
   productionTime: string;
   shippingTime: string;
   orderCutoffNote: string;
+  dispatchCutoffHour: number;    // hafta içi bu saatten önceki siparişler aynı gün kabul (TR saati)
+  dispatchBusinessDays: number;  // kabul gününden kargoya verilişe kaç iş günü
 };
 
 export const SHIPPING_DEFAULTS: ShippingSettings = {
@@ -17,6 +19,8 @@ export const SHIPPING_DEFAULTS: ShippingSettings = {
   productionTime: "2–3 iş günü",
   shippingTime: "1–3 iş günü",
   orderCutoffNote: "Siparişler hafta içi 14:00'a kadar verilirse aynı gün üretime alınır.",
+  dispatchCutoffHour: 14,
+  dispatchBusinessDays: 1,
 };
 
 export const getShippingSettings = unstable_cache(
@@ -25,7 +29,7 @@ export const getShippingSettings = unstable_cache(
       const supabase = await createAdminClient();
       const { data } = await supabase
         .from("shipping_settings")
-        .select("shipping_fee, free_shipping_threshold, cod_fee, production_time, shipping_time, order_cutoff_note")
+        .select("shipping_fee, free_shipping_threshold, cod_fee, production_time, shipping_time, order_cutoff_note, dispatch_cutoff_hour, dispatch_business_days")
         .eq("id", 1)
         .single();
       if (!data) return SHIPPING_DEFAULTS;
@@ -36,6 +40,8 @@ export const getShippingSettings = unstable_cache(
         productionTime: data.production_time?.trim() || SHIPPING_DEFAULTS.productionTime,
         shippingTime: data.shipping_time?.trim() || SHIPPING_DEFAULTS.shippingTime,
         orderCutoffNote: data.order_cutoff_note?.trim() || SHIPPING_DEFAULTS.orderCutoffNote,
+        dispatchCutoffHour: data.dispatch_cutoff_hour ?? SHIPPING_DEFAULTS.dispatchCutoffHour,
+        dispatchBusinessDays: data.dispatch_business_days ?? SHIPPING_DEFAULTS.dispatchBusinessDays,
       };
     } catch {
       return SHIPPING_DEFAULTS;
