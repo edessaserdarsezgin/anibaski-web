@@ -37,19 +37,29 @@ export default function IndirimPage() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [stacking, setStacking] = useState(false);
 
   useEffect(() => { load(); }, []);
   async function load() {
     setLoading(true);
-    const [p, c, pr] = await Promise.all([
+    const [p, c, pr, pub] = await Promise.all([
       fetch("/api/admin/promotions").then(r => r.json()),
       fetch("/api/admin/categories").then(r => r.json()).catch(() => []),
       fetch("/api/admin/products").then(r => r.json()).catch(() => []),
+      fetch("/api/promotions").then(r => r.json()).catch(() => ({})),
     ]);
     setPromos(Array.isArray(p) ? p : []);
     setCats((Array.isArray(c) ? c : []).map((x: Opt) => ({ id: x.id, name: x.name })));
     setProds((Array.isArray(pr) ? pr : []).map((x: Opt) => ({ id: x.id, name: x.name })));
+    setStacking(!!pub?.stacking);
     setLoading(false);
+  }
+  async function toggleStacking() {
+    const next = !stacking;
+    setStacking(next);
+    const res = await fetch("/api/admin/promotions", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ stacking: next }) });
+    if (res.ok) toast(next ? "Çakışma: indirimler toplanır." : "Çakışma: en iyisi uygulanır.");
+    else { setStacking(!next); toast("Güncellenemedi.", "error"); }
   }
 
   function payload() {
@@ -96,7 +106,15 @@ export default function IndirimPage() {
         <h1 className="font-serif text-3xl text-text">İndirim</h1>
         <button onClick={() => setShowForm(!showForm)} className="px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-full transition-colors">+ Yeni İndirim</button>
       </div>
-      <p className="text-sm text-text-light mb-6">Otomatik indirimler (ürün/kategori/tüm) kartta görünür; kuponlar kodla; sepet eşikli otomatik. Kupon ile çakışmada müşteriye büyüğü uygulanır.</p>
+      <p className="text-sm text-text-light mb-3">Otomatik indirimler (ürün/kategori/tüm) kartta görünür; kuponlar kodla; sepet eşikli otomatik.</p>
+      <div className="flex items-center gap-3 mb-6 bg-white border border-border rounded-xl px-4 py-3">
+        <span className="text-sm font-semibold text-text">Çakışma modu:</span>
+        <button onClick={toggleStacking}
+          className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${stacking ? "text-primary bg-primary/10 border-primary/30" : "text-text-light bg-bg border-border hover:border-primary"}`}>
+          {stacking ? "Topla (kupon + sepet eşikli ayrı ayrı)" : "En iyisi (tek indirim kazanır)"}
+        </button>
+        <span className="text-xs text-text-light">Kupon ve sepet eşikli çakışınca davranış. Ürün/kategori indirimi her zaman ürün fiyatına ayrıca yansır.</span>
+      </div>
 
       {showForm && (
         <form onSubmit={handleCreate} className="bg-white rounded-2xl border border-border p-6 mb-6 flex flex-col gap-4">

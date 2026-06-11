@@ -160,8 +160,9 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
   }, []);
 
   const [cartAutos, setCartAutos] = useState<Promotion[]>([]);
+  const [stacking, setStacking] = useState(false);
   useEffect(() => {
-    fetch("/api/promotions").then(r => r.json()).then(d => setCartAutos(d.cartAutos ?? [])).catch(() => {});
+    fetch("/api/promotions").then(r => r.json()).then(d => { setCartAutos(d.cartAutos ?? []); setStacking(!!d.stacking); }).catch(() => {});
   }, []);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -217,7 +218,7 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
     const amt = cartPromoAmount(p, checkoutItems);
     if (amt > autoDiscount) autoDiscount = amt;
   }
-  const discountAmount = Math.max(couponDiscount, autoDiscount);
+  const discountAmount = Math.min(total, stacking ? couponDiscount + autoDiscount : Math.max(couponDiscount, autoDiscount));
   const couponWins = !!appliedCoupon && couponDiscount >= autoDiscount;
   const grandTotal = total + shippingFee + codFee - discountAmount;
 
@@ -476,11 +477,28 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
                   <span className="text-text-light">Ara toplam</span>
                   <span className="font-semibold">{total.toLocaleString("tr-TR")} ₺</span>
                 </div>
-                {discountAmount > 0 && (
-                  <div className="flex justify-between text-green-700">
-                    <span>{couponWins ? `İndirim (${appliedCoupon!.code})` : "Sepet indirimi"}</span>
-                    <span className="font-semibold">−{discountAmount.toLocaleString("tr-TR")} ₺</span>
-                  </div>
+                {stacking ? (
+                  <>
+                    {couponDiscount > 0 && (
+                      <div className="flex justify-between text-green-700">
+                        <span>İndirim ({appliedCoupon!.code})</span>
+                        <span className="font-semibold">−{couponDiscount.toLocaleString("tr-TR")} ₺</span>
+                      </div>
+                    )}
+                    {autoDiscount > 0 && (
+                      <div className="flex justify-between text-green-700">
+                        <span>Sepet indirimi</span>
+                        <span className="font-semibold">−{autoDiscount.toLocaleString("tr-TR")} ₺</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  discountAmount > 0 && (
+                    <div className="flex justify-between text-green-700">
+                      <span>{couponWins ? `İndirim (${appliedCoupon!.code})` : "Sepet indirimi"}</span>
+                      <span className="font-semibold">−{discountAmount.toLocaleString("tr-TR")} ₺</span>
+                    </div>
+                  )
                 )}
                 <div className="flex justify-between">
                   <span className="text-text-light">Kargo</span>

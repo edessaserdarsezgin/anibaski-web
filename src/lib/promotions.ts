@@ -51,6 +51,18 @@ export const getActiveCartAutoPromotions = unstable_cache(
   ["promotions-cart-auto"], { tags: ["promotions"] }
 );
 
+/** İndirim çakışma modu: false = en iyisi (max), true = topla (stack). Cache tag: "promotions". */
+export const getDiscountStacking = unstable_cache(
+  async (): Promise<boolean> => {
+    try {
+      const db = createAdminClient();
+      const { data } = await db.from("discount_settings").select("stacking").eq("id", 1).single();
+      return !!data?.stacking;
+    } catch { return false; }
+  },
+  ["discount-stacking"], { tags: ["promotions"] }
+);
+
 /** Üyenin önceki tamamlanmış (paid/cod) siparişi var mı? (ilk-sipariş kuponu) */
 export async function hasPriorOrder(userId: string): Promise<boolean> {
   const db = createAdminClient();

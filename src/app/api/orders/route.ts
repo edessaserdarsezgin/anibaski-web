@@ -4,7 +4,7 @@ import { sendOrderNotification } from "@/lib/email/orderNotification";
 import { notifyOrderCreated } from "@/lib/whatsapp/notify";
 import { getShippingSettings } from "@/lib/shipping";
 import { activeDiscountPercent, applyDiscount } from "@/lib/pricing";
-import { getActiveItemPromotions, getActiveCartAutoPromotions, validateCoupon } from "@/lib/promotions";
+import { getActiveItemPromotions, getActiveCartAutoPromotions, validateCoupon, getDiscountStacking } from "@/lib/promotions";
 import { bestItemDiscount, cartPromoAmount, isDateValid } from "@/lib/promotionsCalc";
 
 type IncomingItem = {
@@ -120,10 +120,13 @@ export async function POST(req: NextRequest) {
     if (amt > autoAmount) autoAmount = amt;
   }
 
-  let discountAmount = 0;
+  // Çakışma modu: topla (her ikisi) veya en iyisi (max)
+  const stacking = await getDiscountStacking();
+  const couponApplied = !!couponWin && couponAmount > 0 && (stacking || couponAmount >= autoAmount);
+  let discountAmount = stacking ? couponAmount + autoAmount : Math.max(couponAmount, autoAmount);
+  discountAmount = Math.min(discountAmount, subtotal); // sepet altına inmesin
   let validatedCouponCode: string | null = null;
-  if (couponWin && couponAmount >= autoAmount) {
-    discountAmount = couponAmount;
+  if (couponApplied && couponWin) {
     validatedCouponCode = couponWin.code;
     if (paymentMethod === "cod") {
       const newCount = couponWin.usedCount + 1;
@@ -132,8 +135,6 @@ export async function POST(req: NextRequest) {
         used_count: newCount, ...(limitReached && { is_active: false }),
       }).eq("id", couponWin.id);
     }
-  } else {
-    discountAmount = autoAmount; // sepet-eşikli kazandı (veya kupon yok) — kupon sayacı artmaz
   }
 
   const total = Math.round((subtotal + shippingFee - discountAmount) * 100) / 100;

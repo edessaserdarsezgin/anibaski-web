@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { getActiveCartAutoPromotions } from "@/lib/promotions";
+import { getActiveCartAutoPromotions, getDiscountStacking } from "@/lib/promotions";
 
-// Public: aktif sepet eşikli (cart-auto) indirimler — sepet/ödeme gösterimi + nudge için.
+// Public: aktif sepet eşikli (cart-auto) indirimler + çakışma modu — sepet/ödeme gösterimi için.
 // (Item indirimleri zaten ürün kartı/fiyatına yansır; kuponlar koddan doğrulanır.)
 export async function GET() {
-  const cartAutos = await getActiveCartAutoPromotions();
-  return NextResponse.json({ cartAutos });
+  const [cartAutos, stacking] = await Promise.all([getActiveCartAutoPromotions(), getDiscountStacking()]);
+  return NextResponse.json({ cartAutos, stacking });
 }

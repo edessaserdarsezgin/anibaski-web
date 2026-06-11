@@ -44,10 +44,11 @@ export default function SepetPage() {
   }, []);
 
   const [cartAutos, setCartAutos] = useState<Promotion[]>([]);
+  const [stacking, setStacking] = useState(false);
   useEffect(() => {
     fetch("/api/promotions")
       .then(r => r.json())
-      .then(d => setCartAutos(d.cartAutos ?? []))
+      .then(d => { setCartAutos(d.cartAutos ?? []); setStacking(!!d.stacking); })
       .catch(() => {});
   }, []);
 
@@ -77,7 +78,7 @@ export default function SepetPage() {
     if (amt > autoDiscount) autoDiscount = amt;
   }
   const couponWins = !!appliedCoupon && couponDiscount >= autoDiscount;
-  const discountAmount = Math.max(couponDiscount, autoDiscount);
+  const discountAmount = Math.min(total, stacking ? couponDiscount + autoDiscount : Math.max(couponDiscount, autoDiscount));
   const upcomingTier = nextThreshold(total, cartAutos);
   const shippingFee = total >= freeShippingThreshold ? 0 : shippingFeeVal;
   const grandTotal = total + shippingFee - discountAmount;
@@ -287,11 +288,28 @@ export default function SepetPage() {
                 <span className="text-text-light">Ara toplam</span>
                 <span className="font-semibold">{total.toLocaleString("tr-TR")} ₺</span>
               </div>
-              {discountAmount > 0 && (
-                <div className="flex justify-between text-green-700">
-                  <span>{couponWins ? `İndirim (${appliedCoupon!.code})` : "Sepet indirimi"}</span>
-                  <span className="font-semibold">−{discountAmount.toLocaleString("tr-TR")} ₺</span>
-                </div>
+              {stacking ? (
+                <>
+                  {couponDiscount > 0 && (
+                    <div className="flex justify-between text-green-700">
+                      <span>İndirim ({appliedCoupon!.code})</span>
+                      <span className="font-semibold">−{couponDiscount.toLocaleString("tr-TR")} ₺</span>
+                    </div>
+                  )}
+                  {autoDiscount > 0 && (
+                    <div className="flex justify-between text-green-700">
+                      <span>Sepet indirimi</span>
+                      <span className="font-semibold">−{autoDiscount.toLocaleString("tr-TR")} ₺</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                discountAmount > 0 && (
+                  <div className="flex justify-between text-green-700">
+                    <span>{couponWins ? `İndirim (${appliedCoupon!.code})` : "Sepet indirimi"}</span>
+                    <span className="font-semibold">−{discountAmount.toLocaleString("tr-TR")} ₺</span>
+                  </div>
+                )
               )}
               <div className="flex justify-between">
                 <span className="text-text-light">Kargo</span>
