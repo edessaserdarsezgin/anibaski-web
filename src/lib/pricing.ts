@@ -1,4 +1,6 @@
 // src/lib/pricing.ts — ürün indirimi tek kaynağı.
+import { bestItemDiscount, type Promotion } from "@/lib/promotionsCalc";
+
 export type DiscountFields = {
   discount_percent: number | null;
   discount_starts_at: string | null;
@@ -18,6 +20,22 @@ export function activeDiscountPercent(p: DiscountFields, now: Date = new Date())
 export function applyDiscount(amount: number, percent: number): number {
   if (percent <= 0) return amount;
   return Math.round(amount * (1 - percent / 100) * 100) / 100;
+}
+
+/**
+ * Katman A birim fiyat — ürün indirimi (discount_percent) ile otomatik item
+ * promosyonundan İYİSİ. orders ve cart/reprice route'ları için tek kaynak.
+ */
+export function computeItemUnitPrice(
+  fullUnit: number,
+  discount: DiscountFields,
+  scopeItem: { productId: string; categoryId: string | null },
+  itemPromos: Promotion[],
+  now: Date = new Date(),
+): number {
+  const ownPrice = applyDiscount(fullUnit, activeDiscountPercent(discount, now));
+  const promoPrice = bestItemDiscount({ ...scopeItem, unitPrice: fullUnit }, itemPromos, now).unitPrice;
+  return Math.min(ownPrice, promoPrice);
 }
 
 /** Admin gövdesinden indirim alanlarını normalize eder (DB'ye yazılacak şekil). */

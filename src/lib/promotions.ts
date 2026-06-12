@@ -85,6 +85,17 @@ export async function detachTagFromProducts(
   await db.from("product_tags").delete().eq("tagId", tagId).in("productId", productIds);
 }
 
+// Bir promosyonun güncel kapsam (üyelik + scope+alt kategori) ürün id'leri
+export async function promotionScopeProductIds(
+  db: ReturnType<typeof createAdminClient>, promotionId: string, scope: "all" | "products" | "categories",
+): Promise<string[]> {
+  const [{ data: pp }, { data: pc }] = await Promise.all([
+    db.from("promotion_products").select("product_id").eq("promotion_id", promotionId),
+    db.from("promotion_categories").select("category_id").eq("promotion_id", promotionId),
+  ]);
+  return getScopeProductIds(db, scope, (pp ?? []).map((x) => x.product_id), (pc ?? []).map((x) => x.category_id));
+}
+
 async function loadPromotions(filter: { applyLevel: "item" | "cart"; trigger?: "auto" | "code" }): Promise<Promotion[]> {
   const db = createAdminClient();
   let q = db.from("promotions").select("*").eq("is_active", true).eq("apply_level", filter.applyLevel).eq("deal_type", "flat");
@@ -139,11 +150,16 @@ export const getDiscountStacking = unstable_cache(
   ["discount-stacking"], { tags: ["promotions"] }
 );
 
-/** Üyenin önceki tamamlanmış (paid/cod) siparişi var mı? (ilk-sipariş kuponu) */
+/**
+ * Üyenin önceki GERÇEKLEŞMİŞ siparişi var mı? (ilk-sipariş kuponu)
+ * Kart: paymentStatus=paid. COD: iptal/bekleyen değil, işleme alınmış statüler.
+ * (İptal edilmiş COD siparişi ilk-sipariş hakkını yakmamalı.)
+ */
 export async function hasPriorOrder(userId: string): Promise<boolean> {
   const db = createAdminClient();
   const { count } = await db.from("orders").select("id", { count: "exact", head: true })
-    .eq("userId", userId).or("paymentStatus.eq.paid,paymentMethod.eq.cod");
+    .eq("userId", userId)
+    .or("paymentStatus.eq.paid,and(paymentMethod.eq.cod,status.in.(PREPARING,SHIPPED,DELIVERED))");
   return (count ?? 0) > 0;
 }
 

@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 import { revalidateTag } from "next/cache";
 
 export async function POST(req: NextRequest) {
-  if (!(await requireAdmin())) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
+  const admin = await requireAdmin();
+  if (!admin) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
 
   const body = await req.json();
   if (!body.title || !body.slug || !body.image_url || !body.cta_url) {
     return NextResponse.json({ error: "title, slug, image_url ve cta_url zorunlu." }, { status: 400 });
   }
 
-  const { data, error } = await createAdminClient()
+  const { data, error } = await admin.supabase
     .from("campaigns")
     .insert({
       title: body.title,

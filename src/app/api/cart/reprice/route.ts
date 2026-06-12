@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { activeDiscountPercent, applyDiscount } from "@/lib/pricing";
+import { computeItemUnitPrice, type DiscountFields } from "@/lib/pricing";
 import { getActiveItemPromotions } from "@/lib/promotions";
-import { bestItemDiscount } from "@/lib/promotionsCalc";
 
 // Sepetteki kalemlerin GÜNCEL birim fiyatını döndürür (Katman A: ürün indirimi + kategori/tüm item promotion).
 // orders/route.ts ile birebir aynı mantık — sepet eski fiyatı göstermesin diye. Fiyatlar public, auth gerekmez.
@@ -45,9 +44,7 @@ export async function POST(req: NextRequest) {
 
     const fullUnit = Number(product.basePrice) + addons;
     const categoryId = (product as { categoryId?: string | null }).categoryId ?? null;
-    const ownPrice = applyDiscount(fullUnit, activeDiscountPercent(product as Parameters<typeof activeDiscountPercent>[0]));
-    const promoPrice = bestItemDiscount({ productId: item.productId, categoryId, unitPrice: fullUnit }, itemPromos).unitPrice;
-    return Math.min(ownPrice, promoPrice);
+    return computeItemUnitPrice(fullUnit, product as unknown as DiscountFields, { productId: item.productId, categoryId }, itemPromos);
   });
 
   return NextResponse.json({ prices });

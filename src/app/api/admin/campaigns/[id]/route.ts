@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 import { revalidateTag } from "next/cache";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!(await requireAdmin())) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
+  const admin = await requireAdmin();
+  if (!admin) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
 
   const { id } = await params;
   const body = await req.json();
@@ -21,18 +21,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Güncellenecek alan yok." }, { status: 400 });
   }
 
-  const { error } = await createAdminClient().from("campaigns").update(updates).eq("id", id);
+  const { error } = await admin.supabase.from("campaigns").update(updates).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  
+
   revalidateTag("campaigns", "max");
   return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!(await requireAdmin())) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
+  const admin = await requireAdmin();
+  if (!admin) return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
 
   const { id } = await params;
-  const { error } = await createAdminClient().from("campaigns").delete().eq("id", id);
+  const { error } = await admin.supabase.from("campaigns").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   
   revalidateTag("campaigns", "max");

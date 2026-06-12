@@ -77,19 +77,10 @@ export async function POST(req: NextRequest) {
         adminClient.from("profiles").select("email, fullName, phone, notify_delivery_contact").eq("id", order.userId).single(),
       ]);
 
-      // Kupon used_count'u ödeme onayı sonrası artır; limit dolunca pasife al
+      // Kupon used_count'u ödeme onayı sonrası atomik artır; limit dolunca pasife al
+      // (callback idempotent — paymentStatus.neq.paid koruması sayesinde bir kez çalışır)
       if (order.discount_code) {
-        const { data: coupon } = await adminClient
-          .from("promotions").select("id, used_count, max_uses")
-          .eq("code", order.discount_code).eq("trigger", "code").single();
-        if (coupon) {
-          const newCount = coupon.used_count + 1;
-          const limitReached = coupon.max_uses !== null && newCount >= coupon.max_uses;
-          await adminClient.from("promotions").update({
-            used_count: newCount,
-            ...(limitReached && { is_active: false }),
-          }).eq("id", coupon.id);
-        }
+        await adminClient.rpc("increment_coupon_use", { p_code: order.discount_code });
       }
 
       const itemsText = (orderItems ?? []).map((item) => {

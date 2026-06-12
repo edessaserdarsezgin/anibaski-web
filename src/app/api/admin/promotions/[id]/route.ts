@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { revalidateTag } from "next/cache";
-import { getScopeProductIds, applyTagToProducts, detachTagFromProducts } from "@/lib/promotions";
+import { createAdminClient } from "@/lib/supabase/server";
+import { promotionScopeProductIds, applyTagToProducts, detachTagFromProducts } from "@/lib/promotions";
 
 type Scope = "all" | "products" | "categories";
+
+// Kupon koduna bağlı kampanya + duyuru bandını indirimin aktifliğiyle senkronla.
+// İndirim pasife alınınca onları reklam eden band/kampanya da pasifleşir, geri aktifleşince geri açılır.
+async function syncLinkedCampaignsBanners(db: ReturnType<typeof createAdminClient>, code: string, active: boolean) {
+  await db.from("campaigns").update({ is_active: active }).eq("coupon_code", code);
+  const { data: banns } = await db.from("banners").select("id, text");
+  const ids = (banns ?? []).filter((bn) => bn.text?.toUpperCase().includes(code.toUpperCase())).map((bn) => bn.id);
+  if (ids.length) await db.from("banners").update({ isActive: active }).in("id", ids);
+  revalidateTag("campaigns", "max");
+}
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const admin = await requireAdmin();
@@ -18,18 +29,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   let oldTagId: string | null = null;
   let oldScopeIds: string[] = [];
   let wasActive: boolean | null = null;
+  let oldCode: string | null = null;
   if (tagIntent || activeIntent) {
-    const { data: before } = await admin.supabase.from("promotions").select("tag_id, scope, is_active").eq("id", id).single();
+    const { data: before } = await admin.supabase.from("promotions").select("tag_id, scope, is_active, code").eq("id", id).single();
     oldTagId = (before?.tag_id as string | null) ?? null;
     wasActive = (before?.is_active as boolean | null) ?? null;
-    if (oldTagId) {
-      const [{ data: oPP }, { data: oPC }] = await Promise.all([
-        admin.supabase.from("promotion_products").select("product_id").eq("promotion_id", id),
-        admin.supabase.from("promotion_categories").select("category_id").eq("promotion_id", id),
-      ]);
-      oldScopeIds = await getScopeProductIds(admin.supabase, (before?.scope ?? "all") as Scope,
-        (oPP ?? []).map((x) => x.product_id), (oPC ?? []).map((x) => x.category_id));
-    }
+    oldCode = (before?.code as string | null) ?? null;
+    if (oldTagId)
+      oldScopeIds = await promotionScopeProductIds(admin.supabase, id, (before?.scope ?? "all") as Scope);
   }
 
   const mapped: Record<string, unknown> = {};
@@ -80,12 +87,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     await admin.supabase.from("promotions").update({ tag_id: newTagId }).eq("id", id);
     if (newTagId && effectiveActive) {
       const { data: after } = await admin.supabase.from("promotions").select("scope").eq("id", id).single();
-      const [{ data: nPP }, { data: nPC }] = await Promise.all([
-        admin.supabase.from("promotion_products").select("product_id").eq("promotion_id", id),
-        admin.supabase.from("promotion_categories").select("category_id").eq("promotion_id", id),
-      ]);
-      const newPids = await getScopeProductIds(admin.supabase, (after?.scope ?? "all") as Scope,
-        (nPP ?? []).map((x) => x.product_id), (nPC ?? []).map((x) => x.category_id));
+      const newPids = await promotionScopeProductIds(admin.supabase, id, (after?.scope ?? "all") as Scope);
       await applyTagToProducts(admin.supabase, newTagId, newPids);
     }
     revalidateTag("tags", "max");
@@ -97,6 +99,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     else await detachTagFromProducts(admin.supabase, oldTagId, oldScopeIds);
     revalidateTag("tags", "max");
   }
+
+  // Aktif/pasif geçişinde bağlı kampanya/duyuru bandını da senkronla (çift yönlü)
+  if (activeIntent && wasActive !== effectiveActive && oldCode)
+    await syncLinkedCampaignsBanners(admin.supabase, oldCode, effectiveActive);
 
   revalidateTag("promotions", "max");
   revalidateTag("products", "max");
@@ -116,22 +122,11 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   // Bağlı etiketi kapsamdaki ürünlerden sök (etiket tanımı /admin/etiketler'de kalır)
   const tagId = (row?.tag_id as string | null) ?? null;
   if (tagId) {
-    const [{ data: dPP }, { data: dPC }] = await Promise.all([
-      admin.supabase.from("promotion_products").select("product_id").eq("promotion_id", id),
-      admin.supabase.from("promotion_categories").select("category_id").eq("promotion_id", id),
-    ]);
-    const pids = await getScopeProductIds(admin.supabase, (row?.scope ?? "all") as Scope,
-      (dPP ?? []).map((x) => x.product_id), (dPC ?? []).map((x) => x.category_id));
+    const pids = await promotionScopeProductIds(admin.supabase, id, (row?.scope ?? "all") as Scope);
     await detachTagFromProducts(admin.supabase, tagId, pids);
     revalidateTag("tags", "max");
   }
-  await admin.supabase.from("campaigns").update({ is_active: false }).eq("promotion_id", id);
-  if (code) {
-    await admin.supabase.from("campaigns").update({ is_active: false }).eq("coupon_code", code);
-    const { data: banns } = await admin.supabase.from("banners").select("id, text");
-    const ids = (banns ?? []).filter((b) => b.text?.toUpperCase().includes(code.toUpperCase())).map((b) => b.id);
-    if (ids.length) await admin.supabase.from("banners").update({ isActive: false }).in("id", ids);
-  }
+  if (code) await syncLinkedCampaignsBanners(admin.supabase, code, false);
 
   const { error } = await admin.supabase.from("promotions").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

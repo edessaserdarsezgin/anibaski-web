@@ -3,9 +3,9 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { sendOrderNotification } from "@/lib/email/orderNotification";
 import { notifyOrderCreated } from "@/lib/whatsapp/notify";
 import { getShippingSettings } from "@/lib/shipping";
-import { activeDiscountPercent, applyDiscount } from "@/lib/pricing";
+import { computeItemUnitPrice, type DiscountFields } from "@/lib/pricing";
 import { getActiveItemPromotions, getActiveCartAutoPromotions, validateCoupon, getDiscountStacking } from "@/lib/promotions";
-import { bestItemDiscount, cartPromoAmount, isDateValid } from "@/lib/promotionsCalc";
+import { cartPromoAmount, isDateValid } from "@/lib/promotionsCalc";
 
 type IncomingItem = {
   productId: string;
@@ -74,10 +74,8 @@ export async function POST(req: NextRequest) {
 
     const fullUnit = Number(product.basePrice) + addons;
     const categoryId = (product as { categoryId?: string | null }).categoryId ?? null;
-    // Ürün-seviyesi indirim (products.discount_percent) ile kategori/tüm otomatik promotion'dan İYİSİ
-    const ownPrice = applyDiscount(fullUnit, activeDiscountPercent(product as Parameters<typeof activeDiscountPercent>[0]));
-    const promoPrice = bestItemDiscount({ productId: item.productId, categoryId, unitPrice: fullUnit }, itemPromos).unitPrice;
-    const unitPrice = Math.min(ownPrice, promoPrice);
+    // Katman A: ürün-seviyesi indirim (discount_percent) ile kategori/tüm otomatik promotion'dan İYİSİ
+    const unitPrice = computeItemUnitPrice(fullUnit, product as unknown as DiscountFields, { productId: item.productId, categoryId }, itemPromos);
 
     computedItems.push({
       productId: item.productId,
@@ -126,12 +124,9 @@ export async function POST(req: NextRequest) {
   let validatedCouponCode: string | null = null;
   if (couponApplied && couponWin) {
     validatedCouponCode = couponWin.code;
+    // COD'da kupon sayacı hemen; kart yolunda PayTR callback'te artar. Atomik (yarış-güvenli).
     if (paymentMethod === "cod") {
-      const newCount = couponWin.usedCount + 1;
-      const limitReached = couponWin.maxUses !== null && newCount >= couponWin.maxUses;
-      await createAdminClient().from("promotions").update({
-        used_count: newCount, ...(limitReached && { is_active: false }),
-      }).eq("id", couponWin.id);
+      await createAdminClient().rpc("increment_coupon_use", { p_code: couponWin.code });
     }
   }
 

@@ -37,6 +37,25 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     await admin.supabase.from("promotion_products").insert(toInsert.map((pid) => ({ promotion_id: pid, product_id: id })));
   }
 
+  // Etiket senkronu: ürün-kapsamlı promosyonların etiketlerini bu ürünün güncel üyeliğine göre ayarla
+  // (aktif + üye olunan promosyon etiketi gelir; üyelikten/aktiflikten çıkanın etiketi sökülür)
+  const { data: scopedPromos } = await admin.supabase
+    .from("promotions").select("id, tag_id, is_active").eq("scope", "products");
+  const managed = (scopedPromos ?? []).filter((p) => p.tag_id);
+  if (managed.length) {
+    const memSet = new Set(toInsert);
+    const desired = new Set(managed.filter((p) => p.is_active && memSet.has(p.id)).map((p) => p.tag_id as string));
+    const managedTags = [...new Set(managed.map((p) => p.tag_id as string))];
+    const toRemove = managedTags.filter((t) => !desired.has(t));
+    if (desired.size)
+      await admin.supabase.from("product_tags").upsert(
+        [...desired].map((tagId) => ({ productId: id, tagId, position: "top-left" })),
+        { onConflict: "productId,tagId", ignoreDuplicates: true });
+    if (toRemove.length)
+      await admin.supabase.from("product_tags").delete().eq("productId", id).in("tagId", toRemove);
+    revalidateTag("tags", "max");
+  }
+
   revalidateTag("promotions", "max");
   revalidateTag("products", "max");
   return NextResponse.json({ ok: true });
