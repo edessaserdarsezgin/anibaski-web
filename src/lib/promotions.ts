@@ -20,6 +20,30 @@ function mapRow(r: Row, prodMap: Map<string, string[]>, catMap: Map<string, stri
   };
 }
 
+// parentId → doğrudan çocuk kategori id'leri
+async function loadCategoryChildren(db: ReturnType<typeof createAdminClient>): Promise<Map<string, string[]>> {
+  const { data: cats } = await db.from("categories").select('id, "parentId"');
+  const children = new Map<string, string[]>();
+  for (const c of cats ?? []) {
+    const pid = (c as { parentId?: string | null }).parentId;
+    if (pid) { const a = children.get(pid) ?? []; a.push(c.id as string); children.set(pid, a); }
+  }
+  return children;
+}
+
+// Seçili kategori id'lerini tüm alt kategorileriyle genişlet (ana kategori → alt kategoriler de kapsanır)
+function expandWithDescendants(catIds: string[], children: Map<string, string[]>): string[] {
+  const out = new Set<string>(catIds);
+  const stack = [...catIds];
+  while (stack.length) {
+    const cur = stack.pop()!;
+    for (const child of children.get(cur) ?? []) {
+      if (!out.has(child)) { out.add(child); stack.push(child); }
+    }
+  }
+  return [...out];
+}
+
 async function loadPromotions(filter: { applyLevel: "item" | "cart"; trigger?: "auto" | "code" }): Promise<Promotion[]> {
   const db = createAdminClient();
   let q = db.from("promotions").select("*").eq("is_active", true).eq("apply_level", filter.applyLevel).eq("deal_type", "flat");
@@ -35,6 +59,11 @@ async function loadPromotions(filter: { applyLevel: "item" | "cart"; trigger?: "
     ]);
     for (const x of pp ?? []) { const a = prodMap.get(x.promotion_id) ?? []; a.push(x.product_id); prodMap.set(x.promotion_id, a); }
     for (const x of pc ?? []) { const a = catMap.get(x.promotion_id) ?? []; a.push(x.category_id); catMap.set(x.promotion_id, a); }
+    // Kategori kapsamlarını alt kategorilerle genişlet (ana kategori seçilince alt ürünler de kapsanır)
+    if (catMap.size > 0) {
+      const children = await loadCategoryChildren(db);
+      for (const [pid, cids] of catMap) catMap.set(pid, expandWithDescendants(cids, children));
+    }
   }
   return (rows ?? []).map((r) => mapRow(r as Row, prodMap, catMap));
 }
@@ -102,7 +131,9 @@ export async function validateCoupon(
     db.from("promotion_categories").select("category_id").eq("promotion_id", row.id),
   ]);
   const prodMap = new Map([[row.id as string, (pp ?? []).map((x) => x.product_id)]]);
-  const catMap = new Map([[row.id as string, (pc ?? []).map((x) => x.category_id)]]);
+  let catIds = (pc ?? []).map((x) => x.category_id);
+  if (catIds.length) catIds = expandWithDescendants(catIds, await loadCategoryChildren(db));
+  const catMap = new Map([[row.id as string, catIds]]);
   const promo = mapRow(row as Row, prodMap, catMap);
 
   if (!isDateValid(promo)) return { ok: false, error: "Bu kuponun süresi dolmuş." };
