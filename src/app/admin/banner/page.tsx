@@ -52,12 +52,21 @@ export default function AdminBannerPage() {
       fetch("/api/admin/banners"),
       fetch("/api/admin/categories"),
       fetch("/api/admin/products"),
-      fetch("/api/admin/coupons"),
+      fetch("/api/admin/promotions"),
     ]);
     setBanners(bRes.ok ? await bRes.json() : []);
     setCategories(cRes.ok ? await cRes.json() : []);
     setProducts(pRes.ok ? await pRes.json() : []);
-    setCoupons(couRes.ok ? (await couRes.json()).filter((c: Coupon) => c.is_active) : []);
+    // Kupon kodları artık promotions tablosunda (trigger='code')
+    setCoupons(couRes.ok
+      ? (await couRes.json())
+          .filter((p: { trigger: string; is_active: boolean; code: string | null }) => p.trigger === "code" && p.is_active && p.code)
+          .map((p: { id: string; code: string; value_type: string; value: number }) => ({
+            id: p.id, code: p.code,
+            discount_type: p.value_type === "percentage" ? "percentage" : "fixed",
+            discount_value: Number(p.value), is_active: true,
+          }))
+      : []);
     setLoading(false);
   }
 

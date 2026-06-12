@@ -22,7 +22,7 @@ export default async function KampanyaDuzenlePage({ params }: Props) {
     supabase.from("campaigns").select("*").eq("id", id).single(),
     supabase.from("categories").select("id, name, slug").order("name"),
     supabase.from("products").select("id, name, slug").eq("isActive", true).order("name"),
-    supabase.from("coupons").select("id, code").eq("is_active", true).order("code"),
+    supabase.from("promotions").select("id, code").eq("trigger", "code").eq("is_active", true).order("code"),
   ]);
 
   if (!campaign) notFound();

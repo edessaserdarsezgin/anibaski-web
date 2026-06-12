@@ -87,8 +87,23 @@ export function useCart() {
     setItems([]);
   }
 
+  // Sunucudan gelen güncel birim fiyatları uygula (index hizalı). null = ürün satışta değil → düşür.
+  function repriceCart(prices: (number | null)[]): { removed: number; changed: number } {
+    if (prices.length !== items.length) return { removed: 0, changed: 0 };
+    const next: CartItem[] = [];
+    let removed = 0, changed = 0;
+    items.forEach((item, i) => {
+      const p = prices[i];
+      if (p === null || p === undefined) { removed++; return; }
+      if (p !== item.unitPrice) { changed++; next.push({ ...item, unitPrice: p }); }
+      else next.push(item);
+    });
+    if (removed > 0 || changed > 0) { writeCart(next); setItems(next); }
+    return { removed, changed };
+  }
+
   const total = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const count = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  return { items, total, count, updateQuantity, removeItem, clearCart };
+  return { items, total, count, updateQuantity, removeItem, clearCart, repriceCart };
 }

@@ -19,7 +19,7 @@ type SuggestionProduct = {
 };
 
 export default function SepetPage() {
-  const { items, total, updateQuantity, removeItem } = useCart();
+  const { items, total, updateQuantity, removeItem, repriceCart } = useCart();
   const { toast } = useToast();
 
   const [shippingFeeVal, setShippingFeeVal] = useState(49);
@@ -80,12 +80,14 @@ export default function SepetPage() {
   const couponWins = !!appliedCoupon && couponDiscount >= autoDiscount;
   const discountAmount = Math.min(total, stacking ? couponDiscount + autoDiscount : Math.max(couponDiscount, autoDiscount));
   const upcomingTier = nextThreshold(total, cartAutos);
-  const shippingFee = total >= freeShippingThreshold ? 0 : shippingFeeVal;
+  // Ücretsiz kargo eşiği indirim DÜŞÜLDÜKTEN sonraki tutara göre (sunucu /api/orders ile aynı)
+  const discountedTotal = Math.max(0, total - discountAmount);
+  const shippingFee = discountedTotal >= freeShippingThreshold ? 0 : shippingFeeVal;
   const grandTotal = total + shippingFee - discountAmount;
 
   // Ücretsiz kargo ilerlemesi
-  const remainingForFreeShipping = Math.max(0, freeShippingThreshold - total);
-  const shippingProgress = freeShippingThreshold > 0 ? Math.min(100, (total / freeShippingThreshold) * 100) : 100;
+  const remainingForFreeShipping = Math.max(0, freeShippingThreshold - discountedTotal);
+  const shippingProgress = freeShippingThreshold > 0 ? Math.min(100, (discountedTotal / freeShippingThreshold) * 100) : 100;
 
   // Toplam kazanç = ürün indirimleri (orijinal birim = basePrice + varyant eklentileri) + kupon
   const productSavings = items.reduce((sum, item) => {
@@ -94,17 +96,62 @@ export default function SepetPage() {
     return sum + Math.max(0, original - item.unitPrice) * item.quantity;
   }, 0);
   const totalSavings = productSavings + discountAmount;
+  const originalSubtotal = total + productSavings; // ürün (sale) indirimi öncesi ara toplam
 
   // Çapraz satış — sepetteki ürünleri çıkar
   const cartProductIds = new Set(items.map((i) => i.productId));
   const filteredSuggestions = suggestions.filter((p) => !cartProductIds.has(p.id)).slice(0, 10);
 
-  // Adet değişince sessionStorage'daki KUPON indirim tutarını güncelle (oto indirim ayrı hesaplanır)
+  // Kuponu sunucuda yeniden doğrula: admin sildi/süre doldu → düşür; adet/fiyat değişti → tutarı tazele.
+  // Kaydedilen tutara körü körüne güvenme (stale kupon bug'ı).
+  const itemsSig = JSON.stringify(items.map((i) => [i.productId, i.quantity, i.unitPrice]));
+
+  // Sepetteki birim fiyatları sunucu doğrusuyla tazele (ürün fiyatı/indirimi sonradan değişmiş olabilir)
   useEffect(() => {
-    if (!appliedCoupon) return;
-    const updated = { ...appliedCoupon, discountAmount: couponDiscount };
-    sessionStorage.setItem("appliedCoupon", JSON.stringify(updated));
-  }, [total, appliedCoupon, couponDiscount]);
+    if (items.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const res = await fetch("/api/cart/reprice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: items.map((i) => ({ productId: i.productId, variantSelections: i.variantSelections })) }),
+      });
+      if (!res.ok || cancelled) return;
+      const data = await res.json();
+      const { removed, changed } = repriceCart(data.prices ?? []);
+      if (cancelled) return;
+      if (removed > 0) toast(`${removed} ürün artık satışta değil, sepetten kaldırıldı.`, "error");
+      else if (changed > 0) toast("Sepetteki bazı fiyatlar güncellendi.");
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemsSig]);
+
+  useEffect(() => {
+    const code = appliedCoupon?.code;
+    if (!code || items.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, items: pricedItems }),
+      });
+      const data = await res.json();
+      if (cancelled) return;
+      if (!res.ok) {
+        setAppliedCoupon(null);
+        sessionStorage.removeItem("appliedCoupon");
+        toast("Uyguladığın kupon artık geçerli değil, sepetten kaldırıldı.", "error");
+        return;
+      }
+      const fresh = { code: data.code, discountAmount: data.discountAmount };
+      setAppliedCoupon(fresh);
+      sessionStorage.setItem("appliedCoupon", JSON.stringify(fresh));
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemsSig, appliedCoupon?.code]);
 
   async function handleApplyCoupon() {
     if (!couponInput.trim()) return;
@@ -200,11 +247,19 @@ export default function SepetPage() {
                     )}
                   </div>
                   <div className="text-right shrink-0">
-                    {item.quantity > 1 && (
-                      <p className="text-[11px] text-text-light whitespace-nowrap">
-                        {item.unitPrice.toLocaleString("tr-TR")} ₺ × {item.quantity}
-                      </p>
-                    )}
+                    {(() => {
+                      const addons = Object.values(item.variantSelections).reduce((s, v) => s + v.priceAddon, 0);
+                      const originalUnit = item.basePrice + addons;
+                      const discounted = originalUnit > item.unitPrice;
+                      return (
+                        <p className="text-[11px] text-text-light whitespace-nowrap">
+                          {discounted && (
+                            <span className="line-through mr-1">{originalUnit.toLocaleString("tr-TR")} ₺</span>
+                          )}
+                          {item.unitPrice.toLocaleString("tr-TR")} ₺ × {item.quantity}
+                        </p>
+                      );
+                    })()}
                     <p className="font-semibold text-primary whitespace-nowrap">
                       {(item.unitPrice * item.quantity).toLocaleString("tr-TR")} ₺
                     </p>
@@ -285,9 +340,15 @@ export default function SepetPage() {
 
             <div className="flex flex-col gap-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-text-light">Ara toplam</span>
-                <span className="font-semibold">{total.toLocaleString("tr-TR")} ₺</span>
+                <span className="text-text-light">Ara toplam{productSavings > 0 ? " (indirimsiz)" : ""}</span>
+                <span className="font-semibold">{(productSavings > 0 ? originalSubtotal : total).toLocaleString("tr-TR")} ₺</span>
               </div>
+              {productSavings > 0 && (
+                <div className="flex justify-between text-green-700">
+                  <span>Ürün indirimi</span>
+                  <span className="font-semibold">−{productSavings.toLocaleString("tr-TR")} ₺</span>
+                </div>
+              )}
               {stacking ? (
                 <>
                   {couponDiscount > 0 && (

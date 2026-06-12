@@ -92,11 +92,9 @@ export async function POST(req: NextRequest) {
 
   const subtotal = Math.round(computedItems.reduce((s, it) => s + it.unitPrice * it.quantity, 0) * 100) / 100;
 
-  // Kargo + kapıda ödeme bedeli — ayarlardan
+  // Kargo + kapıda ödeme bedeli — ayarlardan (ücretsiz kargo eşiği indirim SONRASI hesaplanır, aşağıda)
   const ship = await getShippingSettings();
-  const baseShipping = subtotal >= ship.freeShippingThreshold ? 0 : ship.shippingFee;
   const codFee = paymentMethod === "cod" ? ship.codFee : 0;
-  const shippingFee = baseShipping + codFee;
 
   // Katman B — kupon (kod) vs sepet eşikli otomatik; müşteriye BÜYÜĞÜ uygulanır (çift indirim yok).
   // Kapsam-kısmi: yalnız eşleşen kalemlerin (Katman A sonrası) tutarına.
@@ -136,6 +134,11 @@ export async function POST(req: NextRequest) {
       }).eq("id", couponWin.id);
     }
   }
+
+  // Ücretsiz kargo eşiği: kupon/sepet-eşikli indirim DÜŞÜLDÜKTEN sonraki tutara göre
+  const discountedSubtotal = Math.round((subtotal - discountAmount) * 100) / 100;
+  const baseShipping = discountedSubtotal >= ship.freeShippingThreshold ? 0 : ship.shippingFee;
+  const shippingFee = baseShipping + codFee;
 
   const total = Math.round((subtotal + shippingFee - discountAmount) * 100) / 100;
 
