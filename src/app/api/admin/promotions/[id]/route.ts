@@ -14,11 +14,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   // Etiket reconcile için eski durumu mutasyondan ÖNCE yakala
   const tagIntent = b.createTag || "tagId" in b;
+  const activeIntent = "isActive" in b;
   let oldTagId: string | null = null;
   let oldScopeIds: string[] = [];
-  if (tagIntent) {
-    const { data: before } = await admin.supabase.from("promotions").select("tag_id, scope").eq("id", id).single();
+  let wasActive: boolean | null = null;
+  if (tagIntent || activeIntent) {
+    const { data: before } = await admin.supabase.from("promotions").select("tag_id, scope, is_active").eq("id", id).single();
     oldTagId = (before?.tag_id as string | null) ?? null;
+    wasActive = (before?.is_active as boolean | null) ?? null;
     if (oldTagId) {
       const [{ data: oPP }, { data: oPC }] = await Promise.all([
         admin.supabase.from("promotion_products").select("product_id").eq("promotion_id", id),
@@ -60,7 +63,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       await admin.supabase.from("promotion_categories").insert(b.categoryIds.map((cid: string) => ({ promotion_id: id, category_id: cid })));
   }
 
-  // Etiket reconcile: eski etiketi eski kapsamdan sök, yeni etiketi (varsa) güncel kapsama uygula
+  // Pasif indirimin etiketi üründe durmaz: etiket yalnız indirim aktifken ürünlere uygulanır
+  const effectiveActive = activeIntent ? !!b.isActive : (wasActive ?? true);
+
+  // Etiket reconcile: eski etiketi eski kapsamdan sök, yeni etiketi (varsa, aktifse) güncel kapsama uygula
   if (tagIntent) {
     let newTagId: string | null = null;
     if (b.createTag) {
@@ -72,7 +78,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
     if (oldTagId) await detachTagFromProducts(admin.supabase, oldTagId, oldScopeIds);
     await admin.supabase.from("promotions").update({ tag_id: newTagId }).eq("id", id);
-    if (newTagId) {
+    if (newTagId && effectiveActive) {
       const { data: after } = await admin.supabase.from("promotions").select("scope").eq("id", id).single();
       const [{ data: nPP }, { data: nPC }] = await Promise.all([
         admin.supabase.from("promotion_products").select("product_id").eq("promotion_id", id),
@@ -82,6 +88,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         (nPP ?? []).map((x) => x.product_id), (nPC ?? []).map((x) => x.category_id));
       await applyTagToProducts(admin.supabase, newTagId, newPids);
     }
+    revalidateTag("tags", "max");
+  }
+
+  // Aktif/pasif geçişinde etiketi senkronla (toggle yalnız isActive gönderir): pasifleşince sök, aktifleşince geri uygula
+  if (activeIntent && !tagIntent && oldTagId && wasActive !== effectiveActive) {
+    if (effectiveActive) await applyTagToProducts(admin.supabase, oldTagId, oldScopeIds);
+    else await detachTagFromProducts(admin.supabase, oldTagId, oldScopeIds);
     revalidateTag("tags", "max");
   }
 
