@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { revalidateTag } from "next/cache";
+import { getScopeProductIds, applyTagToProducts, detachTagFromProducts } from "@/lib/promotions";
+
+type Scope = "all" | "products" | "categories";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const admin = await requireAdmin();
@@ -8,6 +11,24 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { id } = await params;
   const b = await req.json();
+
+  // Etiket reconcile için eski durumu mutasyondan ÖNCE yakala
+  const tagIntent = b.createTag || "tagId" in b;
+  let oldTagId: string | null = null;
+  let oldScopeIds: string[] = [];
+  if (tagIntent) {
+    const { data: before } = await admin.supabase.from("promotions").select("tag_id, scope").eq("id", id).single();
+    oldTagId = (before?.tag_id as string | null) ?? null;
+    if (oldTagId) {
+      const [{ data: oPP }, { data: oPC }] = await Promise.all([
+        admin.supabase.from("promotion_products").select("product_id").eq("promotion_id", id),
+        admin.supabase.from("promotion_categories").select("category_id").eq("promotion_id", id),
+      ]);
+      oldScopeIds = await getScopeProductIds(admin.supabase, (before?.scope ?? "all") as Scope,
+        (oPP ?? []).map((x) => x.product_id), (oPC ?? []).map((x) => x.category_id));
+    }
+  }
+
   const mapped: Record<string, unknown> = {};
   if ("isActive" in b) mapped.is_active = b.isActive;
   if ("name" in b) mapped.name = b.name?.trim();
@@ -39,6 +60,31 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       await admin.supabase.from("promotion_categories").insert(b.categoryIds.map((cid: string) => ({ promotion_id: id, category_id: cid })));
   }
 
+  // Etiket reconcile: eski etiketi eski kapsamdan sök, yeni etiketi (varsa) güncel kapsama uygula
+  if (tagIntent) {
+    let newTagId: string | null = null;
+    if (b.createTag) {
+      const label = b.tagLabel?.trim() || (b.valueType === "percentage" ? `%${b.value} İndirim` : b.value ? `${b.value}₺ İndirim` : "İndirim");
+      const { data: tag } = await admin.supabase.from("tags").insert({ name: label, color: b.tagColor || "#e07a5f" }).select("id").single();
+      newTagId = tag?.id ?? null;
+    } else if (b.tagId) {
+      newTagId = b.tagId;
+    }
+    if (oldTagId) await detachTagFromProducts(admin.supabase, oldTagId, oldScopeIds);
+    await admin.supabase.from("promotions").update({ tag_id: newTagId }).eq("id", id);
+    if (newTagId) {
+      const { data: after } = await admin.supabase.from("promotions").select("scope").eq("id", id).single();
+      const [{ data: nPP }, { data: nPC }] = await Promise.all([
+        admin.supabase.from("promotion_products").select("product_id").eq("promotion_id", id),
+        admin.supabase.from("promotion_categories").select("category_id").eq("promotion_id", id),
+      ]);
+      const newPids = await getScopeProductIds(admin.supabase, (after?.scope ?? "all") as Scope,
+        (nPP ?? []).map((x) => x.product_id), (nPC ?? []).map((x) => x.category_id));
+      await applyTagToProducts(admin.supabase, newTagId, newPids);
+    }
+    revalidateTag("tags", "max");
+  }
+
   revalidateTag("promotions", "max");
   revalidateTag("products", "max");
   return NextResponse.json({ ok: true });
@@ -51,8 +97,21 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params;
 
   // Bağlı kampanya/duyuru bandını SİLME — pasife al (istatistik korunur, dangling referans kalmaz)
-  const { data: row } = await admin.supabase.from("promotions").select("code").eq("id", id).single();
+  const { data: row } = await admin.supabase.from("promotions").select("code, tag_id, scope").eq("id", id).single();
   const code = (row?.code as string | null) ?? null;
+
+  // Bağlı etiketi kapsamdaki ürünlerden sök (etiket tanımı /admin/etiketler'de kalır)
+  const tagId = (row?.tag_id as string | null) ?? null;
+  if (tagId) {
+    const [{ data: dPP }, { data: dPC }] = await Promise.all([
+      admin.supabase.from("promotion_products").select("product_id").eq("promotion_id", id),
+      admin.supabase.from("promotion_categories").select("category_id").eq("promotion_id", id),
+    ]);
+    const pids = await getScopeProductIds(admin.supabase, (row?.scope ?? "all") as Scope,
+      (dPP ?? []).map((x) => x.product_id), (dPC ?? []).map((x) => x.category_id));
+    await detachTagFromProducts(admin.supabase, tagId, pids);
+    revalidateTag("tags", "max");
+  }
   await admin.supabase.from("campaigns").update({ is_active: false }).eq("promotion_id", id);
   if (code) {
     await admin.supabase.from("campaigns").update({ is_active: false }).eq("coupon_code", code);

@@ -5,7 +5,7 @@ import PriceTag from "@/components/product/PriceTag";
 type ProductTagItem = {
   tagId: string;
   position: string;
-  tag: { name: string; color: string };
+  tag: { name: string; color: string; is_active?: boolean };
 };
 
 type Props = {
@@ -62,7 +62,7 @@ export default function ProductCard({ product, priority = false, showDescription
         )}
         {/* Renkli etiketler — konum bazlı gruplar (her iki varyantta) */}
         {(["top-left", "bottom-left", "bottom-right"] as const).map((pos) => {
-          const labels = product.productTags?.filter((pt) => pt.position === pos) ?? [];
+          const labels = product.productTags?.filter((pt) => pt.position === pos && pt.tag.is_active !== false) ?? [];
           if (!labels.length) return null;
           const cls: Record<string, string> = {
             "top-left":    "absolute top-3 left-3 z-10 flex flex-col gap-1.5",

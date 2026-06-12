@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type Tag = { id: string; name: string; color: string };
+type Tag = { id: string; name: string; color: string; is_active?: boolean };
 
 export default function AdminEtiketlerPage() {
   const [tags, setTags] = useState<Tag[]>([]);
@@ -52,6 +52,15 @@ export default function AdminEtiketlerPage() {
       body: JSON.stringify({ id, name: editForm.name, color: editForm.color }),
     });
     setEditingId(null);
+    await load();
+  }
+
+  async function toggleActive(tag: Tag) {
+    await fetch("/api/admin/tags", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: tag.id, is_active: tag.is_active === false }),
+    });
     await load();
   }
 
@@ -182,7 +191,7 @@ export default function AdminEtiketlerPage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between">
+                    <div className={`flex items-center justify-between ${tag.is_active === false ? "opacity-50" : ""}`}>
                       <div className="flex items-center gap-3">
                         <span
                           className="w-4 h-4 rounded-full flex-shrink-0"
@@ -196,7 +205,14 @@ export default function AdminEtiketlerPage() {
                           {tag.name}
                         </span>
                       </div>
-                      <div className="flex gap-3">
+                      <div className="flex gap-3 items-center">
+                        <button
+                          onClick={() => toggleActive(tag)}
+                          className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition-colors ${tag.is_active === false ? "text-text-light bg-bg border-border hover:border-primary" : "text-green-700 bg-green-50 border-green-200 hover:bg-green-100"}`}
+                          title="Pasifte ürün kartlarında görünmez"
+                        >
+                          {tag.is_active === false ? "Pasif" : "Aktif"}
+                        </button>
                         <button
                           onClick={() => startEdit(tag)}
                           className="text-xs text-primary hover:underline font-semibold"

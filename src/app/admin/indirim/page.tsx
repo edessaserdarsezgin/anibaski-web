@@ -10,7 +10,7 @@ type Promo = {
   starts_at: string | null; ends_at: string | null; max_uses: number | null; used_count: number;
   first_order_only: boolean; priority: number; is_active: boolean;
   productIds: string[]; categoryIds: string[];
-  linkedCampaigns?: number; linkedBanners?: number;
+  linkedCampaigns?: number; linkedBanners?: number; tag_id?: string | null;
 };
 type Opt = { id: string; name: string };
 
@@ -27,7 +27,7 @@ const emptyForm = {
   valueType: "percentage", value: "", code: "", minSubtotal: "", startsAt: "", endsAt: "",
   maxUses: "", firstOrderOnly: false, priority: "0",
   productIds: [] as string[], categoryIds: [] as string[],
-  createTag: false, tagLabel: "",
+  useTag: false, tagMode: "new", tagId: "", tagLabel: "", tagColor: "#e07a5f",
 };
 
 export default function IndirimPage() {
@@ -35,6 +35,7 @@ export default function IndirimPage() {
   const [promos, setPromos] = useState<Promo[]>([]);
   const [cats, setCats] = useState<Opt[]>([]);
   const [prods, setProds] = useState<Opt[]>([]);
+  const [tags, setTags] = useState<Opt[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
@@ -45,15 +46,17 @@ export default function IndirimPage() {
   useEffect(() => { load(); }, []);
   async function load() {
     setLoading(true);
-    const [p, c, pr, pub] = await Promise.all([
+    const [p, c, pr, pub, t] = await Promise.all([
       fetch("/api/admin/promotions").then(r => r.json()),
       fetch("/api/admin/categories").then(r => r.json()).catch(() => []),
       fetch("/api/admin/products").then(r => r.json()).catch(() => []),
       fetch("/api/promotions").then(r => r.json()).catch(() => ({})),
+      fetch("/api/admin/tags").then(r => r.json()).catch(() => []),
     ]);
     setPromos(Array.isArray(p) ? p : []);
     setCats((Array.isArray(c) ? c : []).map((x: Opt) => ({ id: x.id, name: x.name })));
     setProds((Array.isArray(pr) ? pr : []).map((x: Opt) => ({ id: x.id, name: x.name })));
+    setTags((Array.isArray(t) ? t : []).map((x: Opt) => ({ id: x.id, name: x.name })));
     setStacking(!!pub?.stacking);
     setLoading(false);
   }
@@ -63,6 +66,15 @@ export default function IndirimPage() {
     const res = await fetch("/api/admin/promotions", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ stacking: next }) });
     if (res.ok) toast(next ? "Çakışma: indirimler toplanır." : "Çakışma: en iyisi uygulanır.");
     else { setStacking(!next); toast("Güncellenemedi.", "error"); }
+  }
+
+  // Etiket alanları (yalnız oto-ürün/sepet-eşikli). useTag kapalıysa tagId:null → düzenlemede bağ söker.
+  function tagPayload(): Record<string, unknown> {
+    const wantsTag = form.kind === "oto-urun" || form.kind === "sepet-esikli";
+    if (!wantsTag) return {};
+    if (!form.useTag) return { tagId: null };
+    if (form.tagMode === "existing") return { tagId: form.tagId || null };
+    return { createTag: true, tagLabel: form.tagLabel, tagColor: form.tagColor };
   }
 
   function payload() {
@@ -79,8 +91,7 @@ export default function IndirimPage() {
       priority: form.priority,
       productIds: form.scope === "products" ? form.productIds : [],
       categoryIds: form.scope === "categories" ? form.categoryIds : [],
-      createTag: form.kind === "oto-urun" ? form.createTag : false,
-      tagLabel: form.tagLabel,
+      ...tagPayload(),
     };
   }
 
@@ -94,7 +105,7 @@ export default function IndirimPage() {
       maxUses: p.max_uses != null ? String(p.max_uses) : "",
       firstOrderOnly: p.first_order_only, priority: String(p.priority),
       productIds: p.productIds ?? [], categoryIds: p.categoryIds ?? [],
-      createTag: false, tagLabel: "",
+      useTag: !!p.tag_id, tagMode: p.tag_id ? "existing" : "new", tagId: p.tag_id ?? "", tagLabel: "", tagColor: "#e07a5f",
     });
     setEditingId(p.id);
     setShowForm(true);
@@ -221,17 +232,36 @@ export default function IndirimPage() {
               <input type="number" min="0" value={form.minSubtotal} onChange={e => setForm(f => ({ ...f, minSubtotal: e.target.value }))} className={inputCls} /></div>
           )}
 
-          {!editingId && form.kind === "oto-urun" && (
-            <div className="bg-bg border border-border rounded-lg p-3 flex flex-col gap-2">
+          {(form.kind === "oto-urun" || form.kind === "sepet-esikli") && (
+            <div className="bg-bg border border-border rounded-lg p-3 flex flex-col gap-3">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form.createTag} onChange={e => setForm(f => ({ ...f, createTag: e.target.checked }))} className="w-4 h-4 accent-primary" />
-                <span className="text-sm text-text">Ürün kartlarında etiket olarak da göster</span>
+                <input type="checkbox" checked={form.useTag} onChange={e => setForm(f => ({ ...f, useTag: e.target.checked }))} className="w-4 h-4 accent-primary" />
+                <span className="text-sm text-text">Ürün kartlarında etiket göster</span>
               </label>
-              {form.createTag && (
+              {form.useTag && (
                 <>
-                  <input value={form.tagLabel} onChange={e => setForm(f => ({ ...f, tagLabel: e.target.value }))}
-                    placeholder={form.valueType === "percentage" ? `%${form.value || "X"} İndirim` : `${form.value || "X"}₺ İndirim`} className={inputCls} />
-                  <p className="text-xs text-text-light">Kapsamdaki ürünlere bir etiket atanır. Sonradan <span className="font-semibold">/admin/etiketler</span>'den düzenleyebilir/kaldırabilirsin (indirimle otomatik senkron değildir).</p>
+                  <div className="flex gap-2">
+                    {(["existing", "new"] as const).map(m => (
+                      <button key={m} type="button" onClick={() => setForm(f => ({ ...f, tagMode: m }))}
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${form.tagMode === m ? "text-primary bg-primary/10 border-primary/30" : "text-text-light bg-white border-border hover:border-primary"}`}>
+                        {m === "existing" ? "Var olan etiket" : "Yeni etiket"}
+                      </button>
+                    ))}
+                  </div>
+                  {form.tagMode === "existing" ? (
+                    <select value={form.tagId} onChange={e => setForm(f => ({ ...f, tagId: e.target.value }))} className={inputCls}>
+                      <option value="">Etiket seç…</option>
+                      {tags.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                    </select>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <input type="color" value={form.tagColor} onChange={e => setForm(f => ({ ...f, tagColor: e.target.value }))} className="w-10 h-10 rounded-lg border border-border cursor-pointer p-0.5 bg-white shrink-0" />
+                      <input value={form.tagLabel} onChange={e => setForm(f => ({ ...f, tagLabel: e.target.value }))}
+                        placeholder={form.valueType === "percentage" ? `%${form.value || "X"} İndirim` : `${form.value || "X"}₺ İndirim`} className={inputCls + " flex-1"} />
+                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold text-white whitespace-nowrap" style={{ backgroundColor: form.tagColor }}>{form.tagLabel || "Önizleme"}</span>
+                    </div>
+                  )}
+                  <p className="text-xs text-text-light">Kapsamdaki ürünlere bu etiket atanır; indirim silinince üründen kalkar (etiket <span className="font-semibold">/admin/etiketler</span>'de kalır).</p>
                 </>
               )}
             </div>

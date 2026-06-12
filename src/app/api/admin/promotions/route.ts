@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { revalidateTag } from "next/cache";
-import { expandCategoryIds } from "@/lib/promotions";
+import { getScopeProductIds, applyTagToProducts } from "@/lib/promotions";
 
 const TRIGGERS = ["auto", "code"];
 const LEVELS = ["item", "cart"];
@@ -83,28 +83,20 @@ export async function POST(req: NextRequest) {
     await admin.supabase.from("promotion_categories").insert(b.categoryIds.map((cid: string) => ({ promotion_id: created.id, category_id: cid })));
   }
 
-  // "Etiket olarak da göster": eşleşen ürünlere ürün kartı etiketi ata (sonrasını admin /admin/etiketler'den yönetir)
-  if (b.createTag && applyLevel === "item") {
+  // Etiket bağı: var olan etiketi seç veya yeni oluştur → kapsamdaki ürünlere uygula
+  let tagId: string | null = null;
+  if (b.createTag) {
     const label = b.tagLabel?.trim() || (valueType === "percentage" ? `%${value} İndirim` : `${value}₺ İndirim`);
     const { data: tag } = await admin.supabase.from("tags").insert({ name: label, color: b.tagColor || "#e07a5f" }).select("id").single();
-    if (tag) {
-      let productIds: string[] = [];
-      if (scope === "products") productIds = Array.isArray(b.productIds) ? b.productIds : [];
-      else if (scope === "categories") {
-        const catIds = await expandCategoryIds(admin.supabase, Array.isArray(b.categoryIds) ? b.categoryIds : []);
-        if (catIds.length) {
-          const { data: prods } = await admin.supabase.from("products").select("id").in("categoryId", catIds).eq("isActive", true);
-          productIds = (prods ?? []).map((p) => p.id);
-        }
-      } else {
-        const { data: prods } = await admin.supabase.from("products").select("id").eq("isActive", true);
-        productIds = (prods ?? []).map((p) => p.id);
-      }
-      if (productIds.length) {
-        await admin.supabase.from("product_tags").insert(productIds.map((pid) => ({ productId: pid, tagId: tag.id, position: b.tagPosition || "top-left" })));
-      }
-      revalidateTag("tags", "max");
-    }
+    tagId = tag?.id ?? null;
+  } else if (b.tagId) {
+    tagId = b.tagId;
+  }
+  if (tagId) {
+    await admin.supabase.from("promotions").update({ tag_id: tagId }).eq("id", created.id);
+    const pids = await getScopeProductIds(admin.supabase, scope, b.productIds ?? [], b.categoryIds ?? []);
+    await applyTagToProducts(admin.supabase, tagId, pids);
+    revalidateTag("tags", "max");
   }
 
   revalidateTag("promotions", "max");

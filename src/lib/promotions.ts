@@ -50,6 +50,41 @@ export async function expandCategoryIds(db: ReturnType<typeof createAdminClient>
   return expandWithDescendants(ids, await loadCategoryChildren(db));
 }
 
+// Bir promotion kapsamındaki (ürün/kategori+alt/tüm) aktif ürün id'leri
+export async function getScopeProductIds(
+  db: ReturnType<typeof createAdminClient>,
+  scope: "all" | "products" | "categories",
+  productIds: string[],
+  categoryIds: string[],
+): Promise<string[]> {
+  if (scope === "products") return productIds ?? [];
+  if (scope === "categories") {
+    const catIds = await expandCategoryIds(db, categoryIds ?? []);
+    if (!catIds.length) return [];
+    const { data } = await db.from("products").select("id").in("categoryId", catIds).eq("isActive", true);
+    return (data ?? []).map((p) => p.id as string);
+  }
+  const { data } = await db.from("products").select("id").eq("isActive", true);
+  return (data ?? []).map((p) => p.id as string);
+}
+
+// Etiketi ürünlere ata (idempotent — mevcut olan dokunulmaz, pozisyonu korunur)
+export async function applyTagToProducts(
+  db: ReturnType<typeof createAdminClient>, tagId: string, productIds: string[], position = "top-left",
+): Promise<void> {
+  if (!productIds.length) return;
+  await db.from("product_tags")
+    .upsert(productIds.map((pid) => ({ productId: pid, tagId, position })), { onConflict: "productId,tagId", ignoreDuplicates: true });
+}
+
+// Etiketi ürünlerden sök (etiket tanımı tags'te kalır)
+export async function detachTagFromProducts(
+  db: ReturnType<typeof createAdminClient>, tagId: string, productIds: string[],
+): Promise<void> {
+  if (!productIds.length) return;
+  await db.from("product_tags").delete().eq("tagId", tagId).in("productId", productIds);
+}
+
 async function loadPromotions(filter: { applyLevel: "item" | "cart"; trigger?: "auto" | "code" }): Promise<Promotion[]> {
   const db = createAdminClient();
   let q = db.from("promotions").select("*").eq("is_active", true).eq("apply_level", filter.applyLevel).eq("deal_type", "flat");
