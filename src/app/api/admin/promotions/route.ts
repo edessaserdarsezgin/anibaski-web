@@ -23,7 +23,18 @@ export async function GET() {
     for (const x of pp ?? []) { const a = prodMap.get(x.promotion_id) ?? []; a.push(x.product_id); prodMap.set(x.promotion_id, a); }
     for (const x of pc ?? []) { const a = catMap.get(x.promotion_id) ?? []; a.push(x.category_id); catMap.set(x.promotion_id, a); }
   }
-  const out = (rows ?? []).map((r) => ({ ...r, productIds: prodMap.get(r.id) ?? [], categoryIds: catMap.get(r.id) ?? [] }));
+  // Bağlı kampanya/duyuru bandı sayıları (silme uyarısı için)
+  const [{ data: camps }, { data: banns }] = await Promise.all([
+    admin.supabase.from("campaigns").select("id, coupon_code, promotion_id"),
+    admin.supabase.from("banners").select("id, text"),
+  ]);
+  const out = (rows ?? []).map((r) => {
+    const code = (r.code as string | null)?.toUpperCase() ?? null;
+    const linkedCampaigns = (camps ?? []).filter((c) =>
+      c.promotion_id === r.id || (!!code && !!c.coupon_code && c.coupon_code.toUpperCase() === code)).length;
+    const linkedBanners = code ? (banns ?? []).filter((b) => b.text?.toUpperCase().includes(code)).length : 0;
+    return { ...r, productIds: prodMap.get(r.id) ?? [], categoryIds: catMap.get(r.id) ?? [], linkedCampaigns, linkedBanners };
+  });
   return NextResponse.json(out);
 }
 

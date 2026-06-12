@@ -10,6 +10,7 @@ type Promo = {
   starts_at: string | null; ends_at: string | null; max_uses: number | null; used_count: number;
   first_order_only: boolean; priority: number; is_active: boolean;
   productIds: string[]; categoryIds: string[];
+  linkedCampaigns?: number; linkedBanners?: number;
 };
 type Opt = { id: string; name: string };
 
@@ -115,9 +116,15 @@ export default function IndirimPage() {
     const res = await fetch(`/api/admin/promotions/${p.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive: !p.is_active }) });
     if (res.ok) load();
   }
-  async function del(id: string) {
-    const res = await fetch(`/api/admin/promotions/${id}`, { method: "DELETE" });
-    if (res.ok) { toast("Silindi."); load(); } else toast("Silinemedi.", "error");
+  async function del(p: Promo) {
+    const lc = p.linkedCampaigns ?? 0, lb = p.linkedBanners ?? 0;
+    const msg = lc + lb > 0
+      ? `"${p.name}" silinecek.\n\nBağlı ${lc} kampanya ve ${lb} duyuru bandı PASİFE alınacak (silinmez, istatistik korunur).\n\nDevam edilsin mi?`
+      : `"${p.name}" indirimi silinsin mi?`;
+    if (!confirm(msg)) return;
+    const res = await fetch(`/api/admin/promotions/${p.id}`, { method: "DELETE" });
+    if (res.ok) { toast(lc + lb > 0 ? "Silindi, bağlı kampanya/band pasife alındı." : "Silindi."); load(); }
+    else toast("Silinemedi.", "error");
   }
 
   const toggleId = (list: string[], id: string) => list.includes(id) ? list.filter(x => x !== id) : [...list, id];
@@ -239,7 +246,7 @@ export default function IndirimPage() {
                     </td>
                     <td className="px-4 py-4 text-right whitespace-nowrap">
                       <button onClick={() => startEdit(p)} className="text-xs text-text-light hover:text-primary font-semibold mr-3">Düzenle</button>
-                      <button onClick={() => del(p.id)} className="text-xs text-red-500 hover:text-red-700 font-semibold">Sil</button>
+                      <button onClick={() => del(p)} className="text-xs text-red-500 hover:text-red-700 font-semibold">Sil</button>
                     </td>
                   </tr>
                 ))}

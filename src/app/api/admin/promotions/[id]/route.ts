@@ -49,6 +49,18 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
+
+  // Bağlı kampanya/duyuru bandını SİLME — pasife al (istatistik korunur, dangling referans kalmaz)
+  const { data: row } = await admin.supabase.from("promotions").select("code").eq("id", id).single();
+  const code = (row?.code as string | null) ?? null;
+  await admin.supabase.from("campaigns").update({ is_active: false }).eq("promotion_id", id);
+  if (code) {
+    await admin.supabase.from("campaigns").update({ is_active: false }).eq("coupon_code", code);
+    const { data: banns } = await admin.supabase.from("banners").select("id, text");
+    const ids = (banns ?? []).filter((b) => b.text?.toUpperCase().includes(code.toUpperCase())).map((b) => b.id);
+    if (ids.length) await admin.supabase.from("banners").update({ isActive: false }).in("id", ids);
+  }
+
   const { error } = await admin.supabase.from("promotions").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
