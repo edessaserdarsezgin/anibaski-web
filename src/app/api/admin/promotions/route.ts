@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { revalidateTag } from "next/cache";
+import { expandCategoryIds } from "@/lib/promotions";
 
 const TRIGGERS = ["auto", "code"];
 const LEVELS = ["item", "cart"];
@@ -80,6 +81,30 @@ export async function POST(req: NextRequest) {
   }
   if (scope === "categories" && Array.isArray(b.categoryIds) && b.categoryIds.length) {
     await admin.supabase.from("promotion_categories").insert(b.categoryIds.map((cid: string) => ({ promotion_id: created.id, category_id: cid })));
+  }
+
+  // "Etiket olarak da göster": eşleşen ürünlere ürün kartı etiketi ata (sonrasını admin /admin/etiketler'den yönetir)
+  if (b.createTag && applyLevel === "item") {
+    const label = b.tagLabel?.trim() || (valueType === "percentage" ? `%${value} İndirim` : `${value}₺ İndirim`);
+    const { data: tag } = await admin.supabase.from("tags").insert({ name: label, color: b.tagColor || "#e07a5f" }).select("id").single();
+    if (tag) {
+      let productIds: string[] = [];
+      if (scope === "products") productIds = Array.isArray(b.productIds) ? b.productIds : [];
+      else if (scope === "categories") {
+        const catIds = await expandCategoryIds(admin.supabase, Array.isArray(b.categoryIds) ? b.categoryIds : []);
+        if (catIds.length) {
+          const { data: prods } = await admin.supabase.from("products").select("id").in("categoryId", catIds).eq("isActive", true);
+          productIds = (prods ?? []).map((p) => p.id);
+        }
+      } else {
+        const { data: prods } = await admin.supabase.from("products").select("id").eq("isActive", true);
+        productIds = (prods ?? []).map((p) => p.id);
+      }
+      if (productIds.length) {
+        await admin.supabase.from("product_tags").insert(productIds.map((pid) => ({ productId: pid, tagId: tag.id, position: b.tagPosition || "top-left" })));
+      }
+      revalidateTag("tags", "max");
+    }
   }
 
   revalidateTag("promotions", "max");

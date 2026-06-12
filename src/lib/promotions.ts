@@ -44,6 +44,12 @@ function expandWithDescendants(catIds: string[], children: Map<string, string[]>
   return [...out];
 }
 
+// Seçili kategori id'lerini alt kategorileriyle genişlet (dışarıdan kullanım için)
+export async function expandCategoryIds(db: ReturnType<typeof createAdminClient>, ids: string[]): Promise<string[]> {
+  if (!ids.length) return ids;
+  return expandWithDescendants(ids, await loadCategoryChildren(db));
+}
+
 async function loadPromotions(filter: { applyLevel: "item" | "cart"; trigger?: "auto" | "code" }): Promise<Promotion[]> {
   const db = createAdminClient();
   let q = db.from("promotions").select("*").eq("is_active", true).eq("apply_level", filter.applyLevel).eq("deal_type", "flat");

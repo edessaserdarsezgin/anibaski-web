@@ -27,6 +27,7 @@ const emptyForm = {
   valueType: "percentage", value: "", code: "", minSubtotal: "", startsAt: "", endsAt: "",
   maxUses: "", firstOrderOnly: false, priority: "0",
   productIds: [] as string[], categoryIds: [] as string[],
+  createTag: false, tagLabel: "",
 };
 
 export default function IndirimPage() {
@@ -78,6 +79,8 @@ export default function IndirimPage() {
       priority: form.priority,
       productIds: form.scope === "products" ? form.productIds : [],
       categoryIds: form.scope === "categories" ? form.categoryIds : [],
+      createTag: form.kind === "oto-urun" ? form.createTag : false,
+      tagLabel: form.tagLabel,
     };
   }
 
@@ -91,6 +94,7 @@ export default function IndirimPage() {
       maxUses: p.max_uses != null ? String(p.max_uses) : "",
       firstOrderOnly: p.first_order_only, priority: String(p.priority),
       productIds: p.productIds ?? [], categoryIds: p.categoryIds ?? [],
+      createTag: false, tagLabel: "",
     });
     setEditingId(p.id);
     setShowForm(true);
@@ -215,6 +219,22 @@ export default function IndirimPage() {
           {(form.kind === "kupon" || form.kind === "sepet-esikli") && (
             <div className="flex flex-col gap-1.5 max-w-[12rem]"><label className="text-xs font-semibold text-text">Min. Sepet (₺)</label>
               <input type="number" min="0" value={form.minSubtotal} onChange={e => setForm(f => ({ ...f, minSubtotal: e.target.value }))} className={inputCls} /></div>
+          )}
+
+          {!editingId && form.kind === "oto-urun" && (
+            <div className="bg-bg border border-border rounded-lg p-3 flex flex-col gap-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={form.createTag} onChange={e => setForm(f => ({ ...f, createTag: e.target.checked }))} className="w-4 h-4 accent-primary" />
+                <span className="text-sm text-text">Ürün kartlarında etiket olarak da göster</span>
+              </label>
+              {form.createTag && (
+                <>
+                  <input value={form.tagLabel} onChange={e => setForm(f => ({ ...f, tagLabel: e.target.value }))}
+                    placeholder={form.valueType === "percentage" ? `%${form.value || "X"} İndirim` : `${form.value || "X"}₺ İndirim`} className={inputCls} />
+                  <p className="text-xs text-text-light">Kapsamdaki ürünlere bir etiket atanır. Sonradan <span className="font-semibold">/admin/etiketler</span>'den düzenleyebilir/kaldırabilirsin (indirimle otomatik senkron değildir).</p>
+                </>
+              )}
+            </div>
           )}
 
           <div className="flex gap-3">
