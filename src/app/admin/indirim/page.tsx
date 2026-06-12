@@ -37,6 +37,7 @@ export default function IndirimPage() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [stacking, setStacking] = useState(false);
 
   useEffect(() => { load(); }, []);
@@ -79,12 +80,35 @@ export default function IndirimPage() {
     };
   }
 
-  async function handleCreate(e: React.FormEvent) {
+  function startEdit(p: Promo) {
+    setForm({
+      name: p.name, kind: kindOf(p), scope: p.scope,
+      valueType: p.value_type, value: String(p.value), code: p.code ?? "",
+      minSubtotal: p.min_subtotal != null ? String(p.min_subtotal) : "",
+      startsAt: p.starts_at ? p.starts_at.slice(0, 10) : "",
+      endsAt: p.ends_at ? p.ends_at.slice(0, 10) : "",
+      maxUses: p.max_uses != null ? String(p.max_uses) : "",
+      firstOrderOnly: p.first_order_only, priority: String(p.priority),
+      productIds: p.productIds ?? [], categoryIds: p.categoryIds ?? [],
+    });
+    setEditingId(p.id);
+    setShowForm(true);
+  }
+
+  function newPromo() {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(s => !s);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    const res = await fetch("/api/admin/promotions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload()) });
+    const res = editingId
+      ? await fetch(`/api/admin/promotions/${editingId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload()) })
+      : await fetch("/api/admin/promotions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload()) });
     setSaving(false);
-    if (res.ok) { toast("İndirim oluşturuldu."); setForm(emptyForm); setShowForm(false); load(); }
+    if (res.ok) { toast(editingId ? "İndirim güncellendi." : "İndirim oluşturuldu."); setForm(emptyForm); setEditingId(null); setShowForm(false); load(); }
     else { const d = await res.json(); toast(d.error ?? "Hata.", "error"); }
   }
   async function toggle(p: Promo) {
@@ -104,7 +128,7 @@ export default function IndirimPage() {
     <div className="max-w-4xl">
       <div className="flex items-center justify-between mb-2">
         <h1 className="font-serif text-3xl text-text">İndirim</h1>
-        <button onClick={() => setShowForm(!showForm)} className="px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-full transition-colors">+ Yeni İndirim</button>
+        <button onClick={newPromo} className="px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-full transition-colors">+ Yeni İndirim</button>
       </div>
       <p className="text-sm text-text-light mb-3">Otomatik indirimler (ürün/kategori/tüm) kartta görünür; kuponlar kodla; sepet eşikli otomatik.</p>
       <div className="flex items-center gap-3 mb-6 bg-white border border-border rounded-xl px-4 py-3">
@@ -117,12 +141,13 @@ export default function IndirimPage() {
       </div>
 
       {showForm && (
-        <form onSubmit={handleCreate} className="bg-white rounded-2xl border border-border p-6 mb-6 flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-border p-6 mb-6 flex flex-col gap-4">
+          {editingId && <p className="text-sm font-semibold text-primary -mb-1">İndirim düzenleniyor (tür değiştirilemez)</p>}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">Ad</label>
               <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Tablolarda %20" className={inputCls} /></div>
             <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">Tür</label>
-              <select value={form.kind} onChange={e => setForm(f => ({ ...f, kind: e.target.value as Kind }))} className={inputCls}>
+              <select value={form.kind} disabled={!!editingId} onChange={e => setForm(f => ({ ...f, kind: e.target.value as Kind }))} className={`${inputCls} disabled:opacity-60 disabled:cursor-not-allowed`}>
                 <option value="oto-urun">Otomatik İndirim (kartta görünür)</option>
                 <option value="kupon">Kupon (kodlu)</option>
                 <option value="sepet-esikli">Sepet Eşikli (otomatik)</option>
@@ -186,8 +211,8 @@ export default function IndirimPage() {
           )}
 
           <div className="flex gap-3">
-            <button type="submit" disabled={saving} className="px-6 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-semibold rounded-full transition-colors">{saving ? "Kaydediliyor..." : "Kaydet"}</button>
-            <button type="button" onClick={() => setShowForm(false)} className="px-6 py-2.5 border border-border text-text-light text-sm font-semibold rounded-full hover:border-primary transition-colors">İptal</button>
+            <button type="submit" disabled={saving} className="px-6 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-semibold rounded-full transition-colors">{saving ? "Kaydediliyor..." : editingId ? "Güncelle" : "Kaydet"}</button>
+            <button type="button" onClick={() => { setShowForm(false); setEditingId(null); setForm(emptyForm); }} className="px-6 py-2.5 border border-border text-text-light text-sm font-semibold rounded-full hover:border-primary transition-colors">İptal</button>
           </div>
         </form>
       )}
@@ -212,7 +237,10 @@ export default function IndirimPage() {
                     <td className="px-4 py-4">
                       <button onClick={() => toggle(p)} className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition-colors ${p.is_active ? "text-green-700 bg-green-50 border-green-200 hover:bg-green-100" : "text-text-light bg-bg border-border hover:border-primary"}`}>{p.is_active ? "Aktif" : "Pasif"}</button>
                     </td>
-                    <td className="px-4 py-4 text-right"><button onClick={() => del(p.id)} className="text-xs text-red-500 hover:text-red-700 font-semibold">Sil</button></td>
+                    <td className="px-4 py-4 text-right whitespace-nowrap">
+                      <button onClick={() => startEdit(p)} className="text-xs text-text-light hover:text-primary font-semibold mr-3">Düzenle</button>
+                      <button onClick={() => del(p.id)} className="text-xs text-red-500 hover:text-red-700 font-semibold">Sil</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
