@@ -51,7 +51,7 @@ export default function HeaderCategoryBar({ categories }: { categories: MenuCate
         {categories.map((cat) => {
           if (cat.children.length === 0) {
             return (
-              <Link key={cat.id} href={`/kategoriler/${cat.slug}`} className={`${link} text-text-light hover:text-primary hover:bg-white`}>
+              <Link key={cat.id} href={`/kategoriler/${cat.slug}`} className={`${link} text-text hover:text-primary hover:bg-white`}>
                 {cat.name}
               </Link>
             );
@@ -63,7 +63,7 @@ export default function HeaderCategoryBar({ categories }: { categories: MenuCate
                 type="button"
                 onClick={() => setOpenId(open ? null : cat.id)}
                 aria-expanded={open}
-                className={`group/pill ${link} inline-flex items-center gap-1 ${open ? "text-primary bg-white" : "text-text-light hover:text-primary hover:bg-white"}`}
+                className={`group/pill ${link} inline-flex items-center gap-1 ${open ? "text-primary bg-white" : "text-text hover:text-primary hover:bg-white"}`}
               >
                 {cat.name}
                 <Chevron open={open} />

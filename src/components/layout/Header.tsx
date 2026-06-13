@@ -39,30 +39,23 @@ export default async function Header() {
           Anı<span className="text-primary">Baskı</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-text-light shrink-0">
-          <Link href="/urunler" className="hover:text-text transition-colors">
-            Ürünler
-          </Link>
-          <Link href="/kategoriler/hazir-urunler" className="hover:text-text transition-colors">
-            Hazır Ürünler
-          </Link>
-          <Link href="/kampanyalar" className="hover:text-text transition-colors">
-            Kampanyalar
-          </Link>
-          <Link href="/urun-rehberi" className="hover:text-text transition-colors">
-            Rehber
-          </Link>
-          <Link href="/studyo" className="hover:text-text transition-colors text-primary">
-            AI Stüdyo
-          </Link>
-          {isAdmin && (
-            <Link href="/admin" className="hover:text-text transition-colors text-primary">
-              Admin
-            </Link>
-          )}
-        </nav>
+        {/* Arama — geniş ekranda üst satırda ortada; md/mobilde alt satırda (sığması için) */}
+        <div className="hidden lg:flex flex-1 justify-center px-6">
+          <div className="w-full max-w-xl">
+            <SearchBar />
+          </div>
+        </div>
 
         <div className="flex items-center gap-2">
+          {/* Ana linkler (md+ inline; mobilde hamburger menüde) */}
+          <nav className="hidden md:flex items-center gap-3 lg:gap-4 text-sm font-semibold mr-1 lg:mr-2">
+            <Link href="/kategoriler/hazir-urunler" className="text-text hover:text-primary transition-colors whitespace-nowrap">Hazır Ürünler</Link>
+            <Link href="/kampanyalar" className="text-text hover:text-primary transition-colors">Kampanyalar</Link>
+            <Link href="/urun-rehberi" className="text-text hover:text-primary transition-colors">Rehber</Link>
+            <Link href="/studyo" className="text-primary hover:text-primary-hover transition-colors whitespace-nowrap">AI Stüdyo</Link>
+            {isAdmin && <Link href="/admin" className="text-primary hover:text-primary-hover transition-colors">Admin</Link>}
+          </nav>
+
           <Link
             href="/favorilerim"
             aria-label="Favorilerim"
@@ -111,16 +104,10 @@ export default async function Header() {
         </div>
       </div>
 
-      {/* Masaüstü — arama kendi tam-genişlik satırında (üst menüyle sıkışmasın) */}
-      <div className="hidden md:block border-t border-border">
-        <div className="max-w-6xl mx-auto px-8 py-2.5">
-          <SearchBar />
-        </div>
-      </div>
-
       <HeaderCategoryBar categories={menuTree} />
 
-      <div className="md:hidden border-t border-border px-4 py-2.5">
+      {/* Arama — md/mobilde alt satırda (lg'de üst satıra taşınır) */}
+      <div className="lg:hidden border-t border-border px-4 py-2.5">
         <SearchBar />
       </div>
     </header>
