@@ -105,7 +105,21 @@ export default async function KategoriPage({ params, searchParams }: Props) {
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-12">
+      {/* ── Filtre + Sıralama (sticky alt-çubuk, header altına oturur) ── */}
+      {(products?.length ?? 0) > 0 && (
+        <div className="sticky top-16 z-40 bg-bg/95 backdrop-blur border-b border-border">
+          <div className="max-w-6xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between gap-3">
+            <Suspense fallback={<div className="h-9" />}>
+              <TagFilter tags={allTags ?? []} current={tag} />
+            </Suspense>
+            <Suspense fallback={<div className="w-40 h-9 rounded-lg border border-border bg-bg" />}>
+              <SortSelect current={sort} />
+            </Suspense>
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
 
         {/* ── Alt Kategori Filtreleri (sadece ana kategoride göster) ── */}
         {(subCategories?.length ?? 0) > 0 && (
@@ -161,14 +175,6 @@ export default async function KategoriPage({ params, searchParams }: Props) {
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between mb-5">
-              <Suspense fallback={<div className="h-9" />}>
-                <TagFilter tags={allTags ?? []} current={tag} />
-              </Suspense>
-              <Suspense fallback={<div className="w-40 h-9 rounded-lg border border-border bg-bg" />}>
-                <SortSelect current={sort} />
-              </Suspense>
-            </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
               {products.map((product) => {
                 const productTags = product.productTags as unknown as { tagId: string; position: string; tag: { name: string; color: string } }[] | null;
