@@ -11,7 +11,7 @@ export default function FeaturedStrip({ products }: { products: FeatProduct[] })
   if (!products.length) return null;
   return (
     <section className="py-20 px-4 sm:px-8 bg-white border-y border-border">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="flex items-end justify-between mb-8">
           <div>
             <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase mb-2">Seçtiklerimiz</p>

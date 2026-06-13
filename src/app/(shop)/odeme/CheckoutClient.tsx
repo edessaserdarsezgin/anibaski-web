@@ -323,7 +323,7 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
   // iframe'den ana pencereye çıkılırken kısa "yönlendiriliyor" ekranı (form flash'ını engeller)
   if (breakingOut) {
     return (
-      <div className="max-w-6xl mx-auto px-8 py-24 text-center text-text-light">
+      <div className="max-w-7xl mx-auto px-8 py-24 text-center text-text-light">
         Yönlendiriliyorsunuz...
       </div>
     );
@@ -331,7 +331,7 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
 
   if (items.length === 0 && !paytrToken) {
     return (
-      <div className="max-w-6xl mx-auto px-8 py-24 text-center">
+      <div className="max-w-7xl mx-auto px-8 py-24 text-center">
         <h1 className="font-serif text-2xl text-text mb-4">Sepetiniz boş</h1>
         <Link href="/urunler" className="text-primary hover:underline font-semibold">Ürünlere git</Link>
       </div>
@@ -362,7 +362,7 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-12">
+    <div className="max-w-7xl mx-auto px-8 py-12">
       <h1 className="font-serif text-3xl text-text mb-8">Ödeme</h1>
 
       {paymentFailed && (

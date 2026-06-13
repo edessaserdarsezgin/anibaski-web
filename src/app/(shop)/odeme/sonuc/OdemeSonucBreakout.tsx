@@ -21,7 +21,7 @@ export default function OdemeSonucBreakout({ target }: { target: string }) {
   }, [target]);
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-24 text-center text-text-light">
+    <div className="max-w-7xl mx-auto px-8 py-24 text-center text-text-light">
       Ödemeniz işleniyor, yönlendiriliyorsunuz…
     </div>
   );

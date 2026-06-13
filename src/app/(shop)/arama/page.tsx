@@ -41,7 +41,7 @@ export default async function AramaPage({ searchParams }: Props) {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-8 py-12">
       <h1 className="font-serif text-3xl text-text mb-2">Arama Sonuçları</h1>
       <p className="text-sm text-text-light mb-8">
         {query

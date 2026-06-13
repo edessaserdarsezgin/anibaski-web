@@ -39,7 +39,7 @@ export default function MobileMenu({ isAdmin, categories = [] }: Props) {
         <>
           <div className="fixed inset-0 top-16 z-40 bg-black/20" onClick={() => setOpen(false)} />
           <div className="md:hidden fixed left-0 right-0 top-16 bottom-0 z-50 bg-bg border-b border-border shadow-hover overflow-y-auto overscroll-contain">
-            <nav className="max-w-6xl mx-auto px-6 py-4 pb-24 flex flex-col">
+            <nav className="max-w-7xl mx-auto px-6 py-4 pb-24 flex flex-col">
 
               {categories.length > 0 && (
                 <div className="pb-2 border-b border-border">

@@ -8,7 +8,8 @@
   --color-accent: #f2cc8f;
   --color-bg: #fdfbf7;
   --color-text: #3d405b;
-  --color-text-light: #646a86;     /* muted metin — WCAG 4.5:1 (eski #8187a2 3.43:1 idi) */
+  --color-text-light: #4d5270;     /* muted metin — koyulaştırıldı (eski #646a86 soluktu) */
+  --color-secondary: #5a6080;      /* ikincil/ipucu metin — tanımlı + koyu (eski #8187a2 çok soluktu) */
   --color-border: #ece8e1;
 
   --font-serif: "Lora", serif;

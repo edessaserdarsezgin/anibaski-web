@@ -90,7 +90,7 @@ export default async function HomePage() {
             <div className="absolute bottom-0 left-0 w-[380px] h-[380px] rounded-full bg-accent/18 blur-3xl" />
           </div>
 
-          <div className="relative max-w-6xl mx-auto px-8 py-24 w-full grid grid-cols-1 lg:grid-cols-[1fr_480px] gap-16 items-center">
+          <div className="relative max-w-7xl mx-auto px-8 py-24 w-full grid grid-cols-1 lg:grid-cols-[1fr_480px] gap-16 items-center">
 
             {/* Left — copy */}
             <div className="flex flex-col gap-8">
@@ -216,7 +216,7 @@ export default async function HomePage() {
 
         {/* ── Kategoriler — Asimetrik grid ─────────────── */}
         <section className="py-28 px-4 sm:px-8 bg-bg">
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-7xl mx-auto">
             <div className="flex items-end justify-between mb-12">
               <div>
                 <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase mb-2">Koleksiyonlar</p>
@@ -269,7 +269,7 @@ export default async function HomePage() {
 
         {/* ── Güven Şeridi — Terracotta ─────────────────── */}
         <section className="py-12 px-8 bg-primary">
-          <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+          <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
             {[
               { icon: "🚚", title: "Ücretsiz Kargo", desc: `${freeShippingThreshold} ₺ ve üzeri siparişlerde` },
               { icon: "🔒", title: "Güvenli Ödeme", desc: "256-bit SSL şifreleme" },
@@ -289,7 +289,7 @@ export default async function HomePage() {
 
         {/* ── Premium Kalite ────────────────────────────── */}
         <section className="py-28 px-8 bg-white">
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
               <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase mb-4">Neden AnıBaskı?</p>
               <h2 className="font-serif text-3xl md:text-5xl text-text">Farkımız kalitemizden gelir</h2>

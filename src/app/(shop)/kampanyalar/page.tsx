@@ -43,7 +43,7 @@ export default async function KampanyalarPage() {
   const campaigns: Campaign[] = (data ?? []) as Campaign[];
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-12">
+    <div className="max-w-7xl mx-auto px-8 py-12">
       <div className="text-center mb-12">
         <h1 className="font-serif text-3xl md:text-4xl text-text mb-3">Kampanyalar</h1>
         <p className="text-text-light max-w-xl mx-auto">

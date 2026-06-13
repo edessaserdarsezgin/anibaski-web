@@ -7,7 +7,7 @@ export default function HeroBanner({ banners }: { banners: Banner[] }) {
   if (!banners.length) return null;
   return (
     <section className="px-4 pt-4">
-      <div className="max-w-6xl mx-auto flex gap-4 overflow-x-auto snap-x snap-mandatory rounded-3xl scrollbar-none">
+      <div className="max-w-7xl mx-auto flex gap-4 overflow-x-auto snap-x snap-mandatory rounded-3xl scrollbar-none">
         {banners.map((b) => (
           <Link key={b.id} href={b.cta_url}
             className="group relative shrink-0 w-full snap-center aspect-[21/9] rounded-3xl overflow-hidden bg-bg">

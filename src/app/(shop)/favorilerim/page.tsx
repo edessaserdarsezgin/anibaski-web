@@ -29,7 +29,7 @@ export default async function FavorilerimPage() {
     .filter(Boolean);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-8 py-12">
       <BackButton className="mb-6" />
       <div className="mb-8">
         <h1 className="font-serif text-3xl md:text-4xl text-text">Favorilerim</h1>

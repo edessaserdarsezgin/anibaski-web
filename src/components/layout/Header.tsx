@@ -34,21 +34,21 @@ export default async function Header() {
   return (
     <>
     <header id="site-header" className="sticky top-0 z-50 bg-bg border-b border-border">
-      <div className="max-w-6xl mx-auto px-8 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-8 h-16 flex items-center justify-between">
         <Link href="/" className="font-serif text-2xl text-text">
           Anı<span className="text-primary">Baskı</span>
         </Link>
 
         {/* Arama — geniş ekranda üst satırda ortada; md/mobilde alt satırda (sığması için) */}
         <div className="hidden lg:flex flex-1 justify-center px-6">
-          <div className="w-full max-w-xl">
+          <div className="w-full max-w-3xl">
             <SearchBar />
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           {/* Ana linkler (md+ inline; mobilde hamburger menüde) */}
-          <nav className="hidden md:flex items-center gap-3 lg:gap-4 text-sm font-semibold mr-1 lg:mr-2">
+          <nav className="hidden md:flex items-center gap-3 lg:gap-4 text-[15px] font-bold mr-1 lg:mr-2">
             <Link href="/kategoriler/hazir-urunler" className="text-text hover:text-primary transition-colors whitespace-nowrap">Hazır Ürünler</Link>
             <Link href="/kampanyalar" className="text-text hover:text-primary transition-colors">Kampanyalar</Link>
             <Link href="/urun-rehberi" className="text-text hover:text-primary transition-colors">Rehber</Link>

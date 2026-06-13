@@ -18,7 +18,7 @@ function Chevron({ open }: { open: boolean }) {
   );
 }
 
-const link = "px-3 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors";
+const link = "px-2.5 py-1.5 rounded-lg text-[15px] font-bold whitespace-nowrap transition-colors";
 
 export default function HeaderCategoryBar({ categories }: { categories: MenuCategory[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -43,7 +43,7 @@ export default function HeaderCategoryBar({ categories }: { categories: MenuCate
 
   return (
     <div ref={ref} className="hidden md:block border-t border-border bg-bg/95 backdrop-blur-sm">
-      <div className="max-w-6xl mx-auto px-8 flex items-center gap-0.5 h-11">
+      <div className="max-w-7xl mx-auto px-8 flex items-center gap-0.5 h-11">
         <Link href="/urunler" className={`${link} text-text hover:text-primary hover:bg-white`}>
           Tüm Ürünler
         </Link>

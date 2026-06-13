@@ -45,7 +45,7 @@ export default async function UrunlerPage({ searchParams }: Props) {
           <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-primary/8 blur-3xl" />
           <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full bg-accent/15 blur-3xl" />
         </div>
-        <div className="relative max-w-6xl mx-auto px-8 py-16 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="relative max-w-7xl mx-auto px-8 py-16 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase mb-3">Koleksiyonlar</p>
             <h1 className="font-serif text-5xl md:text-6xl text-text leading-tight">
@@ -62,7 +62,7 @@ export default async function UrunlerPage({ searchParams }: Props) {
         <ProductFilterBar tags={allTags ?? []} currentTag={tag} currentSort={sort} />
       )}
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8">
 
         {/* ── Ürün Grid ───────────────────────────────── */}
         {!products?.length ? (

@@ -78,7 +78,7 @@ export default async function KategoriPage({ params, searchParams }: Props) {
           <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-primary/8 blur-3xl" />
           <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full bg-accent/15 blur-3xl" />
         </div>
-        <div className="relative max-w-6xl mx-auto px-8 py-14">
+        <div className="relative max-w-7xl mx-auto px-8 py-14">
           <p className="text-sm text-text-light flex items-center gap-1.5 mb-6 flex-wrap">
             <Link href="/" className="hover:text-primary transition-colors">Ana Sayfa</Link>
             <span className="text-border">/</span>
@@ -107,7 +107,7 @@ export default async function KategoriPage({ params, searchParams }: Props) {
         <ProductFilterBar tags={allTags ?? []} currentTag={tag} currentSort={sort} />
       )}
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8">
 
         {/* ── Alt Kategori Filtreleri (sadece ana kategoride göster) ── */}
         {(subCategories?.length ?? 0) > 0 && (

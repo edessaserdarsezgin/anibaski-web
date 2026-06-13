@@ -180,7 +180,7 @@ export default function SepetPage() {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-12">
         <BackButton className="mb-6" />
         <EmptyState
           icon={
@@ -198,7 +198,7 @@ export default function SepetPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-8 py-12">
       <BackButton className="mb-6" />
       <h1 className="font-serif text-3xl text-text mb-6">Sepetim</h1>
 

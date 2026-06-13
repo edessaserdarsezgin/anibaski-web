@@ -98,7 +98,7 @@ export default async function UrunDetayPage({ params }: Props) {
     <>
       {/* ── Breadcrumb ──────────────────────────────── */}
       <div className="border-b border-border bg-bg">
-        <div className="max-w-6xl mx-auto px-8 py-3.5">
+        <div className="max-w-7xl mx-auto px-8 py-3.5">
           <p className="text-sm text-text-light flex items-center gap-1.5 flex-wrap">
             <Link href="/" className="hover:text-primary transition-colors">Ana Sayfa</Link>
             <span className="text-border">/</span>
@@ -118,7 +118,7 @@ export default async function UrunDetayPage({ params }: Props) {
       </div>
 
       {/* ── İçerik ──────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-8 py-12">
+      <div className="max-w-7xl mx-auto px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-12 xl:gap-16">
 
           {/* Galeri */}
