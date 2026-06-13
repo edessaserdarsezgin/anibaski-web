@@ -17,6 +17,7 @@ type Params = {
   items: OrderItem[];
   subtotal: number;
   shippingFee: number;
+  codFee?: number;
   total: number;
   shippingAddress: {
     fullName: string;
@@ -33,7 +34,7 @@ export async function sendOrderNotification(params: Params) {
   const adminEmail = process.env.ADMIN_EMAIL;
   if (!adminEmail || !process.env.RESEND_API_KEY) return;
 
-  const { orderId, customerEmail, customerName, items, subtotal, shippingFee, total, shippingAddress, discountCode, discountAmount } = params;
+  const { orderId, customerEmail, customerName, items, subtotal, shippingFee, codFee, total, shippingAddress, discountCode, discountAmount } = params;
   const shortId = orderId.slice(0, 8).toUpperCase();
 
   const photoItems = items.filter(i => i.uploadedImages?.length > 0);
@@ -102,6 +103,12 @@ export async function sendOrderNotification(params: Params) {
             <td style="padding:6px 12px;text-align:right">${shippingFee === 0 ? '<span style="color:#2d6a4f">Ücretsiz</span>' : `${shippingFee.toLocaleString("tr-TR")} ₺`}</td>
             <td></td>
           </tr>
+          ${codFee && codFee > 0 ? `
+          <tr>
+            <td colspan="3" style="padding:6px 12px;text-align:right;color:#8187a2">Kapıda ödeme bedeli</td>
+            <td style="padding:6px 12px;text-align:right">${codFee.toLocaleString("tr-TR")} ₺</td>
+            <td></td>
+          </tr>` : ''}
           ${discountCode && discountAmount ? `
           <tr>
             <td colspan="3" style="padding:6px 12px;text-align:right;color:#2d6a4f">Kupon (${discountCode})</td>

@@ -23,11 +23,13 @@ export default function ProductFilterBar({
       className="sticky z-40 bg-bg/95 backdrop-blur border-b border-border"
       style={{ top: "var(--header-h, 4rem)" }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between gap-3">
-        <Suspense fallback={<div className="h-9" />}>
-          <TagFilter tags={tags} current={currentTag} />
-        </Suspense>
-        <Suspense fallback={<div className="w-40 h-9 rounded-lg border border-border bg-bg" />}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-2 sm:py-3 flex items-center justify-between gap-2 sm:gap-3">
+        <div className="min-w-0 flex-1">
+          <Suspense fallback={<div className="h-8" />}>
+            <TagFilter tags={tags} current={currentTag} />
+          </Suspense>
+        </div>
+        <Suspense fallback={<div className="w-32 h-8 rounded-lg border border-border bg-bg" />}>
           <SortSelect current={currentSort} />
         </Suspense>
       </div>

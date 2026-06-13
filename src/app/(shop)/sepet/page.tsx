@@ -89,13 +89,16 @@ export default function SepetPage() {
   const remainingForFreeShipping = Math.max(0, freeShippingThreshold - discountedTotal);
   const shippingProgress = freeShippingThreshold > 0 ? Math.min(100, (discountedTotal / freeShippingThreshold) * 100) : 100;
 
-  // Toplam kazanç = ürün indirimleri (orijinal birim = basePrice + varyant eklentileri) + kupon
+  // Ücretsiz kargo kazancı: kargo bedavaysa normalde ödenecek kargo bedeli kadar tasarruf
+  const shippingSavings = shippingFee === 0 ? shippingFeeVal : 0;
+
+  // Toplam kazanç = ürün indirimleri (orijinal birim = basePrice + varyant eklentileri) + kupon + kargo
   const productSavings = items.reduce((sum, item) => {
     const addons = Object.values(item.variantSelections).reduce((s, v) => s + v.priceAddon, 0);
     const original = item.basePrice + addons;
     return sum + Math.max(0, original - item.unitPrice) * item.quantity;
   }, 0);
-  const totalSavings = productSavings + discountAmount;
+  const totalSavings = productSavings + discountAmount + shippingSavings;
   const originalSubtotal = total + productSavings; // ürün (sale) indirimi öncesi ara toplam
 
   // Çapraz satış — sepetteki ürünleri çıkar
@@ -374,9 +377,14 @@ export default function SepetPage() {
               )}
               <div className="flex justify-between">
                 <span className="text-text-light">Kargo</span>
-                <span className="font-semibold">
+                <span className="font-semibold flex items-center gap-2">
                   {shippingFee === 0 ? (
-                    <span className="text-green-600">Ücretsiz</span>
+                    <>
+                      {shippingSavings > 0 && (
+                        <span className="line-through text-text-light font-normal">{shippingSavings.toLocaleString("tr-TR")} ₺</span>
+                      )}
+                      <span className="text-green-600">Ücretsiz</span>
+                    </>
                   ) : (
                     `${shippingFee} ₺`
                   )}

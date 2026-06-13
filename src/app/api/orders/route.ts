@@ -133,9 +133,8 @@ export async function POST(req: NextRequest) {
   // Ücretsiz kargo eşiği: kupon/sepet-eşikli indirim DÜŞÜLDÜKTEN sonraki tutara göre
   const discountedSubtotal = Math.round((subtotal - discountAmount) * 100) / 100;
   const baseShipping = discountedSubtotal >= ship.freeShippingThreshold ? 0 : ship.shippingFee;
-  const shippingFee = baseShipping + codFee;
-
-  const total = Math.round((subtotal + shippingFee - discountAmount) * 100) / 100;
+  // Kargo ve kapıda-ödeme bedeli AYRI saklanır (sipariş özetinde ayrı gösterilir)
+  const total = Math.round((subtotal + baseShipping + codFee - discountAmount) * 100) / 100;
 
   const { data: order, error: orderError } = await supabase
     .from("orders")
@@ -145,7 +144,8 @@ export async function POST(req: NextRequest) {
       billingAddressId: billingAddressId ?? shippingAddressId,
       paymentMethod,
       subtotal,
-      shippingFee,
+      shippingFee: baseShipping,
+      codFee,
       discount_code: validatedCouponCode,
       discount_amount: discountAmount > 0 ? discountAmount : null,
       total,
@@ -193,7 +193,8 @@ export async function POST(req: NextRequest) {
     const notifyPayload = {
       orderNo: order.id.slice(0, 8).toUpperCase(),
       subtotal,
-      shippingFee,
+      shippingFee: baseShipping,
+      codFee,
       total,
       items: itemsText,
       discountCode: validatedCouponCode,
@@ -218,7 +219,8 @@ export async function POST(req: NextRequest) {
         uploadedImages: item.uploadedImages,
       })),
       subtotal,
-      shippingFee,
+      shippingFee: baseShipping,
+      codFee,
       total,
       shippingAddress: address ?? { fullName: "", phone: "", address: "", district: "", city: "" },
       discountCode: validatedCouponCode,

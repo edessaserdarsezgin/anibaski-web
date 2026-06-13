@@ -31,7 +31,7 @@ export default function SortSelect({ current = "newest" }: { current?: string })
     <select
       value={current}
       onChange={handleChange}
-      className="px-3 py-2 rounded-lg border border-border bg-white text-sm text-text outline-none focus:border-primary transition-colors cursor-pointer"
+      className="shrink-0 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-border bg-white text-xs sm:text-sm text-text outline-none focus:border-primary transition-colors cursor-pointer"
     >
       {OPTIONS.map(o => (
         <option key={o.value} value={o.value}>{o.label}</option>

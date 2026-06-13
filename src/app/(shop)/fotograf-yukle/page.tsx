@@ -449,9 +449,13 @@ export default function FotografYuklePage() {
             disabled={uploading}
             className="w-full aspect-video rounded-2xl border-2 border-dashed border-border hover:border-primary transition-colors flex flex-col items-center justify-center gap-4 text-text-light hover:text-primary disabled:opacity-50 mb-4"
           >
-            <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-            </svg>
+            {uploading ? (
+              <span className="w-12 h-12 border-[3px] border-current border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+              </svg>
+            )}
             <div className="text-center">
               <p className="font-semibold">{uploading ? "Yükleniyor..." : "Fotoğraf Seç"}</p>
               <p className="text-sm mt-0.5">Toplam {required} adet · JPG, PNG, WEBP</p>

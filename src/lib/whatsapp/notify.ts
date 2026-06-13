@@ -21,6 +21,7 @@ export function notifyOrderCreated(params: {
   orderNo: string;
   subtotal: number;
   shippingFee: number;
+  codFee?: number;
   total: number;
   items: string;
   discountCode?: string | null;
@@ -32,6 +33,9 @@ export function notifyOrderCreated(params: {
     orderNo: params.orderNo,
     subtotal: params.subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     shippingFee: params.shippingFee === 0 ? "Ücretsiz" : params.shippingFee.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " ₺",
+    ...(params.codFee && params.codFee > 0
+      ? { codFee: params.codFee.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " ₺" }
+      : {}),
     total: params.total.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     items: params.items,
     ...(params.discountCode && params.discountAmount

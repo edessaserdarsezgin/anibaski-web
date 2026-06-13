@@ -299,6 +299,12 @@ export default async function SiparisDetayPage({ params }: Props) {
                     : `${Number(order.shippingFee).toLocaleString("tr-TR")} ₺`}
                 </span>
               </div>
+              {Number(order.codFee) > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-text-light">Kapıda ödeme bedeli</span>
+                  <span>{Number(order.codFee).toLocaleString("tr-TR")} ₺</span>
+                </div>
+              )}
               <div className="flex justify-between pt-2 border-t border-border font-semibold text-base">
                 <span>Toplam</span>
                 <span className="text-primary">{Number(order.total).toLocaleString("tr-TR")} ₺</span>
