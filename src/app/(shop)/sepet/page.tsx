@@ -79,7 +79,7 @@ export default function SepetPage() {
   }
   const couponWins = !!appliedCoupon && couponDiscount >= autoDiscount;
   const discountAmount = Math.min(total, stacking ? couponDiscount + autoDiscount : Math.max(couponDiscount, autoDiscount));
-  const upcomingTier = nextThreshold(total, cartAutos);
+  const upcomingTier = nextThreshold(total, cartAutos, pricedItems);
   // Ücretsiz kargo eşiği indirim DÜŞÜLDÜKTEN sonraki tutara göre (sunucu /api/orders ile aynı)
   const discountedTotal = Math.max(0, total - discountAmount);
   const shippingFee = discountedTotal >= freeShippingThreshold ? 0 : shippingFeeVal;

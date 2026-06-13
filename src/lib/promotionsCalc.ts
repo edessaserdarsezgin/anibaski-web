@@ -86,9 +86,18 @@ export function cartPromoAmount(p: Promotion, items: PricedItem[]): number {
     : Math.min(p.value, matchedTotal);
 }
 
-/** Sonraki ulaşılabilir sepet-eşikli kademe (nudge için). */
-export function nextThreshold(subtotal: number, cartAutoPromos: Promotion[]): Promotion | null {
+/**
+ * Sonraki ulaşılabilir sepet-eşikli kademe (nudge için).
+ * items verilirse YALNIZ sepette kapsam-içi ürünü olan promosyonlar dikkate alınır
+ * (kapsam dışı ürünlerde "X TL daha ekle" mesajı çıkmasın).
+ */
+export function nextThreshold(
+  subtotal: number,
+  cartAutoPromos: Promotion[],
+  items?: { productId: string; categoryId: string | null }[],
+): Promotion | null {
   return cartAutoPromos
-    .filter((p) => p.trigger === "auto" && p.minSubtotal != null && subtotal < p.minSubtotal)
+    .filter((p) => p.trigger === "auto" && p.minSubtotal != null && subtotal < p.minSubtotal
+      && (!items || items.some((it) => itemInScope(p, it))))
     .sort((a, b) => (a.minSubtotal! - b.minSubtotal!))[0] ?? null;
 }
