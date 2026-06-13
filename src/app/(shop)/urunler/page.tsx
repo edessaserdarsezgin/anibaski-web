@@ -78,7 +78,7 @@ export default async function UrunlerPage({ searchParams }: Props) {
           </div>
         ) : (
           <>
-          <div className="flex items-center justify-between mb-5">
+          <div className="sticky top-16 z-30 -mx-4 sm:-mx-8 px-4 sm:px-8 py-3 mb-5 bg-bg/95 backdrop-blur border-b border-border flex items-center justify-between gap-3">
             <Suspense fallback={<div className="h-9" />}>
               <TagFilter tags={allTags ?? []} current={tag} />
             </Suspense>

@@ -101,18 +101,24 @@ export const getHeroBanners = unstable_cache(
   { tags: ["campaigns"] }
 );
 
-// 5. Tags (All tags for filtering)
+// 5. Tags for filtering — yalnız AKTİF ürünlere atanmış + aktif etiketler (boş/pasif etiket gösterme)
 export const getTags = unstable_cache(
   async () => {
     const db = createAdminClient();
     const { data } = await db
-      .from("tags")
-      .select("id, name, color")
-      .order("name");
-    return data ?? [];
+      .from("product_tags")
+      .select("tags!inner(id, name, color, is_active), products!inner(isActive)")
+      .eq("tags.is_active", true)
+      .eq("products.isActive", true);
+    const map = new Map<string, { id: string; name: string; color: string }>();
+    for (const row of (data ?? []) as unknown as { tags: { id: string; name: string; color: string } }[]) {
+      const t = row.tags;
+      if (t && !map.has(t.id)) map.set(t.id, { id: t.id, name: t.name, color: t.color });
+    }
+    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "tr"));
   },
   ["catalog-tags"],
-  { tags: ["tags"] }
+  { tags: ["tags", "products"] }
 );
 
 // 6. Product Tag Matches (fetch product IDs that match a specific tag)
