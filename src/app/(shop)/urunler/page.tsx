@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import ProductCard from "@/components/product/ProductCard";
-import SortSelect from "@/components/product/SortSelect";
-import TagFilter from "@/components/product/TagFilter";
+import ProductFilterBar from "@/components/product/ProductFilterBar";
 import { getReadyMadeCategoryIds } from "@/lib/readyMade";
 import {
   getTags,
@@ -60,18 +58,8 @@ export default async function UrunlerPage({ searchParams }: Props) {
         </div>
       </section>
 
-      {/* ── Filtre + Sıralama (sticky alt-çubuk, header altına oturur) ── */}
       {(products?.length ?? 0) > 0 && (
-        <div className="sticky top-16 z-40 bg-bg/95 backdrop-blur border-b border-border">
-          <div className="max-w-6xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between gap-3">
-            <Suspense fallback={<div className="h-9" />}>
-              <TagFilter tags={allTags ?? []} current={tag} />
-            </Suspense>
-            <Suspense fallback={<div className="w-40 h-9 rounded-lg border border-border bg-bg" />}>
-              <SortSelect current={sort} />
-            </Suspense>
-          </div>
-        </div>
+        <ProductFilterBar tags={allTags ?? []} currentTag={tag} currentSort={sort} />
       )}
 
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
