@@ -60,7 +60,21 @@ export default async function UrunlerPage({ searchParams }: Props) {
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-12">
+      {/* ── Filtre + Sıralama (sticky alt-çubuk, header altına oturur) ── */}
+      {(products?.length ?? 0) > 0 && (
+        <div className="sticky top-16 z-40 bg-bg/95 backdrop-blur border-b border-border">
+          <div className="max-w-6xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between gap-3">
+            <Suspense fallback={<div className="h-9" />}>
+              <TagFilter tags={allTags ?? []} current={tag} />
+            </Suspense>
+            <Suspense fallback={<div className="w-40 h-9 rounded-lg border border-border bg-bg" />}>
+              <SortSelect current={sort} />
+            </Suspense>
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
 
         {/* ── Ürün Grid ───────────────────────────────── */}
         {!products?.length ? (
@@ -77,15 +91,6 @@ export default async function UrunlerPage({ searchParams }: Props) {
             </Link>
           </div>
         ) : (
-          <>
-          <div className="sticky top-16 z-30 -mx-4 sm:-mx-8 px-4 sm:px-8 py-3 mb-5 bg-bg/95 backdrop-blur border-b border-border flex items-center justify-between gap-3">
-            <Suspense fallback={<div className="h-9" />}>
-              <TagFilter tags={allTags ?? []} current={tag} />
-            </Suspense>
-            <Suspense fallback={<div className="w-40 h-9 rounded-lg border border-border bg-bg" />}>
-              <SortSelect current={sort} />
-            </Suspense>
-          </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
             {products.map((product, idx) => {
               const category = product.category as unknown as { name: string; slug: string } | null;
@@ -99,7 +104,6 @@ export default async function UrunlerPage({ searchParams }: Props) {
               );
             })}
           </div>
-          </>
         )}
 
         {/* ── Alt CTA ─────────────────────────────────── */}
