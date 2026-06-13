@@ -19,7 +19,10 @@ export default function ProductFilterBar({
   currentSort?: string;
 }) {
   return (
-    <div className="sticky top-16 z-40 bg-bg/95 backdrop-blur border-b border-border">
+    <div
+      className="sticky z-40 bg-bg/95 backdrop-blur border-b border-border"
+      style={{ top: "var(--header-h, 4rem)" }}
+    >
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between gap-3">
         <Suspense fallback={<div className="h-9" />}>
           <TagFilter tags={tags} current={currentTag} />
