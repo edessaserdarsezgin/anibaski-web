@@ -103,7 +103,6 @@ export default function ProductCard({ product, priority = false, showDescription
               discount_starts_at: product.discount_starts_at ?? null,
               discount_ends_at: product.discount_ends_at ?? null,
             }}
-            suffix="den itibaren"
           />
           {product.couponBadge && (
             <p className="mt-1.5 text-[11px] font-semibold text-primary bg-primary/10 border border-primary/20 rounded-full px-2 py-0.5 w-fit">

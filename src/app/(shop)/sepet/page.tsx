@@ -305,7 +305,7 @@ export default function SepetPage() {
               <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4">
                 <div>
                   <p className="text-xs font-semibold text-green-700">{appliedCoupon.code}</p>
-                  <p className="text-xs text-green-600">−{appliedCoupon.discountAmount.toLocaleString("tr-TR")} ₺ indirim</p>
+                  <p className="text-xs text-green-600">−{appliedCoupon.discountAmount.toLocaleString("tr-TR")} ₺ kupon indirimi</p>
                 </div>
                 <button onClick={handleRemoveCoupon} className="text-xs text-red-500 hover:text-red-700 font-semibold">
                   Kaldır
@@ -353,7 +353,7 @@ export default function SepetPage() {
                 <>
                   {couponDiscount > 0 && (
                     <div className="flex justify-between text-green-700">
-                      <span>İndirim ({appliedCoupon!.code})</span>
+                      <span>Kupon indirimi ({appliedCoupon!.code})</span>
                       <span className="font-semibold">−{couponDiscount.toLocaleString("tr-TR")} ₺</span>
                     </div>
                   )}
@@ -367,7 +367,7 @@ export default function SepetPage() {
               ) : (
                 discountAmount > 0 && (
                   <div className="flex justify-between text-green-700">
-                    <span>{couponWins ? `İndirim (${appliedCoupon!.code})` : "Sepet indirimi"}</span>
+                    <span>{couponWins ? `Kupon indirimi (${appliedCoupon!.code})` : "Sepet indirimi"}</span>
                     <span className="font-semibold">−{discountAmount.toLocaleString("tr-TR")} ₺</span>
                   </div>
                 )

@@ -81,8 +81,11 @@ export async function POST(req: NextRequest) {
     user_name:        address?.fullName ?? user.email!,
     user_address:     address ? `${address.address}, ${address.district}, ${address.city}` : "",
     user_phone:       address?.phone ?? "",
-    merchant_ok_url:  `${siteUrl}/siparis-tamamlandi/${orderId}`,
-    merchant_fail_url:`${siteUrl}/odeme?fail=1`,
+    // PayTR iframe'i bu URL'lere İFRAME İÇİNDE döner. Korumalı sayfaya doğrudan
+    // dönersek SameSite=Lax oturum cookie'si iframe navigasyonunda gitmez → login ekranı.
+    // Bu yüzden public /odeme/sonuc'a döneriz; o da top-level navigasyonla (cookie gider) hedefe çıkar.
+    merchant_ok_url:  `${siteUrl}/odeme/sonuc?order=${orderId}`,
+    merchant_fail_url:`${siteUrl}/odeme/sonuc?fail=1`,
     timeout_limit:    "30",
     debug_on:         testMode === "1" ? "1" : "0",
     test_mode:        testMode,

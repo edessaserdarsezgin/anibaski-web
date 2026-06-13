@@ -221,10 +221,13 @@ export default function IndirimPage() {
               <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">Kupon Kodu</label>
                 <input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))} placeholder="HOSGELDIN15" className={inputCls} /></div>
               <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">Maks. Kullanım (ops.)</label>
-                <input type="number" min="1" value={form.maxUses} onChange={e => setForm(f => ({ ...f, maxUses: e.target.value }))} className={inputCls} /></div>
-              <label className="flex items-center gap-2 cursor-pointer col-span-2">
-                <input type="checkbox" checked={form.firstOrderOnly} onChange={e => setForm(f => ({ ...f, firstOrderOnly: e.target.checked }))} className="w-4 h-4 accent-primary" />
-                <span className="text-sm text-text">Yalnız ilk sipariş</span></label>
+                <input type="number" min="1" value={form.maxUses} onChange={e => setForm(f => ({ ...f, maxUses: e.target.value }))} className={inputCls} />
+                <span className="text-[11px] text-secondary">Toplam (tüm müşteriler) kullanım sınırı. Boş = sınırsız.</span></div>
+              <label className="flex items-start gap-2 cursor-pointer col-span-2">
+                <input type="checkbox" checked={form.firstOrderOnly} onChange={e => setForm(f => ({ ...f, firstOrderOnly: e.target.checked }))} className="w-4 h-4 accent-primary mt-0.5" />
+                <span className="text-sm text-text">Yalnız ilk sipariş
+                  <span className="block text-[11px] text-secondary font-normal">Her müşterinin kendi ilk siparişinde geçerli (müşteri başına, sınırsız müşteri). Tek müşteriyle sınırlamak için Maks. Kullanım = 1 kullanın.</span>
+                </span></label>
             </div>
           )}
           {(form.kind === "kupon" || form.kind === "sepet-esikli") && (

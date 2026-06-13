@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { isNonWorkingDay, parseHolidaySet } from "@/lib/holidays";
+import { isNonWorkingDay, isNationalHoliday, parseHolidaySet, toYMD } from "@/lib/holidays";
 
 type Estimate = { acceptedToday: boolean; cutoffHour: number; label: string };
 
@@ -24,29 +24,35 @@ export default function ShippingEstimate({
 
   useEffect(() => {
     const holidays = parseHolidaySet(extraHolidays);
-    // İş günü = hafta sonu değil + resmî tatil değil + ek tatil değil (kargo çalışır)
+    // Kargo çalışır günü = hafta sonu değil + resmî/ek tatil değil
     const isBiz = (d: Date) => !isNonWorkingDay(d, holidays);
+    // Baskı/hazırlık günü = hafta sonu DAHİL (biz hafta sonu baskı yapıyoruz); yalnız resmî/ek tatil hariç
+    const isProd = (d: Date) => !isNationalHoliday(d) && !holidays.has(toYMD(d));
 
     // TR duvar saatini al (kullanıcının cihaz saat dilimi ne olursa olsun)
     const trNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Istanbul" }));
 
-    const acceptedToday = isBiz(trNow) && trNow.getHours() < cutoffHour;
+    const acceptedToday = isProd(trNow) && trNow.getHours() < cutoffHour;
 
-    // Kabul günü: bugün (iş günü + cutoff öncesi) ya da bir sonraki iş günü
+    // Kabul (üretime giriş) günü: bugün (baskı günü + cutoff öncesi) ya da bir sonraki baskı günü
     const acceptance = new Date(trNow);
     acceptance.setHours(0, 0, 0, 0);
     if (!acceptedToday) {
-      do { acceptance.setDate(acceptance.getDate() + 1); } while (!isBiz(acceptance));
+      do { acceptance.setDate(acceptance.getDate() + 1); } while (!isProd(acceptance));
     }
 
-    // Kargoya veriliş: kabul gününden N iş günü sonra (0 = aynı gün → kabul günü)
-    const ship = new Date(acceptance);
+    // Hazırlık: kabulden N baskı günü sonra (hafta sonu sayılır; biz baskıyı hafta sonu da yapıyoruz)
+    const ready = new Date(acceptance);
     let added = 0;
     const target = Math.max(0, dispatchBusinessDays);
     while (added < target) {
-      ship.setDate(ship.getDate() + 1);
-      if (isBiz(ship)) added++;
+      ready.setDate(ready.getDate() + 1);
+      if (isProd(ready)) added++;
     }
+
+    // Kargoya veriliş: hazır olduktan sonraki ilk kargo-çalışan gün (kargo hafta sonu çalışmaz → kayar)
+    const ship = new Date(ready);
+    while (!isBiz(ship)) ship.setDate(ship.getDate() + 1);
 
     const sameYMD = (a: Date, b: Date) =>
       a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();

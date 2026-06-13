@@ -481,7 +481,7 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
                   <>
                     {couponDiscount > 0 && (
                       <div className="flex justify-between text-green-700">
-                        <span>İndirim ({appliedCoupon!.code})</span>
+                        <span>Kupon indirimi ({appliedCoupon!.code})</span>
                         <span className="font-semibold">−{couponDiscount.toLocaleString("tr-TR")} ₺</span>
                       </div>
                     )}
@@ -495,7 +495,7 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
                 ) : (
                   discountAmount > 0 && (
                     <div className="flex justify-between text-green-700">
-                      <span>{couponWins ? `İndirim (${appliedCoupon!.code})` : "Sepet indirimi"}</span>
+                      <span>{couponWins ? `Kupon indirimi (${appliedCoupon!.code})` : "Sepet indirimi"}</span>
                       <span className="font-semibold">−{discountAmount.toLocaleString("tr-TR")} ₺</span>
                     </div>
                   )
