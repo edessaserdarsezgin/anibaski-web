@@ -50,8 +50,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if ("endsAt" in b) mapped.ends_at = b.endsAt || null;
   if ("maxUses" in b) mapped.max_uses = b.maxUses ? Number(b.maxUses) : null;
   if ("firstOrderOnly" in b) mapped.first_order_only = !!b.firstOrderOnly;
+  if ("firstOrderScope" in b) mapped.first_order_scope = b.firstOrderScope === "product" ? "product" : "site";
   if ("priority" in b) mapped.priority = Number(b.priority) || 0;
   if ("code" in b) mapped.code = b.code ? b.code.trim().toUpperCase() : null;
+  if ("badgeColor" in b) mapped.badge_color = b.badgeColor || null;
 
   if (Object.keys(mapped).length) {
     const { error } = await admin.supabase.from("promotions").update(mapped).eq("id", id);

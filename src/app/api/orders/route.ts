@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
   if (paymentMethod === "cod") {
     const [{ data: address }, { data: profile }] = await Promise.all([
       supabase.from("addresses").select("fullName, phone, address, district, city").eq("id", shippingAddressId).single(),
-      supabase.from("profiles").select("phone, notify_delivery_contact").eq("id", user.id).single(),
+      supabase.from("profiles").select("phone, phone_verified, notify_delivery_contact").eq("id", user.id).single(),
     ]);
 
     const itemsText = computedItems.map((item) => {
@@ -201,7 +201,8 @@ export async function POST(req: NextRequest) {
     };
 
     const recipients = new Set<string>();
-    if (profile?.phone) recipients.add(profile.phone);
+    // Yalnız DOĞRULANMIŞ kendi telefonuna bildirim (yanlış/typo numaraya spam gitmesin)
+    if (profile?.phone && profile.phone_verified) recipients.add(profile.phone);
     if (profile?.notify_delivery_contact && address?.phone) recipients.add(address.phone);
 
     recipients.forEach((phone) => notifyOrderCreated({ phone, ...notifyPayload }));

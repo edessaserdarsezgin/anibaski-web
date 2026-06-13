@@ -69,7 +69,8 @@ export async function POST() {
   return NextResponse.json({
     ok: true,
     provider: result.provider,
-    // Mock modunda kullanıcının kodu görmesi için kolaylık — production'da kaldırılmalı
-    ...(result.provider === "mock" && process.env.NODE_ENV !== "production" ? { _devCode: code } : {}),
+    // Mock modunda (Netgsm yokken) kodu UI'da göster — yalnız non-production (local + Vercel preview).
+    // Vercel'de NODE_ENV hep "production" olduğundan VERCEL_ENV ile preview'ı ayırt ederiz; canlıda gizli.
+    ...(result.provider === "mock" && process.env.VERCEL_ENV !== "production" ? { _devCode: code } : {}),
   });
 }

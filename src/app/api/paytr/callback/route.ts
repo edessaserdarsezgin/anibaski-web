@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
       const [{ data: address }, { data: orderItems }, { data: profile }] = await Promise.all([
         adminClient.from("addresses").select("fullName, phone, address, district, city").eq("id", order.addressId).single(),
         adminClient.from("order_items").select("quantity, unitPrice, uploadedImages, variantSelections, product:products(name)").eq("orderId", orderId),
-        adminClient.from("profiles").select("email, fullName, phone, notify_delivery_contact").eq("id", order.userId).single(),
+        adminClient.from("profiles").select("email, fullName, phone, phone_verified, notify_delivery_contact").eq("id", order.userId).single(),
       ]);
 
       // Kupon used_count'u ödeme onayı sonrası atomik artır; limit dolunca pasife al
@@ -107,7 +107,8 @@ export async function POST(req: NextRequest) {
       };
 
       const recipients = new Set<string>();
-      if (profile?.phone) recipients.add(profile.phone);
+      // Yalnız DOĞRULANMIŞ kendi telefonuna bildirim
+      if (profile?.phone && profile.phone_verified) recipients.add(profile.phone);
       if (profile?.notify_delivery_contact && address?.phone) recipients.add(address.phone);
 
       recipients.forEach((phone) => notifyOrderCreated({ phone, ...notifyPayload }));

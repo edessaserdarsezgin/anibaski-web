@@ -30,7 +30,7 @@ async function withItemPromotions<T extends DiscountableRow>(rows: T[]): Promise
     const promoPct = base > 0 && unitPrice < base ? Math.round((1 - unitPrice / base) * 100) : 0;
     const pct = Math.max(ownPct, promoPct);
     const cb = scopedCoupons.find((c) => itemInScope(c, { productId: r.id, categoryId: r.categoryId ?? null }));
-    const couponBadge = cb ? { code: cb.code as string, label: cb.valueType === "percentage" ? `%${cb.value}` : `${cb.value} ₺` } : null;
+    const couponBadge = cb ? { code: cb.code as string, label: cb.valueType === "percentage" ? `%${cb.value}` : `${cb.value} ₺`, color: cb.badgeColor || "#e07a5f" } : null;
     return { ...r, discount_percent: pct > 0 ? pct : null, discount_starts_at: null, discount_ends_at: null, couponBadge };
   });
 }

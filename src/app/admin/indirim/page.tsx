@@ -8,7 +8,8 @@ type Promo = {
   code: string | null; scope: "all" | "products" | "categories";
   value_type: "percentage" | "fixed"; value: number; min_subtotal: number | null;
   starts_at: string | null; ends_at: string | null; max_uses: number | null; used_count: number;
-  first_order_only: boolean; priority: number; is_active: boolean;
+  first_order_only: boolean; first_order_scope?: "site" | "product"; priority: number; is_active: boolean;
+  badge_color?: string | null;
   productIds: string[]; categoryIds: string[];
   linkedCampaigns?: number; linkedBanners?: number; tag_id?: string | null;
 };
@@ -25,7 +26,8 @@ const inputCls = "px-3 py-2 text-sm rounded-lg border border-border bg-white out
 const emptyForm = {
   name: "", kind: "oto-urun" as Kind, scope: "all" as Promo["scope"],
   valueType: "percentage", value: "", code: "", minSubtotal: "", startsAt: "", endsAt: "",
-  maxUses: "", firstOrderOnly: false, priority: "0",
+  maxUses: "", firstOrderOnly: false, firstOrderScope: "site", priority: "0",
+  badgeColor: "#e07a5f",
   productIds: [] as string[], categoryIds: [] as string[],
   useTag: false, tagMode: "new", tagId: "", tagLabel: "", tagColor: "#e07a5f",
 };
@@ -88,6 +90,8 @@ export default function IndirimPage() {
       startsAt: form.startsAt || null, endsAt: form.endsAt || null,
       maxUses: form.kind === "kupon" ? form.maxUses : null,
       firstOrderOnly: form.kind === "kupon" ? form.firstOrderOnly : false,
+      firstOrderScope: form.kind === "kupon" ? form.firstOrderScope : "site",
+      badgeColor: form.kind === "kupon" ? form.badgeColor : null,
       priority: form.priority,
       productIds: form.scope === "products" ? form.productIds : [],
       categoryIds: form.scope === "categories" ? form.categoryIds : [],
@@ -103,7 +107,8 @@ export default function IndirimPage() {
       startsAt: p.starts_at ? p.starts_at.slice(0, 10) : "",
       endsAt: p.ends_at ? p.ends_at.slice(0, 10) : "",
       maxUses: p.max_uses != null ? String(p.max_uses) : "",
-      firstOrderOnly: p.first_order_only, priority: String(p.priority),
+      firstOrderOnly: p.first_order_only, firstOrderScope: p.first_order_scope ?? "site",
+      badgeColor: p.badge_color ?? "#e07a5f", priority: String(p.priority),
       productIds: p.productIds ?? [], categoryIds: p.categoryIds ?? [],
       useTag: !!p.tag_id, tagMode: p.tag_id ? "existing" : "new", tagId: p.tag_id ?? "", tagLabel: "", tagColor: "#e07a5f",
     });
@@ -223,11 +228,27 @@ export default function IndirimPage() {
               <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">Maks. Kullanım (ops.)</label>
                 <input type="number" min="1" value={form.maxUses} onChange={e => setForm(f => ({ ...f, maxUses: e.target.value }))} className={inputCls} />
                 <span className="text-[11px] text-secondary">Toplam (tüm müşteriler) kullanım sınırı. Boş = sınırsız.</span></div>
+              <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">Rozet Rengi (ürün kartı)</label>
+                <div className="flex items-center gap-2">
+                  <input type="color" value={form.badgeColor} onChange={e => setForm(f => ({ ...f, badgeColor: e.target.value }))} className="w-10 h-10 rounded-lg border border-border cursor-pointer p-0.5 bg-white shrink-0" />
+                  <span className="text-[11px] font-semibold rounded-full px-2 py-0.5 border whitespace-nowrap"
+                    style={{ color: form.badgeColor, backgroundColor: `${form.badgeColor}1a`, borderColor: `${form.badgeColor}33` }}>
+                    🎟️ {form.code || "KOD"} ile {form.valueType === "percentage" ? `%${form.value || "X"}` : `${form.value || "X"} ₺`}
+                  </span>
+                </div></div>
               <label className="flex items-start gap-2 cursor-pointer col-span-2">
                 <input type="checkbox" checked={form.firstOrderOnly} onChange={e => setForm(f => ({ ...f, firstOrderOnly: e.target.checked }))} className="w-4 h-4 accent-primary mt-0.5" />
                 <span className="text-sm text-text">Yalnız ilk sipariş
-                  <span className="block text-[11px] text-secondary font-normal">Her müşterinin kendi ilk siparişinde geçerli (müşteri başına, sınırsız müşteri). Tek müşteriyle sınırlamak için Maks. Kullanım = 1 kullanın.</span>
+                  <span className="block text-[11px] text-secondary font-normal">Müşteri başına geçerli (sınırsız müşteri). Tek müşteriyle sınırlamak için Maks. Kullanım = 1.</span>
                 </span></label>
+              {form.firstOrderOnly && (
+                <div className="flex flex-col gap-1.5 col-span-2"><label className="text-xs font-semibold text-text">İlk sipariş kapsamı</label>
+                  <select value={form.firstOrderScope} onChange={e => setForm(f => ({ ...f, firstOrderScope: e.target.value }))} className={inputCls}>
+                    <option value="site">Müşterinin sitedeki ilk siparişi</option>
+                    <option value="product">Müşterinin bu kapsamdaki üründe ilk siparişi</option>
+                  </select>
+                  <span className="text-[11px] text-secondary">&quot;Üründe ilk sipariş&quot; için kuponu Ürün/Kategori kapsamına ayarlayın; müşteri o ürünü daha önce almadıysa geçerli.</span></div>
+              )}
             </div>
           )}
           {(form.kind === "kupon" || form.kind === "sepet-esikli") && (

@@ -72,6 +72,8 @@ export async function POST(req: NextRequest) {
     starts_at: b.startsAt || null, ends_at: b.endsAt || null,
     max_uses: b.maxUses ? Number(b.maxUses) : null,
     first_order_only: !!b.firstOrderOnly, priority: Number(b.priority) || 0,
+    badge_color: trigger === "code" ? (b.badgeColor || null) : null,
+    first_order_scope: trigger === "code" && b.firstOrderScope === "product" ? "product" : "site",
   }).select("id").single();
 
   if (error || !created) return NextResponse.json({ error: error?.message ?? "Oluşturulamadı." }, { status: 500 });

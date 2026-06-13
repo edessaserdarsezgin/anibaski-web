@@ -17,6 +17,7 @@ function mapRow(r: Row, prodMap: Map<string, string[]>, catMap: Map<string, stri
     maxUses: r.max_uses == null ? null : Number(r.max_uses), usedCount: Number(r.used_count ?? 0),
     firstOrderOnly: !!r.first_order_only, priority: Number(r.priority ?? 0),
     productIds: prodMap.get(id) ?? [], categoryIds: catMap.get(id) ?? [],
+    badgeColor: (r.badge_color as string) ?? null,
   };
 }
 
@@ -163,6 +164,23 @@ export async function hasPriorOrder(userId: string): Promise<boolean> {
   return (count ?? 0) > 0;
 }
 
+/**
+ * Üyenin GERÇEKLEŞMİŞ siparişlerinde bu ürünlerden biri var mı? (üründe-ilk-sipariş kuponu)
+ * productIds boşsa site geneli ilk-siparişe düşer.
+ */
+export async function hasPriorOrderForProducts(userId: string, productIds: string[]): Promise<boolean> {
+  if (!productIds.length) return hasPriorOrder(userId);
+  const db = createAdminClient();
+  const { data: orders } = await db.from("orders").select("id")
+    .eq("userId", userId)
+    .or("paymentStatus.eq.paid,and(paymentMethod.eq.cod,status.in.(PREPARING,SHIPPED,DELIVERED))");
+  const orderIds = (orders ?? []).map((o) => o.id as string);
+  if (!orderIds.length) return false;
+  const { count } = await db.from("order_items").select("id", { count: "exact", head: true })
+    .in("orderId", orderIds).in("productId", productIds);
+  return (count ?? 0) > 0;
+}
+
 export type CouponResult =
   | { ok: true; promo: Promotion; amount: number }
   | { ok: false; error: string };
@@ -197,7 +215,16 @@ export async function validateCoupon(
   if (promo.maxUses !== null && promo.usedCount >= promo.maxUses) return { ok: false, error: "Bu kupon kullanım limitine ulaşmış." };
   if (promo.minSubtotal && subtotal < promo.minSubtotal)
     return { ok: false, error: `Bu kupon için minimum sipariş tutarı ${promo.minSubtotal.toLocaleString("tr-TR")} ₺.` };
-  if (promo.firstOrderOnly && await hasPriorOrder(userId)) return { ok: false, error: "Bu kupon yalnızca ilk siparişte geçerli." };
+  if (promo.firstOrderOnly) {
+    const scopeKind = (row.first_order_scope as string) ?? "site";
+    if (scopeKind === "product") {
+      const scopePids = await promotionScopeProductIds(db, row.id as string, promo.scope);
+      if (await hasPriorOrderForProducts(userId, scopePids))
+        return { ok: false, error: "Bu kupon yalnızca bu üründeki ilk siparişinizde geçerli." };
+    } else if (await hasPriorOrder(userId)) {
+      return { ok: false, error: "Bu kupon yalnızca ilk siparişte geçerli." };
+    }
+  }
   const amount = cartPromoAmount(promo, items);
   if (amount <= 0) return { ok: false, error: "Bu kupon sepetinizdeki ürünlerde geçerli değil." };
   return { ok: true, promo, amount };

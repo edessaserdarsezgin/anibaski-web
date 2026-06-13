@@ -21,7 +21,7 @@ type Props = {
     discount_percent?: number | null;
     discount_starts_at?: string | null;
     discount_ends_at?: string | null;
-    couponBadge?: { code: string; label: string } | null;
+    couponBadge?: { code: string; label: string; color?: string } | null;
   };
   priority?: boolean;
   showDescription?: boolean;
@@ -105,7 +105,14 @@ export default function ProductCard({ product, priority = false, showDescription
             }}
           />
           {product.couponBadge && (
-            <p className="mt-1.5 text-[11px] font-semibold text-primary bg-primary/10 border border-primary/20 rounded-full px-2 py-0.5 w-fit">
+            <p
+              className="mt-1.5 text-[11px] font-semibold rounded-full px-2 py-0.5 w-fit border"
+              style={{
+                color: product.couponBadge.color ?? "#e07a5f",
+                backgroundColor: `${product.couponBadge.color ?? "#e07a5f"}1a`,
+                borderColor: `${product.couponBadge.color ?? "#e07a5f"}33`,
+              }}
+            >
               🎟️ {product.couponBadge.code} ile {product.couponBadge.label}
             </p>
           )}
