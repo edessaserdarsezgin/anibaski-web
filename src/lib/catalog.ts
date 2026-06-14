@@ -51,6 +51,22 @@ export const getHomeCategories = unstable_cache(
   { tags: ["categories"] }
 );
 
+// 1b. Nav Categories — tüm ana (üst seviye) kategoriler; site geneli ikon şeridi için
+export const getNavCategories = unstable_cache(
+  async () => {
+    const db = createAdminClient();
+    const { data } = await db
+      .from("categories")
+      .select('id, name, slug, "imageUrl", "parentId"')
+      .order("name");
+    return (data ?? [])
+      .filter((c) => !(c as { parentId?: string | null }).parentId)
+      .map((c) => ({ id: c.id as string, name: c.name as string, slug: c.slug as string, imageUrl: (c as { imageUrl?: string | null }).imageUrl ?? null }));
+  },
+  ["nav-categories"],
+  { tags: ["categories"] }
+);
+
 // 2. Products by Category IDs (for home rows)
 export const getCategoryProductsForHome = unstable_cache(
   async (categoryIds: string[]) => {

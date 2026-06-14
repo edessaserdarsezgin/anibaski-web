@@ -4,7 +4,6 @@ import { getShippingSettings } from "@/lib/shipping";
 import HomeCategoryRows from "@/components/home/HomeCategoryRows";
 import FeaturedStrip from "@/components/home/FeaturedStrip";
 import HeroBanner from "@/components/home/HeroBanner";
-import CategoryIconStrip from "@/components/home/CategoryIconStrip";
 import FlashDealsStrip from "@/components/home/FlashDealsStrip";
 import CampaignTiles from "@/components/home/CampaignTiles";
 import ReprintStrip from "@/components/home/ReprintStrip";
@@ -197,10 +196,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* 2. Kategori ikon şeridi */}
-        <CategoryIconStrip categories={homeCats} />
-
-        {/* 3. Kampanya slider */}
+        {/* 2. Kampanya slider */}
         <HeroBanner banners={heroBanners} />
 
         {/* 4. Süreli fırsatlar */}
