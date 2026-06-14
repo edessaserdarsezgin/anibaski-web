@@ -4,11 +4,20 @@ import { getShippingSettings } from "@/lib/shipping";
 import HomeCategoryRows from "@/components/home/HomeCategoryRows";
 import FeaturedStrip from "@/components/home/FeaturedStrip";
 import HeroBanner from "@/components/home/HeroBanner";
+import CategoryIconStrip from "@/components/home/CategoryIconStrip";
+import FlashDealsStrip from "@/components/home/FlashDealsStrip";
+import CampaignTiles from "@/components/home/CampaignTiles";
+import ReprintStrip from "@/components/home/ReprintStrip";
+import RecentlyViewed from "@/components/home/RecentlyViewed";
+import { createClient } from "@/lib/supabase/server";
 import {
   getHomeCategories,
   getCategoryProductsForHome,
   getFeaturedProducts,
-  getHeroBanners
+  getHeroBanners,
+  getFlashDeals,
+  getCampaignTiles,
+  getReprintSuggestions
 } from "@/lib/catalog";
 
 export const metadata: Metadata = {
@@ -26,11 +35,17 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const { freeShippingThreshold } = await getShippingSettings();
 
-  const [homeCats, featRaw, bannerRaw] = await Promise.all([
+  const [homeCats, featRaw, bannerRaw, flash, campaignTiles] = await Promise.all([
     getHomeCategories(),
     getFeaturedProducts(12),
     getHeroBanners(),
+    getFlashDeals(8),
+    getCampaignTiles(),
   ]);
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const reprint = user ? await getReprintSuggestions(user.id, 8) : [];
 
   type CatRowProduct = { id: string; name: string; slug: string; basePrice: number; images: string[] | null; discount_percent: number | null; discount_starts_at: string | null; discount_ends_at: string | null; productTags?: { tagId: string; position: string; tag: { name: string; color: string } }[] | null };
   let catRows: { id: string; name: string; slug: string; products: CatRowProduct[] }[] = [];
@@ -79,8 +94,6 @@ export default async function HomePage() {
       `}</style>
 
       <div className="overflow-hidden">
-
-        <HeroBanner banners={heroBanners} />
 
         {/* ── Hero ──────────────────────────────────────── */}
         <section className="relative min-h-[92vh] flex items-center bg-bg">
@@ -184,6 +197,21 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {/* 2. Kategori ikon şeridi */}
+        <CategoryIconStrip categories={homeCats} />
+
+        {/* 3. Kampanya slider */}
+        <HeroBanner banners={heroBanners} />
+
+        {/* 4. Süreli fırsatlar */}
+        <FlashDealsStrip
+          products={flash.products as unknown as Parameters<typeof FlashDealsStrip>[0]["products"]}
+          endsAt={flash.endsAt}
+        />
+
+        {/* 5. Kampanya kartları */}
+        <CampaignTiles tiles={campaignTiles} />
+
         {/* ── Nasıl Çalışır ─────────────────────────────── */}
         <section className="py-28 px-8 bg-white border-y border-border">
           <div className="max-w-5xl mx-auto">
@@ -264,6 +292,10 @@ export default async function HomePage() {
             )}
           </div>
         </section>
+
+        {/* 8. Tekrar Bas + Son baktıkların */}
+        <ReprintStrip products={reprint as unknown as Parameters<typeof ReprintStrip>[0]["products"]} />
+        <RecentlyViewed />
 
         <FeaturedStrip products={featured} />
 
