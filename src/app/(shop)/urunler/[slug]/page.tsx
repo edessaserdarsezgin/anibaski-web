@@ -15,6 +15,7 @@ import {
   getRelatedProductsSameCategory,
   getRelatedProductsFallback
 } from "@/lib/catalog";
+import TrackRecentlyViewed from "@/components/product/TrackRecentlyViewed";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -96,6 +97,9 @@ export default async function UrunDetayPage({ params }: Props) {
 
   return (
     <>
+      <TrackRecentlyViewed
+        item={{ slug: product.slug, name: product.name, image: product.images?.[0] ?? null, price: Number(product.basePrice) }}
+      />
       {/* ── Breadcrumb ──────────────────────────────── */}
       <div className="border-b border-border bg-bg">
         <div className="max-w-7xl mx-auto px-8 py-3.5">

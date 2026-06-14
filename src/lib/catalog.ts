@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getActiveItemPromotions, getActiveCouponPromotions } from "@/lib/promotions";
 import { bestItemDiscount, itemInScope, isDateValid } from "@/lib/promotionsCalc";
+import type { Promotion } from "@/lib/promotionsCalc";
 import { activeDiscountPercent } from "@/lib/pricing";
 
 type DiscountableRow = {
@@ -41,7 +42,7 @@ export const getHomeCategories = unstable_cache(
     const db = createAdminClient();
     const { data } = await db
       .from("categories")
-      .select("id, name, slug")
+      .select('id, name, slug, "imageUrl"')
       .eq("show_on_home", true)
       .order("home_position", { ascending: true });
     return data ?? [];
@@ -84,6 +85,66 @@ export const getFeaturedProducts = unstable_cache(
   ["featured-products"],
   { tags: ["products", "promotions"] }
 );
+
+// 3b. Flash Deals — süreli (discount_ends_at gelecekte) indirimli ürünler + en yakın bitiş
+export const getFlashDeals = unstable_cache(
+  async (limit: number = 8) => {
+    const db = createAdminClient();
+    const nowIso = new Date().toISOString();
+    const { data } = await db
+      .from("products_with_order_count")
+      .select("id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color, is_active))")
+      .eq("isActive", true)
+      .gt("discount_percent", 0)
+      .not("discount_ends_at", "is", null)
+      .gt("discount_ends_at", nowIso)
+      .order("discount_ends_at", { ascending: true })
+      .limit(limit);
+    const rows = data ?? [];
+    const endsAt = rows.length ? (rows[0].discount_ends_at as string) : null;
+    const products = await withItemPromotions(rows);
+    return { products, endsAt };
+  },
+  ["flash-deals"],
+  { tags: ["products", "promotions"] }
+);
+
+// 3c. Campaign Tiles — aktif promosyonlardan türetilen kampanya kartları (yeni admin işi yok)
+export type CampaignTile = { id: string; kind: "promo" | "coupon"; title: string; label: string; code: string | null; color: string; href: string };
+
+export const getCampaignTiles = unstable_cache(
+  async (): Promise<CampaignTile[]> => {
+    const [items, coupons] = await Promise.all([getActiveItemPromotions(), getActiveCouponPromotions()]);
+    const fmt = (p: Promotion) => (p.valueType === "percentage" ? `%${p.value}` : `${p.value} ₺`);
+    const itemTiles: CampaignTile[] = items
+      .filter((p) => isDateValid(p))
+      .map((p) => ({ id: p.id, kind: "promo", title: p.name, label: fmt(p), code: null, color: p.badgeColor || "#e07a5f", href: "/urunler" }));
+    const couponTiles: CampaignTile[] = coupons
+      .filter((c) => isDateValid(c) && !!c.code)
+      .map((c) => ({ id: c.id, kind: "coupon", title: c.name, label: fmt(c), code: c.code as string, color: c.badgeColor || "#f2cc8f", href: "/urunler" }));
+    return [...itemTiles, ...couponTiles].slice(0, 4);
+  },
+  ["campaign-tiles"],
+  { tags: ["promotions"] }
+);
+
+// 3d. Reprint Suggestions — kullanıcının daha önce sipariş ettiği aktif ürünler (yeni paid print)
+export async function getReprintSuggestions(userId: string, limit: number = 8) {
+  const db = createAdminClient();
+  const { data: orders } = await db.from("orders").select("id").eq("userId", userId);
+  const orderIds = (orders ?? []).map((o) => o.id as string);
+  if (!orderIds.length) return [];
+  const { data: oi } = await db.from("order_items").select('"productId"').in("orderId", orderIds);
+  const pids = [...new Set((oi ?? []).map((i) => (i as { productId: string | null }).productId).filter(Boolean) as string[])];
+  if (!pids.length) return [];
+  const { data } = await db
+    .from("products_with_order_count")
+    .select("id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color, is_active))")
+    .in("id", pids)
+    .eq("isActive", true)
+    .limit(limit);
+  return withItemPromotions(data ?? []);
+}
 
 // 4. Hero Banners
 export const getHeroBanners = unstable_cache(
