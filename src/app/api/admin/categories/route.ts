@@ -8,7 +8,7 @@ export async function GET() {
 
   const { data, error } = await admin.supabase
     .from("categories")
-    .select("id, name, slug, description, parentId, show_on_home, home_position")
+    .select("id, name, slug, description, parentId, imageUrl, show_on_home, home_position")
     .order("name");
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -19,11 +19,11 @@ export async function POST(req: NextRequest) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { name, slug, description, parentId } = await req.json();
+  const { name, slug, description, parentId, imageUrl } = await req.json();
 
   const { data, error } = await admin.supabase
     .from("categories")
-    .insert({ name, slug, description: description || null, parentId: parentId || null })
+    .insert({ name, slug, description: description || null, parentId: parentId || null, imageUrl: imageUrl || null })
     .select()
     .single();
 
@@ -38,11 +38,11 @@ export async function PATCH(req: NextRequest) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { id, name, slug, description, parentId, show_on_home, home_position } = await req.json();
+  const { id, name, slug, description, parentId, imageUrl, show_on_home, home_position } = await req.json();
 
   const { error } = await admin.supabase
     .from("categories")
-    .update({ name, slug, description: description || null, parentId: parentId || null, show_on_home: !!show_on_home, home_position: Number.isFinite(Number(home_position)) ? Number(home_position) : 0 })
+    .update({ name, slug, description: description || null, parentId: parentId || null, imageUrl: imageUrl || null, show_on_home: !!show_on_home, home_position: Number.isFinite(Number(home_position)) ? Number(home_position) : 0 })
     .eq("id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

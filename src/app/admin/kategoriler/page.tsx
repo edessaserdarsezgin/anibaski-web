@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type Category = { id: string; name: string; slug: string; description: string | null; parentId: string | null; show_on_home?: boolean; home_position?: number };
+type Category = { id: string; name: string; slug: string; description: string | null; parentId: string | null; imageUrl?: string | null; show_on_home?: boolean; home_position?: number };
 
 const TR_MAP: Record<string, string> = {
   ç: "c", ğ: "g", ı: "i", İ: "i", ö: "o", ş: "s", ü: "u",
@@ -14,14 +14,50 @@ function slugify(text: string) {
     .toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+/** Kategori görseli yükleme alanı — yeni ve düzenle formlarında ortak (DRY). */
+function ImageField({ value, uploading, onUpload, onClear }: {
+  value: string; uploading: boolean; onUpload: (f: File) => void; onClear: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      {value ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={value} alt="" className="w-14 h-14 rounded-lg object-cover border border-border" />
+      ) : (
+        <div className="w-14 h-14 rounded-lg border border-dashed border-border flex items-center justify-center text-[10px] text-text-light text-center px-1">Görsel yok</div>
+      )}
+      <label className="text-sm text-primary font-semibold cursor-pointer hover:underline">
+        {uploading ? "Yükleniyor..." : value ? "Değiştir" : "Görsel Yükle"}
+        <input type="file" accept="image/*" className="hidden" disabled={uploading}
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) onUpload(f); e.target.value = ""; }} />
+      </label>
+      {value && <button type="button" onClick={onClear} className="text-xs text-red-500 hover:underline">Kaldır</button>}
+    </div>
+  );
+}
+
 export default function AdminKategorilerPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ name: "", slug: "", description: "", parentId: "" });
+  const [form, setForm] = useState({ name: "", slug: "", description: "", parentId: "", imageUrl: "" });
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", slug: "", description: "", parentId: "", show_on_home: false, home_position: 0 });
+  const [editForm, setEditForm] = useState({ name: "", slug: "", description: "", parentId: "", imageUrl: "", show_on_home: false, home_position: 0 });
+
+  async function uploadImage(file: File): Promise<string | null> {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setError(d.error ?? "Görsel yüklenemedi.");
+      return null;
+    }
+    const d = await res.json();
+    return d.url as string;
+  }
 
   async function load() {
     const res = await fetch("/api/admin/categories");
@@ -38,13 +74,13 @@ export default function AdminKategorilerPage() {
     const res = await fetch("/api/admin/categories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: form.name, slug: form.slug, description: form.description, parentId: form.parentId || null }),
+      body: JSON.stringify({ name: form.name, slug: form.slug, description: form.description, parentId: form.parentId || null, imageUrl: form.imageUrl || null }),
     });
     if (!res.ok) {
       const data = await res.json();
       setError(data.error ?? "Hata oluştu.");
     } else {
-      setForm({ name: "", slug: "", description: "", parentId: "" });
+      setForm({ name: "", slug: "", description: "", parentId: "", imageUrl: "" });
       await load();
     }
     setSaving(false);
@@ -52,14 +88,14 @@ export default function AdminKategorilerPage() {
 
   function startEdit(cat: Category) {
     setEditingId(cat.id);
-    setEditForm({ name: cat.name, slug: cat.slug, description: cat.description ?? "", parentId: cat.parentId ?? "", show_on_home: cat.show_on_home ?? false, home_position: cat.home_position ?? 0 });
+    setEditForm({ name: cat.name, slug: cat.slug, description: cat.description ?? "", parentId: cat.parentId ?? "", imageUrl: cat.imageUrl ?? "", show_on_home: cat.show_on_home ?? false, home_position: cat.home_position ?? 0 });
   }
 
   async function handleUpdate(id: string) {
     await fetch("/api/admin/categories", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, name: editForm.name, slug: editForm.slug, description: editForm.description, parentId: editForm.parentId || null, show_on_home: editForm.show_on_home, home_position: editForm.home_position }),
+      body: JSON.stringify({ id, name: editForm.name, slug: editForm.slug, description: editForm.description, parentId: editForm.parentId || null, imageUrl: editForm.imageUrl || null, show_on_home: editForm.show_on_home, home_position: editForm.home_position }),
     });
     setEditingId(null);
     await load();
@@ -114,6 +150,12 @@ export default function AdminKategorilerPage() {
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               className={inputCls} placeholder="Açıklama (opsiyonel)"
             />
+            <ImageField
+              value={form.imageUrl}
+              uploading={uploading}
+              onUpload={async (f) => { setUploading(true); const url = await uploadImage(f); if (url) setForm(fm => ({ ...fm, imageUrl: url })); setUploading(false); }}
+              onClear={() => setForm(fm => ({ ...fm, imageUrl: "" }))}
+            />
             <select
               value={form.parentId}
               onChange={e => setForm(f => ({ ...f, parentId: e.target.value }))}
@@ -151,6 +193,12 @@ export default function AdminKategorilerPage() {
                         <input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} className={inputCls + " w-full"} />
                         <input value={editForm.slug} onChange={e => setEditForm(f => ({ ...f, slug: e.target.value }))} className={inputCls + " w-full"} />
                         <input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className={inputCls + " w-full"} placeholder="Açıklama" />
+                        <ImageField
+                          value={editForm.imageUrl}
+                          uploading={uploading}
+                          onUpload={async (f) => { setUploading(true); const url = await uploadImage(f); if (url) setEditForm(fm => ({ ...fm, imageUrl: url })); setUploading(false); }}
+                          onClear={() => setEditForm(fm => ({ ...fm, imageUrl: "" }))}
+                        />
                         <select value={editForm.parentId} onChange={e => setEditForm(f => ({ ...f, parentId: e.target.value }))} className={inputCls}>
                           <option value="">Ana kategori</option>
                           {parents.filter(p => p.id !== cat.id).map(p => (
@@ -178,6 +226,10 @@ export default function AdminKategorilerPage() {
                         <div className={isChild ? "pl-4 border-l-2 border-primary/30" : ""}>
                           <div className="flex items-center gap-2">
                             {isChild && <span className="text-xs text-primary/60">↳</span>}
+                            {cat.imageUrl && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={cat.imageUrl} alt="" className="w-7 h-7 rounded-md object-cover border border-border" />
+                            )}
                             <p className="text-sm font-semibold text-text">{cat.name}</p>
                           </div>
                           <p className="text-xs text-text-light">{cat.slug}</p>
