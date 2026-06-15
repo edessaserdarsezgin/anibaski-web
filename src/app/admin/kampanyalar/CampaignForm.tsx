@@ -22,6 +22,7 @@ type Props = {
     starts_at: string;
     ends_at: string;
     position: number;
+    placement: string;
   };
   categories: Category[];
   products: Product[];
@@ -40,6 +41,7 @@ const DEFAULT = {
   starts_at: "",
   ends_at: "",
   position: 0,
+  placement: "hero",
 };
 
 function slugify(s: string): string {
@@ -96,6 +98,7 @@ export default function CampaignForm({ initial, categories, products, coupons }:
       coupon_code: form.coupon_code || null,
       subtitle: form.subtitle || null,
       description: form.description || null,
+      placement: form.placement === "card" ? "card" : "hero",
     };
 
     const url = initial?.id ? `/api/admin/campaigns/${initial.id}` : "/api/admin/campaigns";
@@ -119,6 +122,22 @@ export default function CampaignForm({ initial, categories, products, coupons }:
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5 max-w-3xl">
+      {/* Yerleşim */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-sm font-semibold text-text">Yerleşim</label>
+        <select
+          value={form.placement}
+          onChange={(e) => setForm({ ...form, placement: e.target.value })}
+          className={inputCls + " cursor-pointer"}
+        >
+          <option value="hero">Hero Banner (üst slider)</option>
+          <option value="card">Kampanya Kartı (ana sayfa ızgara)</option>
+        </select>
+        <p className="text-xs text-text-light">
+          Hero: sayfanın üstündeki büyük slider. Kart: ana sayfadaki görselli kampanya ızgarası.
+        </p>
+      </div>
+
       {/* Görsel */}
       <div className="flex flex-col gap-2">
         <label className="text-sm font-semibold text-text">Görsel <span className="text-red-500">*</span></label>
