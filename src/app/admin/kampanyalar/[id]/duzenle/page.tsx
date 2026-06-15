@@ -40,6 +40,7 @@ export default async function KampanyaDuzenlePage({ params }: Props) {
     starts_at: toDatetimeLocal(campaign.starts_at),
     ends_at: toDatetimeLocal(campaign.ends_at),
     position: campaign.position ?? 0,
+    placement: (campaign.placement as string) ?? "hero",
   };
 
   return (
