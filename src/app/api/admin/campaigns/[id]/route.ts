@@ -15,6 +15,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   });
   if ("is_active" in body) updates.is_active = body.is_active;
   if ("show_on_home" in body) updates.show_on_home = body.show_on_home;
+  if ("placement" in body) updates.placement = body.placement === "card" ? "card" : "hero";
   updates.updated_at = new Date().toISOString();
 
   if (Object.keys(updates).length <= 1) {

@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
       position: body.position ?? 0,
       is_active: body.is_active ?? true,
       show_on_home: body.show_on_home ?? false,
+      placement: body.placement === "card" ? "card" : "hero",
     })
     .select()
     .single();
