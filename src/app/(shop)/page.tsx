@@ -15,7 +15,7 @@ import {
   getFeaturedProducts,
   getHeroBanners,
   getFlashDeals,
-  getCampaignTiles,
+  getCampaignCards,
   getReprintSuggestions
 } from "@/lib/catalog";
 
@@ -34,12 +34,12 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const { freeShippingThreshold } = await getShippingSettings();
 
-  const [homeCats, featRaw, bannerRaw, flash, campaignTiles] = await Promise.all([
+  const [homeCats, featRaw, bannerRaw, flash, campaignCards] = await Promise.all([
     getHomeCategories(),
     getFeaturedProducts(12),
     getHeroBanners(),
     getFlashDeals(8),
-    getCampaignTiles(),
+    getCampaignCards(),
   ]);
 
   const supabase = await createClient();
@@ -206,7 +206,7 @@ export default async function HomePage() {
         />
 
         {/* 5. Kampanya kartları */}
-        <CampaignTiles tiles={campaignTiles} />
+        <CampaignTiles cards={campaignCards} />
 
         {/* ── Nasıl Çalışır ─────────────────────────────── */}
         <section className="py-28 px-8 bg-white border-y border-border">
