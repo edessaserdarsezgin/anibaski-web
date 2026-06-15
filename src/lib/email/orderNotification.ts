@@ -1,7 +1,9 @@
 import { Resend } from "resend";
 import { signUploadedImages } from "@/lib/uploads";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 type OrderItem = {
   productName: string;
@@ -157,7 +159,7 @@ export async function sendOrderNotification(params: Params) {
 
   const fromAddress = process.env.EMAIL_FROM || "AnıBaskı <onboarding@resend.dev>";
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: fromAddress,
     to: adminEmail,
     subject: `Yeni Sipariş #${shortId}${totalPhotos > 0 ? ` — ${totalPhotos} fotoğraf` : ""}`,

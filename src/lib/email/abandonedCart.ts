@@ -1,6 +1,8 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 type Item = {
   productName: string;
@@ -102,7 +104,7 @@ export async function sendAbandonedCartEmail(params: Params) {
 </body>
 </html>`;
 
-  const result = await resend.emails.send({ from, to, subject, html });
+  const result = await getResend().emails.send({ from, to, subject, html });
   if (result.error) {
     console.error("[abandonedCart] Resend hatası:", JSON.stringify(result.error));
   } else {
