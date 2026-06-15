@@ -20,6 +20,7 @@ type Campaign = {
   is_active: boolean;
   show_on_home: boolean;
   position: number;
+  placement: string;
 };
 
 export default async function AdminKampanyalarPage() {
@@ -54,6 +55,7 @@ export default async function AdminKampanyalarPage() {
               <tr className="text-text-light">
                 <th className="text-left px-6 py-3 font-semibold">Kampanya</th>
                 <th className="text-left px-4 py-3 font-semibold">Kupon</th>
+                <th className="text-left px-4 py-3 font-semibold">Yerleşim</th>
                 <th className="text-left px-4 py-3 font-semibold">Tarih</th>
                 <th className="text-center px-4 py-3 font-semibold">Sıra</th>
                 <th className="text-center px-4 py-3 font-semibold">Ana Sayfa</th>
@@ -76,6 +78,11 @@ export default async function AdminKampanyalarPage() {
                     </div>
                   </td>
                   <td className="px-4 py-4 text-xs font-mono text-primary">{c.coupon_code ?? "—"}</td>
+                  <td className="px-4 py-4">
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${c.placement === "card" ? "bg-accent/25 text-text" : "bg-primary/10 text-primary"}`}>
+                      {c.placement === "card" ? "Kart" : "Hero"}
+                    </span>
+                  </td>
                   <td className="px-4 py-4 text-xs text-text-light">
                     {c.starts_at && <p>Başlangıç: {new Date(c.starts_at).toLocaleDateString("tr-TR")}</p>}
                     {c.ends_at && <p>Bitiş: {new Date(c.ends_at).toLocaleDateString("tr-TR")}</p>}
