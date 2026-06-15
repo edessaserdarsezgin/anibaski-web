@@ -2,7 +2,6 @@ import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getActiveItemPromotions, getActiveCouponPromotions } from "@/lib/promotions";
 import { bestItemDiscount, itemInScope, isDateValid } from "@/lib/promotionsCalc";
-import type { Promotion } from "@/lib/promotionsCalc";
 import { activeDiscountPercent } from "@/lib/pricing";
 
 type DiscountableRow = {
@@ -125,23 +124,47 @@ export const getFlashDeals = unstable_cache(
   { tags: ["products", "promotions"] }
 );
 
-// 3c. Campaign Tiles — aktif promosyonlardan türetilen kampanya kartları (yeni admin işi yok)
-export type CampaignTile = { id: string; kind: "promo" | "coupon"; title: string; label: string; code: string | null; color: string; href: string };
+// 3c. Campaign Cards — admin'in elle seçtiği görselli kampanya kartları (placement='card')
+export type CampaignCard = {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  image_url: string;
+  cta_text: string | null;
+  cta_url: string;
+  coupon_code: string | null;
+};
 
-export const getCampaignTiles = unstable_cache(
-  async (): Promise<CampaignTile[]> => {
-    const [items, coupons] = await Promise.all([getActiveItemPromotions(), getActiveCouponPromotions()]);
-    const fmt = (p: Promotion) => (p.valueType === "percentage" ? `%${p.value}` : `${p.value} ₺`);
-    const itemTiles: CampaignTile[] = items
-      .filter((p) => isDateValid(p))
-      .map((p) => ({ id: p.id, kind: "promo", title: p.name, label: fmt(p), code: null, color: p.badgeColor || "#e07a5f", href: "/urunler" }));
-    const couponTiles: CampaignTile[] = coupons
-      .filter((c) => isDateValid(c) && !!c.code)
-      .map((c) => ({ id: c.id, kind: "coupon", title: c.name, label: fmt(c), code: c.code as string, color: c.badgeColor || "#f2cc8f", href: "/urunler" }));
-    return [...itemTiles, ...couponTiles].slice(0, 4);
+export const getCampaignCards = unstable_cache(
+  async (): Promise<CampaignCard[]> => {
+    const db = createAdminClient();
+    const nowIso = new Date().toISOString();
+    const { data } = await db
+      .from("campaigns")
+      .select("id, title, subtitle, image_url, cta_text, cta_url, coupon_code, starts_at, ends_at")
+      .eq("placement", "card")
+      .eq("is_active", true)
+      .eq("show_on_home", true)
+      .order("position", { ascending: true })
+      .order("created_at", { ascending: false });
+    return (data ?? [])
+      .filter(
+        (c) =>
+          (!c.starts_at || (c.starts_at as string) <= nowIso) &&
+          (!c.ends_at || (c.ends_at as string) >= nowIso)
+      )
+      .map((c) => ({
+        id: c.id as string,
+        title: c.title as string,
+        subtitle: (c.subtitle as string | null) ?? null,
+        image_url: c.image_url as string,
+        cta_text: (c.cta_text as string | null) ?? null,
+        cta_url: c.cta_url as string,
+        coupon_code: (c.coupon_code as string | null) ?? null,
+      }));
   },
-  ["campaign-tiles"],
-  { tags: ["promotions"] }
+  ["campaign-cards"],
+  { tags: ["campaigns"] }
 );
 
 // 3d. Reprint Suggestions — kullanıcının daha önce sipariş ettiği aktif ürünler (yeni paid print)
@@ -170,6 +193,7 @@ export const getHeroBanners = unstable_cache(
       .from("campaigns")
       .select("id, image_url, title, subtitle, cta_text, cta_url, starts_at, ends_at")
       .eq("show_on_home", true)
+      .eq("placement", "hero")
       .eq("is_active", true)
       .order("position", { ascending: true });
     return data ?? [];
