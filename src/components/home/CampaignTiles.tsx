@@ -1,8 +1,9 @@
 import Link from "next/link";
-import type { CampaignTile } from "@/lib/catalog";
+import Image from "next/image";
+import type { CampaignCard } from "@/lib/catalog";
 
-export default function CampaignTiles({ tiles }: { tiles: CampaignTile[] }) {
-  if (!tiles.length) return null;
+export default function CampaignTiles({ cards }: { cards: CampaignCard[] }) {
+  if (!cards.length) return null;
   return (
     <section className="py-16 px-4 sm:px-8 bg-white border-y border-border">
       <div className="max-w-7xl mx-auto">
@@ -11,19 +12,31 @@ export default function CampaignTiles({ tiles }: { tiles: CampaignTile[] }) {
           <h2 className="font-serif text-3xl md:text-4xl text-text">Kampanyalar</h2>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {tiles.map((t) => (
+          {cards.map((c) => (
             <Link
-              key={t.id}
-              href={t.href}
-              className="group relative overflow-hidden rounded-3xl p-6 min-h-[150px] flex flex-col justify-between hover:-translate-y-1 hover:shadow-hover transition-all duration-300"
-              style={{ backgroundColor: `${t.color}1a`, border: `1px solid ${t.color}40` }}
+              key={c.id}
+              href={c.cta_url}
+              className="group relative overflow-hidden rounded-3xl min-h-[200px] flex flex-col justify-end p-5 hover:-translate-y-1 hover:shadow-hover transition-all duration-300"
             >
-              <span className="font-serif text-3xl font-semibold" style={{ color: t.color }}>{t.label}</span>
-              <div>
-                <p className="text-sm font-semibold text-text line-clamp-2">{t.title}</p>
-                {t.code && (
-                  <span className="inline-block mt-2 text-[11px] font-mono font-semibold px-2 py-0.5 rounded border border-dashed" style={{ color: t.color, borderColor: `${t.color}80` }}>
-                    {t.code}
+              <Image
+                src={c.image_url}
+                alt={c.title}
+                fill
+                sizes="(max-width: 1024px) 50vw, 25vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-text/75 via-text/25 to-transparent" />
+              <div className="relative">
+                {c.coupon_code && (
+                  <span className="inline-block mb-2 text-[11px] font-mono font-semibold px-2 py-0.5 rounded border border-dashed border-white/60 text-white">
+                    {c.coupon_code}
+                  </span>
+                )}
+                <h3 className="font-serif text-lg md:text-xl text-white leading-tight">{c.title}</h3>
+                {c.subtitle && <p className="text-xs text-white/80 mt-1 line-clamp-2">{c.subtitle}</p>}
+                {c.cta_text && (
+                  <span className="inline-flex items-center gap-1.5 mt-3 text-white text-xs font-semibold group-hover:gap-2.5 transition-all">
+                    {c.cta_text} <span aria-hidden>→</span>
                   </span>
                 )}
               </div>
