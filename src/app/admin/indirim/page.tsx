@@ -29,7 +29,7 @@ const emptyForm = {
   maxUses: "", firstOrderOnly: false, firstOrderScope: "site", priority: "0",
   badgeColor: "#e07a5f",
   productIds: [] as string[], categoryIds: [] as string[],
-  useTag: false, tagMode: "new", tagId: "", tagLabel: "", tagColor: "#e07a5f",
+  useTag: false, tagMode: "new", tagId: "", tagLabel: "", tagColor: "#e07a5f", tagTextColor: "#ffffff",
 };
 
 export default function IndirimPage() {
@@ -76,7 +76,7 @@ export default function IndirimPage() {
     if (!wantsTag) return {};
     if (!form.useTag) return { tagId: null };
     if (form.tagMode === "existing") return { tagId: form.tagId || null };
-    return { createTag: true, tagLabel: form.tagLabel, tagColor: form.tagColor };
+    return { createTag: true, tagLabel: form.tagLabel, tagColor: form.tagColor, tagTextColor: form.tagTextColor };
   }
 
   function payload() {
@@ -110,7 +110,7 @@ export default function IndirimPage() {
       firstOrderOnly: p.first_order_only, firstOrderScope: p.first_order_scope ?? "site",
       badgeColor: p.badge_color ?? "#e07a5f", priority: String(p.priority),
       productIds: p.productIds ?? [], categoryIds: p.categoryIds ?? [],
-      useTag: !!p.tag_id, tagMode: p.tag_id ? "existing" : "new", tagId: p.tag_id ?? "", tagLabel: "", tagColor: "#e07a5f",
+      useTag: !!p.tag_id, tagMode: p.tag_id ? "existing" : "new", tagId: p.tag_id ?? "", tagLabel: "", tagColor: "#e07a5f", tagTextColor: "#ffffff",
     });
     setEditingId(p.id);
     setShowForm(true);
@@ -279,10 +279,17 @@ export default function IndirimPage() {
                     </select>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <input type="color" value={form.tagColor} onChange={e => setForm(f => ({ ...f, tagColor: e.target.value }))} className="w-10 h-10 rounded-lg border border-border cursor-pointer p-0.5 bg-white shrink-0" />
+                      <div className="flex flex-col gap-0.5 items-center shrink-0">
+                        <span className="text-[10px] text-text-light">Arka</span>
+                        <input type="color" value={form.tagColor} onChange={e => setForm(f => ({ ...f, tagColor: e.target.value }))} className="w-9 h-9 rounded-lg border border-border cursor-pointer p-0.5 bg-white" />
+                      </div>
+                      <div className="flex flex-col gap-0.5 items-center shrink-0">
+                        <span className="text-[10px] text-text-light">Yazı</span>
+                        <input type="color" value={form.tagTextColor} onChange={e => setForm(f => ({ ...f, tagTextColor: e.target.value }))} className="w-9 h-9 rounded-lg border border-border cursor-pointer p-0.5 bg-white" />
+                      </div>
                       <input value={form.tagLabel} onChange={e => setForm(f => ({ ...f, tagLabel: e.target.value }))}
                         placeholder={form.valueType === "percentage" ? `%${form.value || "X"} İndirim` : `${form.value || "X"}₺ İndirim`} className={inputCls + " flex-1"} />
-                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold text-white whitespace-nowrap" style={{ backgroundColor: form.tagColor }}>{form.tagLabel || "Önizleme"}</span>
+                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap" style={{ backgroundColor: form.tagColor, color: form.tagTextColor }}>{form.tagLabel || "Önizleme"}</span>
                     </div>
                   )}
                   <p className="text-xs text-text-light">Kapsamdaki ürünlere bu etiket atanır; indirim silinince üründen kalkar (etiket <span className="font-semibold">/admin/etiketler</span>'de kalır).</p>

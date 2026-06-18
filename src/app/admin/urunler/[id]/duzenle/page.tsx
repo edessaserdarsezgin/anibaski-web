@@ -9,7 +9,7 @@ import ProductPromotions from "./ProductPromotions";
 type Category = { id: string; name: string; slug: string; parentId?: string | null };
 type SavedVariant = { id: string; type: string; label: string; value: string; priceAddon: number };
 type PendingOption = { label: string; priceAddon: number };
-type Tag = { id: string; name: string; color: string };
+type Tag = { id: string; name: string; color: string; text_color?: string };
 type SelectedTag = { tagId: string; position: string };
 
 const TR_MAP: Record<string, string> = {
@@ -493,8 +493,8 @@ export default function UrunDuzenle() {
                 if (!tag) return null;
                 return (
                   <div key={st.tagId} className="flex items-center gap-2">
-                    <span className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold text-white"
-                      style={{ backgroundColor: tag.color }}>
+                    <span className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold"
+                      style={{ backgroundColor: tag.color, color: tag.text_color ?? "#ffffff" }}>
                       {tag.name}
                     </span>
                     <select

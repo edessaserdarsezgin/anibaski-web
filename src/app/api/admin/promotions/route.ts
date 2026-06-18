@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
   let tagId: string | null = null;
   if (b.createTag) {
     const label = b.tagLabel?.trim() || (valueType === "percentage" ? `%${value} İndirim` : `${value}₺ İndirim`);
-    const { data: tag } = await admin.supabase.from("tags").insert({ name: label, color: b.tagColor || "#e07a5f" }).select("id").single();
+    const { data: tag } = await admin.supabase.from("tags").insert({ name: label, color: b.tagColor || "#e07a5f", text_color: b.tagTextColor || "#ffffff" }).select("id").single();
     tagId = tag?.id ?? null;
   } else if (b.tagId) {
     tagId = b.tagId;
