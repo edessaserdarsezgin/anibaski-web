@@ -23,6 +23,7 @@ type Props = {
     ends_at: string;
     position: number;
     placement: string;
+    show_on_home: boolean;
   };
   categories: Category[];
   products: Product[];
@@ -42,6 +43,7 @@ const DEFAULT = {
   ends_at: "",
   position: 0,
   placement: "hero",
+  show_on_home: false,
 };
 
 function slugify(s: string): string {
@@ -99,6 +101,7 @@ export default function CampaignForm({ initial, categories, products, coupons }:
       subtitle: form.subtitle || null,
       description: form.description || null,
       placement: form.placement === "card" ? "card" : "hero",
+      show_on_home: form.show_on_home,
     };
 
     const url = initial?.id ? `/api/admin/campaigns/${initial.id}` : "/api/admin/campaigns";
@@ -127,7 +130,10 @@ export default function CampaignForm({ initial, categories, products, coupons }:
         <label className="text-sm font-semibold text-text">Yerleşim</label>
         <select
           value={form.placement}
-          onChange={(e) => setForm({ ...form, placement: e.target.value })}
+          onChange={(e) => {
+            const placement = e.target.value;
+            setForm({ ...form, placement, show_on_home: placement === "card" ? true : form.show_on_home });
+          }}
           className={inputCls + " cursor-pointer"}
         >
           <option value="hero">Hero Banner (üst slider)</option>
@@ -137,6 +143,17 @@ export default function CampaignForm({ initial, categories, products, coupons }:
           Hero: sayfanın üstündeki büyük slider. Kart: ana sayfadaki görselli kampanya ızgarası.
         </p>
       </div>
+
+      {/* Ana Sayfada Göster */}
+      <label className="flex items-center gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={form.show_on_home}
+          onChange={(e) => setForm({ ...form, show_on_home: e.target.checked })}
+          className="w-4 h-4 accent-primary"
+        />
+        <span className="text-sm font-semibold text-text">Ana sayfada göster</span>
+      </label>
 
       {/* Görsel */}
       <div className="flex flex-col gap-2">
