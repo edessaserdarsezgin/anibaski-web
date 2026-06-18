@@ -110,9 +110,9 @@ export default function ProductCard({ product, priority = false, showDescription
             <p
               className="mt-1.5 text-[11px] font-semibold rounded-full px-2 py-0.5 w-fit border"
               style={{
-                color: product.couponBadge.textColor ?? product.couponBadge.color ?? "#e07a5f",
-                backgroundColor: `${product.couponBadge.color ?? "#e07a5f"}1a`,
-                borderColor: `${product.couponBadge.color ?? "#e07a5f"}33`,
+                color: product.couponBadge.textColor ?? "#ffffff",
+                backgroundColor: product.couponBadge.color ?? "#e07a5f",
+                borderColor: product.couponBadge.color ?? "#e07a5f",
               }}
             >
               🎟️ {product.couponBadge.code} ile {product.couponBadge.label}

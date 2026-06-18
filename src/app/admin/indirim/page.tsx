@@ -238,7 +238,7 @@ export default function IndirimPage() {
                     onTextChange={c => setForm(f => ({ ...f, badgeTextColor: c }))}
                   />
                   <span className="text-[11px] font-semibold rounded-full px-2 py-0.5 border whitespace-nowrap"
-                    style={{ color: form.badgeTextColor, backgroundColor: `${form.badgeColor}1a`, borderColor: `${form.badgeColor}33` }}>
+                    style={{ color: form.badgeTextColor, backgroundColor: form.badgeColor, borderColor: form.badgeColor }}>
                     🎟️ {form.code || "KOD"} ile {form.valueType === "percentage" ? `%${form.value || "X"}` : `${form.value || "X"} ₺`}
                   </span>
                 </div></div>
