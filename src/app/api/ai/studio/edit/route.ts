@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   const maxEdge = Math.max(meta.width ?? 0, meta.height ?? 0);
   let pipeline = sharp(inputBuf).rotate();
   if (maxEdge > MAX_EDGE) pipeline = pipeline.resize({ width: MAX_EDGE, height: MAX_EDGE, fit: "inside" });
-  const normalized = await pipeline.toBuffer();
+  const normalized = await pipeline.jpeg({ quality: 90 }).toBuffer();
 
   // 5. Düzenle + kredi/job kaydı
   try {

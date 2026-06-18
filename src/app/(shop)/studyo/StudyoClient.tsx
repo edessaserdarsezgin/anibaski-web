@@ -48,7 +48,7 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
     setStep("upload");
   }
 
-  const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/avif"];
+  const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/avif", "image/bmp"];
 
   function pickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -236,10 +236,10 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
         <div className="w-14 h-14 rounded-2xl bg-white border border-border flex items-center justify-center text-2xl shadow-sm">📷</div>
         <div>
           <p className="font-semibold text-text">Fotoğrafı seç</p>
-          <p className="text-secondary text-sm mt-1">PNG, JPG, WebP, AVIF</p>
+          <p className="text-secondary text-sm mt-1">PNG, JPG, WebP, AVIF, BMP</p>
         </div>
         {file && <p className="text-primary font-semibold text-sm">{file.name} ✓</p>}
-        <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/avif" className="hidden" onChange={pickFile} />
+        <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/bmp" className="hidden" onChange={pickFile} />
       </div>
 
       {tool?.generative && (
