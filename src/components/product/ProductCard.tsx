@@ -21,6 +21,7 @@ type Props = {
     discount_percent?: number | null;
     discount_starts_at?: string | null;
     discount_ends_at?: string | null;
+    salePrice?: number | null;
     couponBadge?: { code: string; label: string; color?: string } | null;
   };
   priority?: boolean;
@@ -103,6 +104,7 @@ export default function ProductCard({ product, priority = false, showDescription
               discount_starts_at: product.discount_starts_at ?? null,
               discount_ends_at: product.discount_ends_at ?? null,
             }}
+            salePrice={product.salePrice ?? null}
           />
           {product.couponBadge && (
             <p

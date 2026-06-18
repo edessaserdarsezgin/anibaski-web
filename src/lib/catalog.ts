@@ -7,6 +7,7 @@ import { activeDiscountPercent } from "@/lib/pricing";
 type DiscountableRow = {
   id: string; basePrice: number; categoryId?: string | null;
   discount_percent?: number | null; discount_starts_at?: string | null; discount_ends_at?: string | null;
+  salePrice?: number | null;
 };
 
 /**
@@ -29,9 +30,12 @@ async function withItemPromotions<T extends DiscountableRow>(rows: T[]): Promise
     const { unitPrice } = bestItemDiscount({ productId: r.id, categoryId: r.categoryId ?? null, unitPrice: base }, promos);
     const promoPct = base > 0 && unitPrice < base ? Math.round((1 - unitPrice / base) * 100) : 0;
     const pct = Math.max(ownPct, promoPct);
+    // Sabit tutarlı promosyon varsa (promoPct > ownPct) kesin hesaplanan fiyatı sakla;
+    // yüzde→fiyat çift yuvarlama hatasını önler.
+    const salePrice = pct > 0 ? (promoPct > ownPct ? unitPrice : null) : null;
     const cb = scopedCoupons.find((c) => itemInScope(c, { productId: r.id, categoryId: r.categoryId ?? null }));
     const couponBadge = cb ? { code: cb.code as string, label: cb.valueType === "percentage" ? `%${cb.value}` : `${cb.value} ₺`, color: cb.badgeColor || "#e07a5f" } : null;
-    return { ...r, discount_percent: pct > 0 ? pct : null, discount_starts_at: null, discount_ends_at: null, couponBadge };
+    return { ...r, discount_percent: pct > 0 ? pct : null, discount_starts_at: null, discount_ends_at: null, salePrice, couponBadge };
   });
 }
 
