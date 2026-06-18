@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import ColorPairPicker from "@/components/ui/ColorPairPicker";
 
 type Banner = {
   id: string;
   text: string;
   url: string | null;
   bgColor: string;
+  textColor: string;
   isActive: boolean;
   startAt: string | null;
   endAt: string | null;
@@ -44,7 +46,7 @@ export default function AdminBannerPage() {
   const [activeEmojiGroup, setActiveEmojiGroup] = useState(0);
   const textRef = useRef<HTMLInputElement>(null);
 
-  const emptyForm = { text: "", url: "", bgColor: "#6d55e8", isActive: true, startAt: "", endAt: "" };
+  const emptyForm = { text: "", url: "", bgColor: "#6d55e8", textColor: "#ffffff", isActive: true, startAt: "", endAt: "" };
   const [form, setForm] = useState(emptyForm);
 
   async function load() {
@@ -144,7 +146,7 @@ export default function AdminBannerPage() {
 
   function startEdit(b: Banner) {
     setEditingId(b.id);
-    setForm({ text: b.text, url: b.url ?? "", bgColor: b.bgColor, isActive: b.isActive, startAt: b.startAt?.slice(0,16) ?? "", endAt: b.endAt?.slice(0,16) ?? "" });
+    setForm({ text: b.text, url: b.url ?? "", bgColor: b.bgColor, textColor: b.textColor ?? "#ffffff", isActive: b.isActive, startAt: b.startAt?.slice(0,16) ?? "", endAt: b.endAt?.slice(0,16) ?? "" });
     setShowForm(true); setError("");
   }
 
@@ -173,7 +175,7 @@ export default function AdminBannerPage() {
             <div className="mb-4 rounded-xl overflow-hidden border border-border">
               <p className="text-xs text-text-light px-4 py-2 bg-bg border-b border-border">Önizleme</p>
               <div className="py-2.5 flex items-center justify-center" style={{ backgroundColor: form.bgColor }}>
-                <span className="text-sm font-semibold text-white">{form.text}</span>
+                <span className="text-sm font-semibold" style={{ color: form.textColor }}>{form.text}</span>
               </div>
             </div>
           )}
@@ -296,8 +298,11 @@ export default function AdminBannerPage() {
                     className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${form.bgColor === c.value ? "border-text scale-110" : "border-transparent"}`}
                     style={{ backgroundColor: c.value }} title={c.label} />
                 ))}
-                <input type="color" value={form.bgColor} onChange={e => setForm(f => ({ ...f, bgColor: e.target.value }))}
-                  className="w-8 h-8 rounded-full cursor-pointer border border-border" title="Özel renk" />
+                <ColorPairPicker size="sm"
+                  bgColor={form.bgColor} textColor={form.textColor}
+                  onBgChange={c => setForm(f => ({ ...f, bgColor: c }))}
+                  onTextChange={c => setForm(f => ({ ...f, textColor: c }))}
+                />
                 <span className="text-xs text-text-light font-mono">{form.bgColor}</span>
               </div>
             </div>

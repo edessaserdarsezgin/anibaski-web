@@ -1,4 +1,5 @@
 "use client";
+import ColorPairPicker from "@/components/ui/ColorPairPicker";
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -231,14 +232,11 @@ export default function IndirimPage() {
                 <span className="text-[11px] text-secondary">Toplam (tüm müşteriler) kullanım sınırı. Boş = sınırsız.</span></div>
               <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">Rozet Rengi (ürün kartı)</label>
                 <div className="flex items-center gap-2">
-                  <div className="flex flex-col gap-0.5 items-center shrink-0">
-                    <span className="text-[10px] text-text-light">Arka</span>
-                    <input type="color" value={form.badgeColor} onChange={e => setForm(f => ({ ...f, badgeColor: e.target.value }))} className="w-9 h-9 rounded-lg border border-border cursor-pointer p-0.5 bg-white" />
-                  </div>
-                  <div className="flex flex-col gap-0.5 items-center shrink-0">
-                    <span className="text-[10px] text-text-light">Yazı</span>
-                    <input type="color" value={form.badgeTextColor} onChange={e => setForm(f => ({ ...f, badgeTextColor: e.target.value }))} className="w-9 h-9 rounded-lg border border-border cursor-pointer p-0.5 bg-white" />
-                  </div>
+                  <ColorPairPicker
+                    bgColor={form.badgeColor} textColor={form.badgeTextColor}
+                    onBgChange={c => setForm(f => ({ ...f, badgeColor: c }))}
+                    onTextChange={c => setForm(f => ({ ...f, badgeTextColor: c }))}
+                  />
                   <span className="text-[11px] font-semibold rounded-full px-2 py-0.5 border whitespace-nowrap"
                     style={{ color: form.badgeTextColor, backgroundColor: `${form.badgeColor}1a`, borderColor: `${form.badgeColor}33` }}>
                     🎟️ {form.code || "KOD"} ile {form.valueType === "percentage" ? `%${form.value || "X"}` : `${form.value || "X"} ₺`}
@@ -287,14 +285,11 @@ export default function IndirimPage() {
                     </select>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <div className="flex flex-col gap-0.5 items-center shrink-0">
-                        <span className="text-[10px] text-text-light">Arka</span>
-                        <input type="color" value={form.tagColor} onChange={e => setForm(f => ({ ...f, tagColor: e.target.value }))} className="w-9 h-9 rounded-lg border border-border cursor-pointer p-0.5 bg-white" />
-                      </div>
-                      <div className="flex flex-col gap-0.5 items-center shrink-0">
-                        <span className="text-[10px] text-text-light">Yazı</span>
-                        <input type="color" value={form.tagTextColor} onChange={e => setForm(f => ({ ...f, tagTextColor: e.target.value }))} className="w-9 h-9 rounded-lg border border-border cursor-pointer p-0.5 bg-white" />
-                      </div>
+                      <ColorPairPicker
+                        bgColor={form.tagColor} textColor={form.tagTextColor}
+                        onBgChange={c => setForm(f => ({ ...f, tagColor: c }))}
+                        onTextChange={c => setForm(f => ({ ...f, tagTextColor: c }))}
+                      />
                       <input value={form.tagLabel} onChange={e => setForm(f => ({ ...f, tagLabel: e.target.value }))}
                         placeholder={form.valueType === "percentage" ? `%${form.value || "X"} İndirim` : `${form.value || "X"}₺ İndirim`} className={inputCls + " flex-1"} />
                       <span className="px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap" style={{ backgroundColor: form.tagColor, color: form.tagTextColor }}>{form.tagLabel || "Önizleme"}</span>

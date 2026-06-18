@@ -9,7 +9,7 @@ export default async function AnnouncementBanner() {
 
   const { data: banner } = await adminDb
     .from("banners")
-    .select("id, text, url, bgColor")
+    .select("id, text, url, bgColor, textColor")
     .eq("isActive", true)
     .order("createdAt", { ascending: false })
     .limit(1)
@@ -18,7 +18,7 @@ export default async function AnnouncementBanner() {
   if (!banner) return null;
 
   const content = (
-    <span className="text-sm font-semibold text-white text-center px-4">
+    <span className="text-sm font-semibold text-center px-4" style={{ color: banner.textColor ?? "#ffffff" }}>
       {banner.text}
     </span>
   );

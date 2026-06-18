@@ -17,11 +17,11 @@ export async function POST(req: NextRequest) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { text, url, bgColor, isActive, startAt, endAt } = await req.json();
+  const { text, url, bgColor, textColor, isActive, startAt, endAt } = await req.json();
 
   const { data, error } = await admin.supabase
     .from("banners")
-    .insert({ text, url: url || null, bgColor: bgColor || "#6d55e8", isActive: isActive ?? true, startAt: startAt || null, endAt: endAt || null })
+    .insert({ text, url: url || null, bgColor: bgColor || "#6d55e8", textColor: textColor || "#ffffff", isActive: isActive ?? true, startAt: startAt || null, endAt: endAt || null })
     .select()
     .single();
 
@@ -33,11 +33,11 @@ export async function PATCH(req: NextRequest) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { id, text, url, bgColor, isActive, startAt, endAt } = await req.json();
+  const { id, text, url, bgColor, textColor, isActive, startAt, endAt } = await req.json();
 
   const { error } = await admin.supabase
     .from("banners")
-    .update({ text, url: url || null, bgColor: bgColor || "#6d55e8", isActive, startAt: startAt || null, endAt: endAt || null })
+    .update({ text, url: url || null, bgColor: bgColor || "#6d55e8", textColor: textColor || "#ffffff", isActive, startAt: startAt || null, endAt: endAt || null })
     .eq("id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
