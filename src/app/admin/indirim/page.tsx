@@ -9,7 +9,7 @@ type Promo = {
   value_type: "percentage" | "fixed"; value: number; min_subtotal: number | null;
   starts_at: string | null; ends_at: string | null; max_uses: number | null; used_count: number;
   first_order_only: boolean; first_order_scope?: "site" | "product"; priority: number; is_active: boolean;
-  badge_color?: string | null;
+  badge_color?: string | null; badge_text_color?: string | null;
   productIds: string[]; categoryIds: string[];
   linkedCampaigns?: number; linkedBanners?: number; tag_id?: string | null;
 };
@@ -27,7 +27,7 @@ const emptyForm = {
   name: "", kind: "oto-urun" as Kind, scope: "all" as Promo["scope"],
   valueType: "percentage", value: "", code: "", minSubtotal: "", startsAt: "", endsAt: "",
   maxUses: "", firstOrderOnly: false, firstOrderScope: "site", priority: "0",
-  badgeColor: "#e07a5f",
+  badgeColor: "#e07a5f", badgeTextColor: "#e07a5f",
   productIds: [] as string[], categoryIds: [] as string[],
   useTag: false, tagMode: "new", tagId: "", tagLabel: "", tagColor: "#e07a5f", tagTextColor: "#ffffff",
 };
@@ -92,6 +92,7 @@ export default function IndirimPage() {
       firstOrderOnly: form.kind === "kupon" ? form.firstOrderOnly : false,
       firstOrderScope: form.kind === "kupon" ? form.firstOrderScope : "site",
       badgeColor: form.kind === "kupon" ? form.badgeColor : null,
+      badgeTextColor: form.kind === "kupon" ? form.badgeTextColor : null,
       priority: form.priority,
       productIds: form.scope === "products" ? form.productIds : [],
       categoryIds: form.scope === "categories" ? form.categoryIds : [],
@@ -108,7 +109,7 @@ export default function IndirimPage() {
       endsAt: p.ends_at ? p.ends_at.slice(0, 10) : "",
       maxUses: p.max_uses != null ? String(p.max_uses) : "",
       firstOrderOnly: p.first_order_only, firstOrderScope: p.first_order_scope ?? "site",
-      badgeColor: p.badge_color ?? "#e07a5f", priority: String(p.priority),
+      badgeColor: p.badge_color ?? "#e07a5f", badgeTextColor: p.badge_text_color ?? "#e07a5f", priority: String(p.priority),
       productIds: p.productIds ?? [], categoryIds: p.categoryIds ?? [],
       useTag: !!p.tag_id, tagMode: p.tag_id ? "existing" : "new", tagId: p.tag_id ?? "", tagLabel: "", tagColor: "#e07a5f", tagTextColor: "#ffffff",
     });
@@ -230,9 +231,16 @@ export default function IndirimPage() {
                 <span className="text-[11px] text-secondary">Toplam (tüm müşteriler) kullanım sınırı. Boş = sınırsız.</span></div>
               <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">Rozet Rengi (ürün kartı)</label>
                 <div className="flex items-center gap-2">
-                  <input type="color" value={form.badgeColor} onChange={e => setForm(f => ({ ...f, badgeColor: e.target.value }))} className="w-10 h-10 rounded-lg border border-border cursor-pointer p-0.5 bg-white shrink-0" />
+                  <div className="flex flex-col gap-0.5 items-center shrink-0">
+                    <span className="text-[10px] text-text-light">Arka</span>
+                    <input type="color" value={form.badgeColor} onChange={e => setForm(f => ({ ...f, badgeColor: e.target.value }))} className="w-9 h-9 rounded-lg border border-border cursor-pointer p-0.5 bg-white" />
+                  </div>
+                  <div className="flex flex-col gap-0.5 items-center shrink-0">
+                    <span className="text-[10px] text-text-light">Yazı</span>
+                    <input type="color" value={form.badgeTextColor} onChange={e => setForm(f => ({ ...f, badgeTextColor: e.target.value }))} className="w-9 h-9 rounded-lg border border-border cursor-pointer p-0.5 bg-white" />
+                  </div>
                   <span className="text-[11px] font-semibold rounded-full px-2 py-0.5 border whitespace-nowrap"
-                    style={{ color: form.badgeColor, backgroundColor: `${form.badgeColor}1a`, borderColor: `${form.badgeColor}33` }}>
+                    style={{ color: form.badgeTextColor, backgroundColor: `${form.badgeColor}1a`, borderColor: `${form.badgeColor}33` }}>
                     🎟️ {form.code || "KOD"} ile {form.valueType === "percentage" ? `%${form.value || "X"}` : `${form.value || "X"} ₺`}
                   </span>
                 </div></div>

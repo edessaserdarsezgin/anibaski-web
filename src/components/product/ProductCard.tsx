@@ -22,7 +22,7 @@ type Props = {
     discount_starts_at?: string | null;
     discount_ends_at?: string | null;
     salePrice?: number | null;
-    couponBadge?: { code: string; label: string; color?: string } | null;
+    couponBadge?: { code: string; label: string; color?: string; textColor?: string | null } | null;
   };
   priority?: boolean;
   showDescription?: boolean;
@@ -110,7 +110,7 @@ export default function ProductCard({ product, priority = false, showDescription
             <p
               className="mt-1.5 text-[11px] font-semibold rounded-full px-2 py-0.5 w-fit border"
               style={{
-                color: product.couponBadge.color ?? "#e07a5f",
+                color: product.couponBadge.textColor ?? product.couponBadge.color ?? "#e07a5f",
                 backgroundColor: `${product.couponBadge.color ?? "#e07a5f"}1a`,
                 borderColor: `${product.couponBadge.color ?? "#e07a5f"}33`,
               }}

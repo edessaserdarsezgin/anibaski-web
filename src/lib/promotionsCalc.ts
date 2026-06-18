@@ -18,7 +18,8 @@ export type Promotion = {
   priority: number;
   productIds: string[];      // scope='products'
   categoryIds: string[];     // scope='categories'
-  badgeColor?: string | null; // kupon rozeti rengi (ürün kartı)
+  badgeColor?: string | null;     // kupon rozeti arka plan rengi (ürün kartı)
+  badgeTextColor?: string | null; // kupon rozeti yazı rengi
 };
 
 export type PricedItem = { productId: string; categoryId: string | null; unitPrice: number; quantity: number };

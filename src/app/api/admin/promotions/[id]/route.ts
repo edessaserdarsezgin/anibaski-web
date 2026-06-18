@@ -54,6 +54,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if ("priority" in b) mapped.priority = Number(b.priority) || 0;
   if ("code" in b) mapped.code = b.code ? b.code.trim().toUpperCase() : null;
   if ("badgeColor" in b) mapped.badge_color = b.badgeColor || null;
+  if ("badgeTextColor" in b) mapped.badge_text_color = b.badgeTextColor || null;
 
   if (Object.keys(mapped).length) {
     const { error } = await admin.supabase.from("promotions").update(mapped).eq("id", id);

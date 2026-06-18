@@ -18,6 +18,7 @@ function mapRow(r: Row, prodMap: Map<string, string[]>, catMap: Map<string, stri
     firstOrderOnly: !!r.first_order_only, priority: Number(r.priority ?? 0),
     productIds: prodMap.get(id) ?? [], categoryIds: catMap.get(id) ?? [],
     badgeColor: (r.badge_color as string) ?? null,
+    badgeTextColor: (r.badge_text_color as string) ?? null,
   };
 }
 

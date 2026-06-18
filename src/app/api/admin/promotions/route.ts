@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
     max_uses: b.maxUses ? Number(b.maxUses) : null,
     first_order_only: !!b.firstOrderOnly, priority: Number(b.priority) || 0,
     badge_color: trigger === "code" ? (b.badgeColor || null) : null,
+    badge_text_color: trigger === "code" ? (b.badgeTextColor || null) : null,
     first_order_scope: trigger === "code" && b.firstOrderScope === "product" ? "product" : "site",
   }).select("id").single();
 
