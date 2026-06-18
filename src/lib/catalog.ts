@@ -77,7 +77,7 @@ export const getCategoryProductsForHome = unstable_cache(
     const db = createAdminClient();
     const { data } = await db
       .from("products_with_order_count")
-      .select("id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color, is_active))")
+      .select("id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color, text_color, is_active))")
       .in("categoryId", categoryIds)
       .eq("isActive", true)
       .order("createdAt", { ascending: false });
@@ -93,7 +93,7 @@ export const getFeaturedProducts = unstable_cache(
     const db = createAdminClient();
     const { data } = await db
       .from("products_with_order_count")
-      .select("id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color, is_active))")
+      .select("id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color, text_color, is_active))")
       .eq("is_featured", true)
       .eq("isActive", true)
       .order("featured_position", { ascending: true })
@@ -112,7 +112,7 @@ export const getFlashDeals = unstable_cache(
     const nowIso = new Date().toISOString();
     const { data } = await db
       .from("products_with_order_count")
-      .select("id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color, is_active))")
+      .select("id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color, text_color, is_active))")
       .eq("isActive", true)
       .gt("discount_percent", 0)
       .not("discount_ends_at", "is", null)
@@ -182,7 +182,7 @@ export async function getReprintSuggestions(userId: string, limit: number = 8) {
   if (!pids.length) return [];
   const { data } = await db
     .from("products_with_order_count")
-    .select("id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color, is_active))")
+    .select("id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color, text_color, is_active))")
     .in("id", pids)
     .eq("isActive", true)
     .limit(limit);
@@ -212,7 +212,7 @@ export const getTags = unstable_cache(
     const db = createAdminClient();
     const { data } = await db
       .from("product_tags")
-      .select("tags!inner(id, name, color, is_active), products!inner(isActive)")
+      .select("tags!inner(id, name, color, text_color, is_active), products!inner(isActive)")
       .eq("tags.is_active", true)
       .eq("products.isActive", true);
     const map = new Map<string, { id: string; name: string; color: string }>();
@@ -246,7 +246,7 @@ export const getProductsForCatalog = unstable_cache(
     const db = createAdminClient();
     let baseQuery = db
       .from("products_with_order_count")
-      .select("id, name, slug, description, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, category:categories!products_categoryId_fkey(name, slug), productTags:product_tags(tagId, position, tag:tags(name, color, is_active))")
+      .select("id, name, slug, description, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, category:categories!products_categoryId_fkey(name, slug), productTags:product_tags(tagId, position, tag:tags(name, color, text_color, is_active))")
       .eq("isActive", true)
       .order(column, { ascending });
 
@@ -341,7 +341,7 @@ export const getProductsInCategory = unstable_cache(
     const db = createAdminClient();
     let baseQuery = db
       .from("products_with_order_count")
-      .select("id, name, slug, description, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color, is_active))")
+      .select("id, name, slug, description, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color, text_color, is_active))")
       .eq("isActive", true)
       .order(column, { ascending });
 
@@ -372,7 +372,7 @@ export const getProductBySlug = unstable_cache(
     const db = createAdminClient();
     const { data } = await db
       .from("products")
-      .select("*, category:categories!products_categoryId_fkey(id, name, slug), productTags:product_tags(tagId, position, tag:tags(name, color, is_active))")
+      .select("*, category:categories!products_categoryId_fkey(id, name, slug), productTags:product_tags(tagId, position, tag:tags(name, color, text_color, is_active))")
       .eq("slug", slug)
       .eq("isActive", true)
       .single();
@@ -402,7 +402,7 @@ export const getProductVariants = unstable_cache(
 export const getRelatedProductsSameCategory = unstable_cache(
   async (categoryId: string, productId: string) => {
     const db = createAdminClient();
-    const RELATED_COLS = "id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color, is_active))";
+    const RELATED_COLS = "id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color, text_color, is_active))";
     const { data } = await db
       .from("products_with_order_count")
       .select(RELATED_COLS)
@@ -420,7 +420,7 @@ export const getRelatedProductsSameCategory = unstable_cache(
 export const getRelatedProductsFallback = unstable_cache(
   async (productId: string) => {
     const db = createAdminClient();
-    const RELATED_COLS = "id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color, is_active))";
+    const RELATED_COLS = "id, name, slug, basePrice, images, categoryId, discount_percent, discount_starts_at, discount_ends_at, productTags:product_tags(tagId, position, tag:tags(name, color, text_color, is_active))";
     const { data } = await db
       .from("products_with_order_count")
       .select(RELATED_COLS)

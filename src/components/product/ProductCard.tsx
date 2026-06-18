@@ -5,7 +5,7 @@ import PriceTag from "@/components/product/PriceTag";
 type ProductTagItem = {
   tagId: string;
   position: string;
-  tag: { name: string; color: string; is_active?: boolean };
+  tag: { name: string; color: string; text_color?: string | null; is_active?: boolean };
 };
 
 type Props = {
@@ -75,8 +75,8 @@ export default function ProductCard({ product, priority = false, showDescription
               {labels.map((pt) => (
                 <span
                   key={pt.tagId}
-                  className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-white shadow-md"
-                  style={{ backgroundColor: pt.tag.color }}
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-bold shadow-md"
+                  style={{ backgroundColor: pt.tag.color, color: pt.tag.text_color ?? "#ffffff" }}
                 >
                   {pt.tag.name}
                 </span>

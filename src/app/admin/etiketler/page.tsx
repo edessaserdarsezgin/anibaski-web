@@ -2,16 +2,16 @@
 
 import { useEffect, useState } from "react";
 
-type Tag = { id: string; name: string; color: string; is_active?: boolean };
+type Tag = { id: string; name: string; color: string; text_color?: string; is_active?: boolean };
 
 export default function AdminEtiketlerPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ name: "", color: "#e07a5f" });
+  const [form, setForm] = useState({ name: "", color: "#e07a5f", text_color: "#ffffff" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", color: "#e07a5f" });
+  const [editForm, setEditForm] = useState({ name: "", color: "#e07a5f", text_color: "#ffffff" });
 
   async function load() {
     const res = await fetch("/api/admin/tags");
@@ -28,13 +28,13 @@ export default function AdminEtiketlerPage() {
     const res = await fetch("/api/admin/tags", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: form.name, color: form.color }),
+      body: JSON.stringify({ name: form.name, color: form.color, text_color: form.text_color }),
     });
     if (!res.ok) {
       const data = await res.json();
       setError(data.error ?? "Hata oluştu.");
     } else {
-      setForm({ name: "", color: "#e07a5f" });
+      setForm({ name: "", color: "#e07a5f", text_color: "#ffffff" });
       await load();
     }
     setSaving(false);
@@ -42,14 +42,14 @@ export default function AdminEtiketlerPage() {
 
   function startEdit(tag: Tag) {
     setEditingId(tag.id);
-    setEditForm({ name: tag.name, color: tag.color });
+    setEditForm({ name: tag.name, color: tag.color, text_color: tag.text_color ?? "#ffffff" });
   }
 
   async function handleUpdate(id: string) {
     await fetch("/api/admin/tags", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, name: editForm.name, color: editForm.color }),
+      body: JSON.stringify({ id, name: editForm.name, color: editForm.color, text_color: editForm.text_color }),
     });
     setEditingId(null);
     await load();
@@ -76,6 +76,38 @@ export default function AdminEtiketlerPage() {
 
   const inputCls = "px-3 py-2 rounded-lg border border-border bg-bg text-sm outline-none focus:border-primary transition-colors";
 
+  function ColorPicker({ label, color, textColor, onColor, onText }: {
+    label: string; color: string; textColor: string;
+    onColor: (v: string) => void; onText: (v: string) => void;
+  }) {
+    return (
+      <div className="flex flex-col gap-1.5">
+        <label className="text-sm font-semibold text-text">{label}</label>
+        <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-text-light">Arka plan</span>
+            <input type="color" value={color} onChange={e => onColor(e.target.value)}
+              className="w-9 h-9 rounded-lg border border-border cursor-pointer p-0.5 bg-white" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-text-light">Yazı</span>
+            <input type="color" value={textColor} onChange={e => onText(e.target.value)}
+              className="w-9 h-9 rounded-lg border border-border cursor-pointer p-0.5 bg-white" />
+          </div>
+          <input value={color} onChange={e => onColor(e.target.value)}
+            className={inputCls + " flex-1 font-mono uppercase text-xs"}
+            placeholder="#e07a5f" pattern="^#[0-9A-Fa-f]{6}$" />
+          <span
+            className="px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
+            style={{ backgroundColor: color, color: textColor }}
+          >
+            {label === "Renk" ? "Önizleme" : "Önizleme"}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <h1 className="font-serif text-3xl text-text mb-8">Etiketler</h1>
@@ -98,24 +130,25 @@ export default function AdminEtiketlerPage() {
 
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-text">Renk</label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={form.color}
-                  onChange={e => setForm(f => ({ ...f, color: e.target.value }))}
-                  className="w-10 h-10 rounded-lg border border-border cursor-pointer p-0.5 bg-white"
-                />
-                <input
-                  value={form.color}
-                  onChange={e => setForm(f => ({ ...f, color: e.target.value }))}
+              <div className="flex items-center gap-2">
+                <div className="flex flex-col gap-1 items-center">
+                  <span className="text-[10px] text-text-light">Arka plan</span>
+                  <input type="color" value={form.color}
+                    onChange={e => setForm(f => ({ ...f, color: e.target.value }))}
+                    className="w-9 h-9 rounded-lg border border-border cursor-pointer p-0.5 bg-white" />
+                </div>
+                <div className="flex flex-col gap-1 items-center">
+                  <span className="text-[10px] text-text-light">Yazı</span>
+                  <input type="color" value={form.text_color}
+                    onChange={e => setForm(f => ({ ...f, text_color: e.target.value }))}
+                    className="w-9 h-9 rounded-lg border border-border cursor-pointer p-0.5 bg-white" />
+                </div>
+                <input value={form.color} onChange={e => setForm(f => ({ ...f, color: e.target.value }))}
                   className={inputCls + " flex-1 font-mono uppercase"}
-                  placeholder="#e07a5f"
-                  pattern="^#[0-9A-Fa-f]{6}$"
-                />
-                {/* Önizleme */}
+                  placeholder="#e07a5f" pattern="^#[0-9A-Fa-f]{6}$" />
                 <span
-                  className="px-3 py-1 rounded-full text-xs font-semibold text-white whitespace-nowrap"
-                  style={{ backgroundColor: form.color }}
+                  className="px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
+                  style={{ backgroundColor: form.color, color: form.text_color }}
                 >
                   {form.name || "Önizleme"}
                 </span>
@@ -157,35 +190,35 @@ export default function AdminEtiketlerPage() {
                         placeholder="Etiket Adı"
                       />
                       <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={editForm.color}
+                        <div className="flex flex-col gap-1 items-center">
+                          <span className="text-[10px] text-text-light">Arka plan</span>
+                          <input type="color" value={editForm.color}
+                            onChange={e => setEditForm(f => ({ ...f, color: e.target.value }))}
+                            className="w-8 h-8 rounded border border-border cursor-pointer p-0.5 bg-white" />
+                        </div>
+                        <div className="flex flex-col gap-1 items-center">
+                          <span className="text-[10px] text-text-light">Yazı</span>
+                          <input type="color" value={editForm.text_color}
+                            onChange={e => setEditForm(f => ({ ...f, text_color: e.target.value }))}
+                            className="w-8 h-8 rounded border border-border cursor-pointer p-0.5 bg-white" />
+                        </div>
+                        <input value={editForm.color}
                           onChange={e => setEditForm(f => ({ ...f, color: e.target.value }))}
-                          className="w-8 h-8 rounded border border-border cursor-pointer p-0.5 bg-white"
-                        />
-                        <input
-                          value={editForm.color}
-                          onChange={e => setEditForm(f => ({ ...f, color: e.target.value }))}
-                          className={inputCls + " flex-1 font-mono"}
-                        />
+                          className={inputCls + " flex-1 font-mono"} />
                         <span
-                          className="px-2.5 py-0.5 rounded-full text-xs font-semibold text-white"
-                          style={{ backgroundColor: editForm.color }}
+                          className="px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap"
+                          style={{ backgroundColor: editForm.color, color: editForm.text_color }}
                         >
                           {editForm.name || "Önizleme"}
                         </span>
                       </div>
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => handleUpdate(tag.id)}
-                          className="px-4 py-1.5 bg-primary text-white text-xs font-semibold rounded-full"
-                        >
+                        <button onClick={() => handleUpdate(tag.id)}
+                          className="px-4 py-1.5 bg-primary text-white text-xs font-semibold rounded-full">
                           Kaydet
                         </button>
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="px-4 py-1.5 border border-border text-xs font-semibold rounded-full"
-                        >
+                        <button onClick={() => setEditingId(null)}
+                          className="px-4 py-1.5 border border-border text-xs font-semibold rounded-full">
                           İptal
                         </button>
                       </div>
@@ -193,36 +226,27 @@ export default function AdminEtiketlerPage() {
                   ) : (
                     <div className={`flex items-center justify-between ${tag.is_active === false ? "opacity-50" : ""}`}>
                       <div className="flex items-center gap-3">
-                        <span
-                          className="w-4 h-4 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: tag.color }}
-                        />
+                        <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
                         <span className="text-sm font-semibold text-text">{tag.name}</span>
                         <span
-                          className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-white"
-                          style={{ backgroundColor: tag.color }}
+                          className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold"
+                          style={{ backgroundColor: tag.color, color: tag.text_color ?? "#ffffff" }}
                         >
                           {tag.name}
                         </span>
                       </div>
                       <div className="flex gap-3 items-center">
-                        <button
-                          onClick={() => toggleActive(tag)}
+                        <button onClick={() => toggleActive(tag)}
                           className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition-colors ${tag.is_active === false ? "text-text-light bg-bg border-border hover:border-primary" : "text-green-700 bg-green-50 border-green-200 hover:bg-green-100"}`}
-                          title="Pasifte ürün kartlarında görünmez"
-                        >
+                          title="Pasifte ürün kartlarında görünmez">
                           {tag.is_active === false ? "Pasif" : "Aktif"}
                         </button>
-                        <button
-                          onClick={() => startEdit(tag)}
-                          className="text-xs text-primary hover:underline font-semibold"
-                        >
+                        <button onClick={() => startEdit(tag)}
+                          className="text-xs text-primary hover:underline font-semibold">
                           Düzenle
                         </button>
-                        <button
-                          onClick={() => handleDelete(tag.id)}
-                          className="text-xs text-red-500 hover:text-red-700 font-semibold"
-                        >
+                        <button onClick={() => handleDelete(tag.id)}
+                          className="text-xs text-red-500 hover:text-red-700 font-semibold">
                           Sil
                         </button>
                       </div>
