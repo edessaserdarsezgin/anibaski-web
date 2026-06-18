@@ -181,6 +181,7 @@ export default async function UrunDetayPage({ params }: Props) {
                 discount_starts_at: product.discount_starts_at ?? null,
                 discount_ends_at: product.discount_ends_at ?? null,
               })}
+              salePrice={(product as unknown as { salePrice?: number | null }).salePrice ?? null}
               variantGroups={Object.entries(variantGroups).map(([type, items]) => ({
                 type,
                 items: items.map((v) => ({

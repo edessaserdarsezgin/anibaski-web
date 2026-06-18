@@ -21,9 +21,10 @@ type Props = {
   };
   variantGroups: VariantGroup[];
   discountPercent?: number;
+  salePrice?: number | null;
 };
 
-export default function AddToCartButton({ isLoggedIn, product, variantGroups, discountPercent = 0 }: Props) {
+export default function AddToCartButton({ isLoggedIn, product, variantGroups, discountPercent = 0, salePrice }: Props) {
   const router = useRouter();
   const [selected, setSelected] = useState<Record<string, VariantItem>>({});
   const [quantity, setQuantity] = useState(1);
@@ -31,7 +32,11 @@ export default function AddToCartButton({ isLoggedIn, product, variantGroups, di
 
   const totalAddon = Object.values(selected).reduce((sum, v) => sum + v.priceAddon, 0);
   const fullUnit = product.basePrice + totalAddon;
-  const unitPrice = applyDiscount(fullUnit, discountPercent);
+  // salePrice: sabit tutarlı promosyondan gelen kesin fiyat (base için). Eklentiye de aynı fark uygulanır.
+  const fixedDiscount = salePrice != null ? product.basePrice - salePrice : null;
+  const unitPrice = fixedDiscount != null
+    ? Math.max(0, Math.round((fullUnit - fixedDiscount) * 100) / 100)
+    : applyDiscount(fullUnit, discountPercent);
   const totalPrice = unitPrice * quantity;
 
   function handleAddToCart() {
