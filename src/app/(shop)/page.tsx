@@ -10,6 +10,7 @@ import ReprintStrip from "@/components/home/ReprintStrip";
 import RecentlyViewed from "@/components/home/RecentlyViewed";
 import TestimonialsStrip from "@/components/home/TestimonialsStrip";
 import AIStudioPromo from "@/components/home/AIStudioPromo";
+import AIStudioPrintOptions from "@/components/home/AIStudioPrintOptions";
 import { createClient } from "@/lib/supabase/server";
 import {
   getHomeCategories,
@@ -243,6 +244,9 @@ export default async function HomePage() {
 
         {/* 5. AI Stüdyo tanıtımı */}
         <AIStudioPromo />
+
+        {/* 6. AI Stüdyo → baskı seçenekleri */}
+        <AIStudioPrintOptions />
 
         {/* ── Kategoriler — Asimetrik grid ─────────────── */}
         <section className="py-28 px-4 sm:px-8 bg-bg">
