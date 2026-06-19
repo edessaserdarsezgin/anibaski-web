@@ -9,11 +9,60 @@ const EXAMPLES = [
   { label: "Pixar 3D Karakter", icon: "🧸", before: "/IMG-20240703-WA0002a.jpg", after: "/rahsan-serdar-pixar.png" },
 ];
 
-export default function AIStudioPromo() {
+function BeforeAfter({ example }: { example: typeof EXAMPLES[0] }) {
   const [sliderX, setSliderX] = useState(50);
   const [dragging, setDragging] = useState(false);
+
+  function handleMove(clientX: number, rect: DOMRect) {
+    const pct = Math.max(5, Math.min(95, ((clientX - rect.left) / rect.width) * 100));
+    setSliderX(pct);
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2 text-white/70 text-xs font-semibold">
+        <span>{example.icon}</span> {example.label}
+      </div>
+      <div
+        className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden border border-white/10 shadow-2xl select-none cursor-ew-resize"
+        onMouseDown={(e) => { setDragging(true); handleMove(e.clientX, e.currentTarget.getBoundingClientRect()); }}
+        onMouseMove={(e) => { if (dragging) handleMove(e.clientX, e.currentTarget.getBoundingClientRect()); }}
+        onMouseUp={() => setDragging(false)}
+        onMouseLeave={() => setDragging(false)}
+        onTouchStart={(e) => { setDragging(true); handleMove(e.touches[0].clientX, e.currentTarget.getBoundingClientRect()); }}
+        onTouchMove={(e) => { if (dragging) handleMove(e.touches[0].clientX, e.currentTarget.getBoundingClientRect()); }}
+        onTouchEnd={() => setDragging(false)}
+      >
+        {/* SONRA */}
+        <img src={example.after} alt="AI sonrası" className="absolute inset-0 w-full h-full object-cover" draggable={false} />
+        <div className="absolute bottom-2 right-2 text-[9px] font-bold text-white/90 tracking-widest uppercase bg-black/40 px-1.5 py-0.5 rounded pointer-events-none">SONRA</div>
+
+        {/* ÖNCE */}
+        <div className="absolute inset-0 pointer-events-none" style={{ clipPath: `inset(0 ${100 - sliderX}% 0 0)` }}>
+          <img src={example.before} alt="Orijinal" className="w-full h-full object-cover" draggable={false} />
+          <div className="absolute bottom-2 left-2 text-[9px] font-bold text-white/90 tracking-widest uppercase bg-black/40 px-1.5 py-0.5 rounded">ÖNCE</div>
+        </div>
+
+        {/* Handle */}
+        <div className="absolute top-0 bottom-0 z-10 flex items-center justify-center pointer-events-none" style={{ left: `calc(${sliderX}% - 1px)` }}>
+          <div className="w-0.5 h-full bg-white/70" />
+          <div className="absolute w-8 h-8 rounded-full bg-white shadow-xl flex items-center justify-center">
+            <svg className="w-3.5 h-3.5 text-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l-4 3 4 3M16 9l4 3-4 3" />
+            </svg>
+          </div>
+        </div>
+
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="text-white/15 text-xs tracking-wider select-none">← sürükle →</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function AIStudioPromo() {
   const [tools, setTools] = useState<StudioTool[]>([]);
-  const [activeExample, setActiveExample] = useState(0);
 
   useEffect(() => {
     fetch("/api/ai/studio/tools")
@@ -21,11 +70,6 @@ export default function AIStudioPromo() {
       .then((d: StudioTool[]) => setTools(d))
       .catch(() => {});
   }, []);
-
-  function handleMove(clientX: number, rect: DOMRect) {
-    const pct = Math.max(5, Math.min(95, ((clientX - rect.left) / rect.width) * 100));
-    setSliderX(pct);
-  }
 
   return (
     <section className="py-24 px-4 sm:px-8 bg-text overflow-hidden relative">
@@ -37,11 +81,11 @@ export default function AIStudioPromo() {
 
       <div className="relative max-w-7xl mx-auto flex flex-col gap-14">
 
-        {/* Üst — başlık + before/after yan yana */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        {/* Üst — başlık + iki slider */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
 
           {/* Sol — metin */}
-          <div className="flex flex-col gap-7 order-2 lg:order-1">
+          <div className="flex flex-col gap-7 order-2 lg:order-1 lg:pt-6">
             <div className="inline-flex items-center gap-2 self-start px-3 py-1.5 rounded-full border border-accent/40 bg-accent/10 text-accent text-xs font-semibold">
               <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
               YENİ · AI Stüdyo
@@ -70,81 +114,11 @@ export default function AIStudioPromo() {
             </div>
           </div>
 
-          {/* Sağ — interaktif before/after mockup */}
-          <div className="order-1 lg:order-2 flex flex-col items-center gap-3">
-            {/* Örnek seçici */}
-            <div className="flex gap-2">
-              {EXAMPLES.map((ex, i) => (
-                <button
-                  key={ex.label}
-                  onClick={() => { setActiveExample(i); setSliderX(50); }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                    activeExample === i
-                      ? "bg-white text-text"
-                      : "bg-white/10 text-white/60 hover:bg-white/15 hover:text-white/80"
-                  }`}
-                >
-                  <span>{ex.icon}</span> {ex.label}
-                </button>
-              ))}
-            </div>
-
-            <div
-              className="relative w-full max-w-[420px] aspect-[4/3] rounded-2xl overflow-hidden border border-white/10 shadow-2xl select-none cursor-ew-resize"
-              onMouseDown={(e) => {
-                setDragging(true);
-                handleMove(e.clientX, e.currentTarget.getBoundingClientRect());
-              }}
-              onMouseMove={(e) => {
-                if (dragging) handleMove(e.clientX, e.currentTarget.getBoundingClientRect());
-              }}
-              onMouseUp={() => setDragging(false)}
-              onMouseLeave={() => setDragging(false)}
-              onTouchStart={(e) => {
-                setDragging(true);
-                handleMove(e.touches[0].clientX, e.currentTarget.getBoundingClientRect());
-              }}
-              onTouchMove={(e) => {
-                if (dragging) handleMove(e.touches[0].clientX, e.currentTarget.getBoundingClientRect());
-              }}
-              onTouchEnd={() => setDragging(false)}
-            >
-              {/* SONRA — işlenmiş */}
-              <img
-                src={EXAMPLES[activeExample].after}
-                alt="AI ile işlenmiş fotoğraf"
-                className="absolute inset-0 w-full h-full object-cover"
-                draggable={false}
-              />
-              <div className="absolute bottom-3 right-3 text-[10px] font-bold text-white/90 tracking-widest uppercase bg-black/40 px-2 py-0.5 rounded pointer-events-none">SONRA</div>
-
-              {/* ÖNCE — orijinal, klip ile kesili */}
-              <div className="absolute inset-0 pointer-events-none"
-                style={{ clipPath: `inset(0 ${100 - sliderX}% 0 0)` }}>
-                <img
-                  src={EXAMPLES[activeExample].before}
-                  alt="Orijinal fotoğraf"
-                  className="w-full h-full object-cover"
-                  draggable={false}
-                />
-                <div className="absolute bottom-3 left-3 text-[10px] font-bold text-white/90 tracking-widest uppercase bg-black/40 px-2 py-0.5 rounded">ÖNCE</div>
-              </div>
-
-              {/* Slider handle */}
-              <div className="absolute top-0 bottom-0 z-10 flex items-center justify-center pointer-events-none"
-                style={{ left: `calc(${sliderX}% - 1px)` }}>
-                <div className="w-0.5 h-full bg-white/70" />
-                <div className="absolute w-9 h-9 rounded-full bg-white shadow-xl flex items-center justify-center">
-                  <svg className="w-4 h-4 text-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l-4 3 4 3M16 9l4 3-4 3" />
-                  </svg>
-                </div>
-              </div>
-
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <span className="text-white/20 text-xs font-medium tracking-wider select-none">← sürükle →</span>
-              </div>
-            </div>
+          {/* Sağ — iki ayrı before/after */}
+          <div className="order-1 lg:order-2 grid grid-cols-2 gap-4">
+            {EXAMPLES.map((ex) => (
+              <BeforeAfter key={ex.label} example={ex} />
+            ))}
           </div>
         </div>
 
