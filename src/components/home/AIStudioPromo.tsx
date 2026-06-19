@@ -95,9 +95,27 @@ export default function AIStudioPromo() {
               <em className="not-italic text-accent">hazırla</em>
             </h2>
             <p className="mt-4 text-white/60 text-lg leading-relaxed max-w-xl mx-auto">
-              Photoshop gerekmez. Netleştir, renklendir, Pixar karakterine veya pixel art'a dönüştür —
-              yapay zeka saniyeler içinde halleder.
+              Photoshop gerekmez. Fotoğrafını yapay zeka ile işle, beğenince tek tıkla baskıya gönder —
+              sonuç doğrudan kapına gelsin.
             </p>
+          </div>
+
+          {/* Adım akışı */}
+          <div className="flex items-center gap-2 flex-wrap justify-center text-sm">
+            <div className="flex items-center gap-2 bg-white/8 border border-white/10 rounded-full px-4 py-2">
+              <span>📤</span>
+              <span className="text-white/80 font-medium">Fotoğraf yükle</span>
+            </div>
+            <svg className="w-4 h-4 text-white/30 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+            <div className="flex items-center gap-2 bg-white/8 border border-white/10 rounded-full px-4 py-2">
+              <span>✨</span>
+              <span className="text-white/80 font-medium">AI ile işle</span>
+            </div>
+            <svg className="w-4 h-4 text-white/30 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+            <div className="flex items-center gap-2 bg-primary/30 border border-primary/50 rounded-full px-4 py-2">
+              <span>🖨️</span>
+              <span className="text-white font-semibold">Baskıya gönder</span>
+            </div>
           </div>
 
           <div className="flex items-center gap-3 flex-wrap justify-center">
