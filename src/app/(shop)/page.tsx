@@ -9,6 +9,7 @@ import CampaignTiles from "@/components/home/CampaignTiles";
 import ReprintStrip from "@/components/home/ReprintStrip";
 import RecentlyViewed from "@/components/home/RecentlyViewed";
 import TestimonialsStrip from "@/components/home/TestimonialsStrip";
+import AIStudioPromo from "@/components/home/AIStudioPromo";
 import { createClient } from "@/lib/supabase/server";
 import {
   getHomeCategories,
@@ -239,6 +240,9 @@ export default async function HomePage() {
 
         {/* 4. Kampanya kartları */}
         <CampaignTiles cards={campaignCards} />
+
+        {/* 5. AI Stüdyo tanıtımı */}
+        <AIStudioPromo />
 
         {/* ── Kategoriler — Asimetrik grid ─────────────── */}
         <section className="py-28 px-4 sm:px-8 bg-bg">
