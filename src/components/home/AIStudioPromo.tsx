@@ -7,6 +7,7 @@ import { type StudioTool } from "@/lib/studio";
 const EXAMPLES = [
   { label: "Netleştir & Büyüt", icon: "🌟", before: "/IMG-20240703-WA0002a.jpg", after: "/anibaski-studyoa.png" },
   { label: "Pixar 3D Karakter", icon: "🧸", before: "/IMG-20240703-WA0002a.jpg", after: "/rahsan-serdar-pixar.png" },
+  { label: "Pixel Art", icon: "🎮", before: "/deniz-once.jpeg", after: "/deniz-pixelart.png" },
 ];
 
 function BeforeAfter({ example }: { example: typeof EXAMPLES[0] }) {
@@ -81,45 +82,40 @@ export default function AIStudioPromo() {
 
       <div className="relative max-w-7xl mx-auto flex flex-col gap-14">
 
-        {/* Üst — başlık + iki slider */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-
-          {/* Sol — metin */}
-          <div className="flex flex-col gap-7 order-2 lg:order-1 lg:pt-6">
-            <div className="inline-flex items-center gap-2 self-start px-3 py-1.5 rounded-full border border-accent/40 bg-accent/10 text-accent text-xs font-semibold">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
-              YENİ · AI Stüdyo
-            </div>
-
-            <div>
-              <h2 className="font-serif text-4xl md:text-5xl text-white leading-tight">
-                Fotoğrafını baskıya
-                <br />
-                <em className="not-italic text-accent">hazırla</em>
-              </h2>
-              <p className="mt-4 text-white/60 text-lg leading-relaxed max-w-md">
-                Photoshop gerekmez. Netleştir, renklendir, anime veya Pixar karakterine dönüştür —
-                yapay zeka saniyeler içinde halleder.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3 flex-wrap">
-              <Link
-                href="/studyo"
-                className="px-8 py-3.5 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full transition-all hover:-translate-y-0.5 shadow-lg"
-              >
-                AI Stüdyo&apos;yu Dene ✨
-              </Link>
-              <span className="text-white/40 text-xs">Her gün ücretsiz kredi · Baskıdan kredi kazan</span>
-            </div>
+        {/* Üst — ortalı başlık */}
+        <div className="text-center flex flex-col items-center gap-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-accent/40 bg-accent/10 text-accent text-xs font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
+            YENİ · AI Stüdyo
           </div>
 
-          {/* Sağ — iki ayrı before/after */}
-          <div className="order-1 lg:order-2 grid grid-cols-2 gap-4">
-            {EXAMPLES.map((ex) => (
-              <BeforeAfter key={ex.label} example={ex} />
-            ))}
+          <div>
+            <h2 className="font-serif text-4xl md:text-5xl text-white leading-tight">
+              Fotoğrafını baskıya{" "}
+              <em className="not-italic text-accent">hazırla</em>
+            </h2>
+            <p className="mt-4 text-white/60 text-lg leading-relaxed max-w-xl mx-auto">
+              Photoshop gerekmez. Netleştir, renklendir, Pixar karakterine veya pixel art'a dönüştür —
+              yapay zeka saniyeler içinde halleder.
+            </p>
           </div>
+
+          <div className="flex items-center gap-3 flex-wrap justify-center">
+            <Link
+              href="/studyo"
+              className="px-8 py-3.5 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full transition-all hover:-translate-y-0.5 shadow-lg"
+            >
+              AI Stüdyo&apos;yu Dene ✨
+            </Link>
+            <span className="text-white/40 text-xs">Her gün ücretsiz kredi · Baskıdan kredi kazan</span>
+          </div>
+        </div>
+
+        {/* Üç before/after çerçeve */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {EXAMPLES.map((ex) => (
+            <BeforeAfter key={ex.label} example={ex} />
+          ))}
         </div>
 
         {/* Alt — araç kartları */}
