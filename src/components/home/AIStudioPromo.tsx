@@ -86,22 +86,25 @@ export default function AIStudioPromo() {
               }}
               onTouchEnd={() => setDragging(false)}
             >
-              {/* SONRA — canlı */}
-              <div className="absolute inset-0"
-                style={{ background: "linear-gradient(135deg, #fde68a 0%, #f97316 35%, #e07a5f 65%, #9333ea 100%)" }}>
-                <div className="absolute inset-0 opacity-30"
-                  style={{ backgroundImage: "radial-gradient(circle at 30% 40%, rgba(255,255,255,0.4) 0%, transparent 50%), radial-gradient(circle at 70% 70%, rgba(255,200,100,0.3) 0%, transparent 40%)" }} />
-                <div className="absolute bottom-3 right-3 text-[10px] font-bold text-white/70 tracking-widest uppercase bg-black/20 px-2 py-0.5 rounded">SONRA</div>
-              </div>
+              {/* SONRA — işlenmiş */}
+              <img
+                src="/anibaski-studyoa.png"
+                alt="AI ile işlenmiş fotoğraf"
+                className="absolute inset-0 w-full h-full object-cover"
+                draggable={false}
+              />
+              <div className="absolute bottom-3 right-3 text-[10px] font-bold text-white/90 tracking-widest uppercase bg-black/40 px-2 py-0.5 rounded pointer-events-none">SONRA</div>
 
-              {/* ÖNCE — soluk */}
-              <div className="absolute inset-0"
-                style={{
-                  clipPath: `inset(0 ${100 - sliderX}% 0 0)`,
-                  background: "linear-gradient(135deg, #c8b89a 0%, #a89070 35%, #907560 65%, #6b5a80 100%)",
-                  filter: "saturate(0.25) brightness(0.7) blur(0.5px)",
-                }}>
-                <div className="absolute bottom-3 left-3 text-[10px] font-bold text-white/50 tracking-widest uppercase bg-black/20 px-2 py-0.5 rounded">ÖNCE</div>
+              {/* ÖNCE — orijinal, klip ile kesili */}
+              <div className="absolute inset-0 pointer-events-none"
+                style={{ clipPath: `inset(0 ${100 - sliderX}% 0 0)` }}>
+                <img
+                  src="/IMG-20240703-WA0002a.jpg"
+                  alt="Orijinal fotoğraf"
+                  className="w-full h-full object-cover"
+                  draggable={false}
+                />
+                <div className="absolute bottom-3 left-3 text-[10px] font-bold text-white/90 tracking-widest uppercase bg-black/40 px-2 py-0.5 rounded">ÖNCE</div>
               </div>
 
               {/* Slider handle */}
