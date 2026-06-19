@@ -4,10 +4,16 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { type StudioTool } from "@/lib/studio";
 
+const EXAMPLES = [
+  { label: "Netleştir & Büyüt", icon: "🌟", before: "/IMG-20240703-WA0002a.jpg", after: "/anibaski-studyoa.png" },
+  { label: "Pixar 3D Karakter", icon: "🧸", before: "/IMG-20240703-WA0002a.jpg", after: "/rahsan-serdar-pixar.png" },
+];
+
 export default function AIStudioPromo() {
   const [sliderX, setSliderX] = useState(50);
   const [dragging, setDragging] = useState(false);
   const [tools, setTools] = useState<StudioTool[]>([]);
+  const [activeExample, setActiveExample] = useState(0);
 
   useEffect(() => {
     fetch("/api/ai/studio/tools")
@@ -65,7 +71,24 @@ export default function AIStudioPromo() {
           </div>
 
           {/* Sağ — interaktif before/after mockup */}
-          <div className="order-1 lg:order-2 flex justify-center">
+          <div className="order-1 lg:order-2 flex flex-col items-center gap-3">
+            {/* Örnek seçici */}
+            <div className="flex gap-2">
+              {EXAMPLES.map((ex, i) => (
+                <button
+                  key={ex.label}
+                  onClick={() => { setActiveExample(i); setSliderX(50); }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                    activeExample === i
+                      ? "bg-white text-text"
+                      : "bg-white/10 text-white/60 hover:bg-white/15 hover:text-white/80"
+                  }`}
+                >
+                  <span>{ex.icon}</span> {ex.label}
+                </button>
+              ))}
+            </div>
+
             <div
               className="relative w-full max-w-[420px] aspect-[4/3] rounded-2xl overflow-hidden border border-white/10 shadow-2xl select-none cursor-ew-resize"
               onMouseDown={(e) => {
@@ -88,7 +111,7 @@ export default function AIStudioPromo() {
             >
               {/* SONRA — işlenmiş */}
               <img
-                src="/anibaski-studyoa.png"
+                src={EXAMPLES[activeExample].after}
                 alt="AI ile işlenmiş fotoğraf"
                 className="absolute inset-0 w-full h-full object-cover"
                 draggable={false}
@@ -99,7 +122,7 @@ export default function AIStudioPromo() {
               <div className="absolute inset-0 pointer-events-none"
                 style={{ clipPath: `inset(0 ${100 - sliderX}% 0 0)` }}>
                 <img
-                  src="/IMG-20240703-WA0002a.jpg"
+                  src={EXAMPLES[activeExample].before}
                   alt="Orijinal fotoğraf"
                   className="w-full h-full object-cover"
                   draggable={false}
