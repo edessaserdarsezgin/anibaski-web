@@ -8,6 +8,7 @@ import FlashDealsStrip from "@/components/home/FlashDealsStrip";
 import CampaignTiles from "@/components/home/CampaignTiles";
 import ReprintStrip from "@/components/home/ReprintStrip";
 import RecentlyViewed from "@/components/home/RecentlyViewed";
+import TestimonialsStrip from "@/components/home/TestimonialsStrip";
 import { createClient } from "@/lib/supabase/server";
 import {
   getHomeCategories,
@@ -143,6 +144,12 @@ export default async function HomePage() {
                 >
                   Baskıya Başla
                 </Link>
+                <Link
+                  href="/studyo"
+                  className="px-9 py-4 border border-primary text-primary font-semibold rounded-full transition-all hover:bg-primary/8 hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  AI Stüdyo ✨
+                </Link>
               </div>
 
               {/* Micro stats */}
@@ -162,29 +169,54 @@ export default async function HomePage() {
 
             {/* Right — floating polaroids */}
             <div className="relative h-[480px] hidden lg:block">
-              {/* Back */}
+              {/* Back — kanvas tablo */}
               <div className="pol-2 absolute bg-white rounded-sm shadow-xl p-3 pb-10 w-52"
                 style={{ rotate: "9deg", top: "4%", left: "52%" }}>
-                <div className="w-full h-36 bg-amber-100 rounded-sm flex items-center justify-center">
-                  <span className="text-5xl">🌊</span>
+                <div className="w-full h-36 rounded-sm overflow-hidden relative"
+                  style={{ background: "linear-gradient(135deg, #fde8d8 0%, #f4a87c 40%, #c87941 100%)" }}>
+                  <div className="absolute inset-0 flex items-end p-3">
+                    <div className="w-full h-1.5 bg-white/20 rounded-full" />
+                  </div>
+                  <div className="absolute top-3 left-3 right-3 bottom-6 rounded opacity-60"
+                    style={{ background: "linear-gradient(160deg, #ffb347 0%, #e07a5f 60%, #9b4f2a 100%)" }} />
+                  <div className="absolute bottom-2 right-2 text-white/40 text-[10px] font-mono">KANVAS</div>
                 </div>
-                <p className="text-center text-[11px] text-text-light mt-3 font-sans">yaz tatili 2024</p>
+                <p className="text-center text-[11px] text-text-light mt-3 font-sans">oturma odası tablo</p>
               </div>
 
-              {/* Middle */}
+              {/* Middle — fotokitap */}
               <div className="pol-3 absolute bg-white rounded-sm shadow-2xl p-3 pb-10 w-60"
                 style={{ rotate: "-1deg", top: "18%", left: "20%" }}>
-                <div className="w-full h-44 bg-rose-100 rounded-sm flex items-center justify-center">
-                  <span className="text-6xl">🌸</span>
+                <div className="w-full h-44 rounded-sm overflow-hidden relative"
+                  style={{ background: "linear-gradient(120deg, #dbeafe 0%, #93c5fd 45%, #3b82f6 100%)" }}>
+                  <div className="absolute inset-0 opacity-70"
+                    style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 50%, rgba(0,0,0,0.15) 100%)" }} />
+                  {/* Book spine illusion */}
+                  <div className="absolute left-0 top-0 bottom-0 w-5 bg-white/25 border-r border-white/40" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-white/80 text-[10px] font-semibold tracking-widest uppercase mb-1">Yaz 2024</div>
+                      <div className="w-12 h-0.5 bg-white/50 mx-auto" />
+                    </div>
+                  </div>
+                  <div className="absolute bottom-2 right-2 text-white/40 text-[10px] font-mono">FOTOKİTAP</div>
                 </div>
-                <p className="text-center text-[11px] text-text-light mt-3 font-sans">ilkbahar 🌸</p>
+                <p className="text-center text-[11px] text-text-light mt-3 font-sans">yaz tatili anıları</p>
               </div>
 
-              {/* Front */}
+              {/* Front — polaroid baskı */}
               <div className="pol-1 absolute bg-white rounded-sm shadow-xl p-3 pb-10 w-52"
                 style={{ rotate: "-5deg", top: "50%", left: "44%" }}>
-                <div className="w-full h-36 bg-violet-100 rounded-sm flex items-center justify-center">
-                  <span className="text-5xl">👨‍👩‍👧</span>
+                <div className="w-full h-36 rounded-sm overflow-hidden relative"
+                  style={{ background: "linear-gradient(135deg, #fce7f3 0%, #f9a8d4 40%, #ec4899 100%)" }}>
+                  <div className="absolute inset-0 opacity-50"
+                    style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.4) 0%, transparent 60%)" }} />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-white/30 backdrop-blur-sm border border-white/50 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-white/50" />
+                    </div>
+                  </div>
+                  <div className="absolute bottom-2 right-2 text-white/40 text-[10px] font-mono">POLAROİD</div>
                 </div>
                 <p className="text-center text-[11px] text-text-light mt-3 font-sans">aile günü 💕</p>
               </div>
@@ -199,44 +231,14 @@ export default async function HomePage() {
         {/* 2. Kampanya slider */}
         <HeroBanner banners={heroBanners} />
 
-        {/* 4. Süreli fırsatlar */}
+        {/* 3. Süreli fırsatlar */}
         <FlashDealsStrip
           products={flash.products as unknown as Parameters<typeof FlashDealsStrip>[0]["products"]}
           endsAt={flash.endsAt}
         />
 
-        {/* 5. Kampanya kartları */}
+        {/* 4. Kampanya kartları */}
         <CampaignTiles cards={campaignCards} />
-
-        {/* ── Nasıl Çalışır ─────────────────────────────── */}
-        <section className="py-28 px-8 bg-white border-y border-border">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-20">
-              <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase mb-4">Süreç</p>
-              <h2 className="font-serif text-3xl md:text-5xl text-text">Üç adımda tamamdır</h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-0 relative">
-              {/* Dashed connector */}
-              <div className="hidden md:block absolute top-[2.6rem] left-[calc(16.66%+2.75rem)] right-[calc(16.66%+2.75rem)] border-t-2 border-dashed border-border" />
-
-              {[
-                { num: "01", icon: "📸", title: "Fotoğrafını Yükle", desc: "Telefonundan ya da bilgisayarından istediğin fotoğrafı saniyeler içinde yükle." },
-                { num: "02", icon: "🎨", title: "Ürünü Özelleştir", desc: "Boyut, kağıt kalitesi ve çerçeve seçeneklerini dilediğince belirle." },
-                { num: "03", icon: "📦", title: "Kapında Olsun", desc: "2–5 iş günü içinde özenle paketlenmiş ürününü teslim alırsın." },
-              ].map((s) => (
-                <div key={s.num} className="flex flex-col items-center text-center px-8 gap-5 relative z-10">
-                  <div className="w-[5.5rem] h-[5.5rem] rounded-2xl bg-bg border border-border shadow-soft flex flex-col items-center justify-center gap-1">
-                    <span className="text-[2rem]">{s.icon}</span>
-                    <span className="font-mono text-[9px] text-text-light tracking-[0.2em]">{s.num}</span>
-                  </div>
-                  <h3 className="font-serif text-xl text-text">{s.title}</h3>
-                  <p className="text-sm text-text-light leading-relaxed max-w-[200px]">{s.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
 
         {/* ── Kategoriler — Asimetrik grid ─────────────── */}
         <section className="py-28 px-4 sm:px-8 bg-bg">
@@ -289,11 +291,12 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {/* 7. Öne çıkan ürünler */}
+        <FeaturedStrip products={featured} />
+
         {/* 8. Tekrar Bas + Son baktıkların */}
         <ReprintStrip products={reprint as unknown as Parameters<typeof ReprintStrip>[0]["products"]} />
         <RecentlyViewed />
-
-        <FeaturedStrip products={featured} />
 
         {/* ── Güven Şeridi — Terracotta ─────────────────── */}
         <section className="py-12 px-8 bg-primary">
@@ -314,6 +317,37 @@ export default async function HomePage() {
             ))}
           </div>
         </section>
+
+        {/* ── Nasıl Çalışır ─────────────────────────────── */}
+        <section className="py-28 px-8 bg-white border-y border-border">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-20">
+              <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase mb-4">Süreç</p>
+              <h2 className="font-serif text-3xl md:text-5xl text-text">Üç adımda tamamdır</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-0 relative">
+              <div className="hidden md:block absolute top-[2.6rem] left-[calc(16.66%+2.75rem)] right-[calc(16.66%+2.75rem)] border-t-2 border-dashed border-border" />
+              {[
+                { num: "01", icon: "📸", title: "Fotoğrafını Yükle", desc: "Telefonundan ya da bilgisayarından istediğin fotoğrafı saniyeler içinde yükle." },
+                { num: "02", icon: "🎨", title: "Ürünü Özelleştir", desc: "Boyut, kağıt kalitesi ve çerçeve seçeneklerini dilediğince belirle." },
+                { num: "03", icon: "📦", title: "Kapında Olsun", desc: "2–5 iş günü içinde özenle paketlenmiş ürününü teslim alırsın." },
+              ].map((s) => (
+                <div key={s.num} className="flex flex-col items-center text-center px-8 gap-5 relative z-10">
+                  <div className="w-[5.5rem] h-[5.5rem] rounded-2xl bg-bg border border-border shadow-soft flex flex-col items-center justify-center gap-1">
+                    <span className="text-[2rem]">{s.icon}</span>
+                    <span className="font-mono text-[9px] text-text-light tracking-[0.2em]">{s.num}</span>
+                  </div>
+                  <h3 className="font-serif text-xl text-text">{s.title}</h3>
+                  <p className="text-sm text-text-light leading-relaxed max-w-[200px]">{s.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Müşteri Yorumları ─────────────────────────── */}
+        <TestimonialsStrip />
 
         {/* ── Premium Kalite ────────────────────────────── */}
         <section className="py-28 px-8 bg-white">
