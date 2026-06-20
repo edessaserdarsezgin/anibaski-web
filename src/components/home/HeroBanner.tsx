@@ -36,9 +36,9 @@ export default function HeroBanner({ banners }: { banners: Banner[] }) {
   }, [single, paused, active, scrollToIndex]);
 
   if (!count) return (
-    <section className="px-4 pt-4">
-      <div className="relative max-w-7xl mx-auto">
-        <div className="relative w-full aspect-[21/9] rounded-3xl overflow-hidden bg-gradient-to-br from-text via-text/90 to-primary/40 flex items-center">
+    <section>
+      <div className="relative w-full">
+        <div className="relative w-full aspect-[21/9] overflow-hidden bg-gradient-to-br from-text via-text/90 to-primary/40 flex items-center">
           <div className="absolute inset-0 opacity-20"
             style={{ backgroundImage: "radial-gradient(circle at 20% 50%, #e07a5f 0%, transparent 50%), radial-gradient(circle at 80% 30%, #f2cc8f 0%, transparent 50%)" }} />
           <div className="relative px-8 md:px-14 max-w-xl flex flex-col gap-5">
@@ -66,20 +66,20 @@ export default function HeroBanner({ banners }: { banners: Banner[] }) {
   );
 
   return (
-    <section className="px-4 pt-4">
+    <section>
       <div
-        className="relative max-w-7xl mx-auto"
+        className="relative"
         onPointerEnter={() => setPaused(true)}
         onPointerLeave={() => setPaused(false)}
       >
         <div
           ref={scrollerRef}
           onScroll={onScroll}
-          className="flex gap-4 overflow-x-auto snap-x snap-mandatory rounded-3xl scrollbar-none"
+          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none"
         >
           {banners.map((b) => (
             <Link key={b.id} href={b.cta_url}
-              className="group relative shrink-0 w-full snap-center aspect-[21/9] rounded-3xl overflow-hidden bg-bg">
+              className="group relative shrink-0 w-full snap-center aspect-[21/9] overflow-hidden bg-bg">
               <Image src={b.image_url} alt={b.title} fill priority sizes="100vw" className="object-cover" />
               <div className="absolute inset-0 bg-gradient-to-r from-text/65 via-text/25 to-transparent" />
               <div className="absolute inset-0 flex flex-col justify-center p-8 md:p-14 max-w-xl">

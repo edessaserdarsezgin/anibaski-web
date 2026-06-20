@@ -8,7 +8,6 @@ import CampaignTiles from "@/components/home/CampaignTiles";
 import ReprintStrip from "@/components/home/ReprintStrip";
 import RecentlyViewed from "@/components/home/RecentlyViewed";
 import TestimonialsStrip from "@/components/home/TestimonialsStrip";
-import AIStudioPromo from "@/components/home/AIStudioPromo";
 import { createClient } from "@/lib/supabase/server";
 import {
   getHomeCategories,
@@ -71,36 +70,17 @@ export default async function HomePage() {
         .cat-large .cat-icon { transition: transform 0.5s ease, opacity 0.5s ease; }
       `}</style>
 
+      <h1 className="sr-only">AnıBaskı — Fotoğraf Baskısı, Fotokitap, Tablo ve Polaroid</h1>
+
       <div className="overflow-hidden">
 
-        {/* 1. Hero Banner — admin'den yönetilen dinamik banner (placement='hero') */}
-        <h1 className="sr-only">AnıBaskı — Fotoğraf Baskısı, Fotokitap, Tablo ve Polaroid</h1>
+        {/* 1. Hero Banner — tam genişlik, admin'den yönetilen */}
         <HeroBanner banners={heroBanners} />
 
-        {/* 2. Güven Şeridi — hero'nun hemen altında */}
-        <section className="py-10 px-8 bg-primary">
-          <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            {[
-              { icon: "🚚", title: "Ücretsiz Kargo", desc: `${freeShippingThreshold} ₺ ve üzeri siparişlerde` },
-              { icon: "🔒", title: "Güvenli Ödeme", desc: "256-bit SSL şifreleme" },
-              { icon: "🎁", title: "Özel Paketleme", desc: "Hediyeye hazır kutularda" },
-              { icon: "↩️", title: "Memnuniyet Garantisi", desc: "Sorun varsa yeniden basıyoruz" },
-            ].map((t) => (
-              <div key={t.title} className="flex items-center gap-3">
-                <span className="text-2xl shrink-0">{t.icon}</span>
-                <div>
-                  <p className="text-sm font-semibold text-white">{t.title}</p>
-                  <p className="text-xs text-white/65">{t.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* 3. Kampanya kartları */}
+        {/* 2. Kampanya kartları */}
         <CampaignTiles cards={campaignCards} />
 
-        {/* 4. Kategoriler */}
+        {/* 3. Kategoriler */}
         <section className="py-24 px-4 sm:px-8 bg-bg">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-end justify-between mb-12">
@@ -116,49 +96,46 @@ export default async function HomePage() {
             {catRows.length > 0 ? (
               <HomeCategoryRows rows={catRows} />
             ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 gap-4 lg:h-[480px]">
-              <Link href="/kategoriler/fotograf-baskilari"
-                className="cat-large group col-span-2 lg:row-span-2 relative overflow-hidden rounded-3xl bg-primary flex flex-col justify-end p-8 min-h-[280px] hover:shadow-hover transition-all duration-500">
-                <div className="absolute inset-0 bg-gradient-to-t from-text/50 via-text/10 to-transparent" />
-                <span className="cat-icon absolute top-6 right-6 text-[5rem] opacity-30">🖼️</span>
-                <div className="relative">
-                  <h3 className="font-serif text-3xl text-white mb-2">Fotoğraf Baskıları</h3>
-                  <p className="text-white/75 text-sm mb-5 max-w-xs">Anılarınızı en net ve canlı haliyle kağıda dökün. Fujifilm kalitesi.</p>
-                  <span className="inline-flex items-center gap-2 text-white text-sm font-semibold group-hover:gap-3 transition-all">
-                    Keşfet <span aria-hidden>→</span>
-                  </span>
-                </div>
-              </Link>
-              {[
-                { title: "Duvar Dekorasyonu", desc: "Evinizi sanata dönüştürün.", slug: "duvar-dekorasyonu", icon: "🏠", bg: "bg-amber-50" },
-                { title: "Albümler ve Kitaplar", desc: "Hikayenizi sayfalarca anlatın.", slug: "albumler-ve-kitaplar", icon: "📖", bg: "bg-emerald-50" },
-                { title: "Kişiye Özel Hediyeler", desc: "Sevdiklerinizi şaşırtın.", slug: "kisiye-ozel-hediyeler", icon: "🎁", bg: "bg-violet-50" },
-              ].map((cat) => (
-                <Link key={cat.slug} href={`/kategoriler/${cat.slug}`}
-                  className={`group relative overflow-hidden rounded-3xl ${cat.bg} flex flex-col justify-between p-6 hover:shadow-hover transition-all duration-300 hover:-translate-y-1`}>
-                  <span className="text-3xl group-hover:scale-110 transition-transform duration-300 inline-block">{cat.icon}</span>
-                  <div>
-                    <h3 className="font-serif text-base text-text mb-1 group-hover:text-primary transition-colors">{cat.title}</h3>
-                    <p className="text-xs text-text-light leading-relaxed hidden lg:block">{cat.desc}</p>
+              <div className="grid grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 gap-4 lg:h-[480px]">
+                <Link href="/kategoriler/fotograf-baskilari"
+                  className="cat-large group col-span-2 lg:row-span-2 relative overflow-hidden rounded-3xl bg-primary flex flex-col justify-end p-8 min-h-[280px] hover:shadow-hover transition-all duration-500">
+                  <div className="absolute inset-0 bg-gradient-to-t from-text/50 via-text/10 to-transparent" />
+                  <span className="cat-icon absolute top-6 right-6 text-[5rem] opacity-30">🖼️</span>
+                  <div className="relative">
+                    <h3 className="font-serif text-3xl text-white mb-2">Fotoğraf Baskıları</h3>
+                    <p className="text-white/75 text-sm mb-5 max-w-xs">Anılarınızı en net ve canlı haliyle kağıda dökün. Fujifilm kalitesi.</p>
+                    <span className="inline-flex items-center gap-2 text-white text-sm font-semibold group-hover:gap-3 transition-all">
+                      Keşfet <span aria-hidden>→</span>
+                    </span>
                   </div>
                 </Link>
-              ))}
-            </div>
+                {[
+                  { title: "Duvar Dekorasyonu", desc: "Evinizi sanata dönüştürün.", slug: "duvar-dekorasyonu", icon: "🏠", bg: "bg-amber-50" },
+                  { title: "Albümler ve Kitaplar", desc: "Hikayenizi sayfalarca anlatın.", slug: "albumler-ve-kitaplar", icon: "📖", bg: "bg-emerald-50" },
+                  { title: "Kişiye Özel Hediyeler", desc: "Sevdiklerinizi şaşırtın.", slug: "kisiye-ozel-hediyeler", icon: "🎁", bg: "bg-violet-50" },
+                ].map((cat) => (
+                  <Link key={cat.slug} href={`/kategoriler/${cat.slug}`}
+                    className={`group relative overflow-hidden rounded-3xl ${cat.bg} flex flex-col justify-between p-6 hover:shadow-hover transition-all duration-300 hover:-translate-y-1`}>
+                    <span className="text-3xl group-hover:scale-110 transition-transform duration-300 inline-block">{cat.icon}</span>
+                    <div>
+                      <h3 className="font-serif text-base text-text mb-1 group-hover:text-primary transition-colors">{cat.title}</h3>
+                      <p className="text-xs text-text-light leading-relaxed hidden lg:block">{cat.desc}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             )}
           </div>
         </section>
 
-        {/* 5. AI Stüdyo */}
-        <AIStudioPromo />
-
-        {/* 7. Öne çıkan ürünler */}
+        {/* 4. Öne çıkan ürünler */}
         <FeaturedStrip products={featured} />
 
-        {/* 8. Tekrar Bas + Son baktıkların */}
+        {/* 5. Tekrar Bas + Son baktıkların */}
         <ReprintStrip products={reprint as unknown as Parameters<typeof ReprintStrip>[0]["products"]} />
         <RecentlyViewed />
 
-        {/* 9. Nasıl Çalışır */}
+        {/* 6. Nasıl Çalışır */}
         <section className="py-28 px-8 bg-white border-y border-border">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-20">
@@ -185,10 +162,30 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* 10. Müşteri Yorumları */}
+        {/* 7. Müşteri Yorumları */}
         <TestimonialsStrip />
 
-        {/* 11. Son CTA */}
+        {/* 8. Güven Şeridi — dönüşüm öncesi */}
+        <section className="py-10 px-8 bg-primary">
+          <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            {[
+              { icon: "🚚", title: "Ücretsiz Kargo", desc: `${freeShippingThreshold} ₺ ve üzeri siparişlerde` },
+              { icon: "🔒", title: "Güvenli Ödeme", desc: "256-bit SSL şifreleme" },
+              { icon: "🎁", title: "Özel Paketleme", desc: "Hediyeye hazır kutularda" },
+              { icon: "↩️", title: "Memnuniyet Garantisi", desc: "Sorun varsa yeniden basıyoruz" },
+            ].map((t) => (
+              <div key={t.title} className="flex items-center gap-3">
+                <span className="text-2xl shrink-0">{t.icon}</span>
+                <div>
+                  <p className="text-sm font-semibold text-white">{t.title}</p>
+                  <p className="text-xs text-white/65">{t.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 9. Son CTA */}
         <section className="relative py-36 px-8 bg-text overflow-hidden">
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-primary/20 blur-3xl" />
