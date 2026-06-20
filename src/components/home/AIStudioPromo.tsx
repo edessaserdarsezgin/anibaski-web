@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { type StudioTool } from "@/lib/studio";
 
 const EXAMPLES = [
-  { label: "Netleştir & Büyüt", icon: "🌟", before: "/IMG-20240703-WA0002a.jpg", after: "/anibaski-studyoa.png" },
+  { label: "Anime", icon: "🌟", before: "/IMG-20240703-WA0002a.jpg", after: "/anibaski-studyoa.png" },
   { label: "Pixar 3D Karakter", icon: "🧸", before: "/IMG-20240703-WA0002a.jpg", after: "/rahsan-serdar-pixar.png" },
   { label: "Pixel Art", icon: "🎮", before: "/deniz-once.jpeg", after: "/deniz-pixelart.png" },
 ];
