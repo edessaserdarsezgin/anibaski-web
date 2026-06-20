@@ -7,6 +7,21 @@ import { type StudioTool } from "@/lib/studio";
 import { upscaleViaServer, editViaServer, UpscaleError } from "@/lib/upscaleClient";
 import BeforeAfterSlider from "@/components/studio/BeforeAfterSlider";
 
+const EXAMPLES = [
+  { label: "Anime Efekti", before: "/IMG-20240703-WA0002a.jpg", after: "/anibaski-studyoa.png" },
+  { label: "Pixar 3D", before: "/IMG-20240703-WA0002a.jpg", after: "/rahsan-serdar-pixar.png" },
+  { label: "Pixel Art", before: "/deniz-once.jpeg", after: "/deniz-pixelart.png" },
+];
+
+const PRINT_OPTIONS = [
+  { icon: "🖼️", name: "Fotoğraf Baskısı", href: "/kategoriler/klasik-baskilar" },
+  { icon: "🎨", name: "Kanvas Tablo", href: "/kategoriler/kanvas-tablolar" },
+  { icon: "☕", name: "Kupa", href: "/kategoriler/kupalar" },
+  { icon: "🪟", name: "Cam Baskı", href: "/kategoriler/cam-baski" },
+  { icon: "🖼️", name: "Çerçeveli Baskı", href: "/kategoriler/cerceveler" },
+  { icon: "🧲", name: "Magnet", href: "/kategoriler/magnetler" },
+];
+
 type Step = "gallery" | "upload" | "processing" | "result";
 
 export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
@@ -116,13 +131,34 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
 
   if (step === "gallery") {
     return (
-      <div className="max-w-5xl mx-auto px-8 py-16">
-        <div className="text-center mb-12">
-          <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase mb-3">AnıBaskı AI Stüdyo</p>
-          <h1 className="font-serif text-4xl md:text-5xl text-text mb-3">Fotoğraflarını mükemmelleştir</h1>
+      <div className="max-w-5xl mx-auto px-4 sm:px-8 py-16 flex flex-col gap-16">
+
+        {/* Başlık + akış */}
+        <div className="text-center flex flex-col items-center gap-5">
+          <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase">AnıBaskı AI Stüdyo</p>
+          <h1 className="font-serif text-4xl md:text-5xl text-text">Fotoğraflarını mükemmelleştir</h1>
           <p className="text-secondary">Photoshop gerekmez — yapay zeka senin için yapsın.</p>
+
+          {/* 3-adım akışı */}
+          <div className="flex items-center gap-2 flex-wrap justify-center text-sm mt-1">
+            {[
+              { icon: "📤", label: "Fotoğraf yükle" },
+              { icon: "✨", label: "AI ile işle" },
+              { icon: "🖨️", label: "Baskıya gönder", accent: true },
+            ].map((s, i) => (
+              <div key={s.label} className="flex items-center gap-2">
+                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm border ${
+                  s.accent ? "bg-primary/10 border-primary/30 text-primary font-semibold" : "bg-bg border-border text-text"
+                }`}>
+                  {s.icon} {s.label}
+                </span>
+                {i < 2 && <span className="text-border">›</span>}
+              </div>
+            ))}
+          </div>
+
           {credits && (
-            <p className="mt-4 inline-block text-sm bg-white border border-border rounded-full px-4 py-1.5 text-text">
+            <p className="text-sm bg-white border border-border rounded-full px-4 py-1.5 text-text">
               {credits.total > 0
                 ? credits.trial
                   ? <>Ücretsiz deneme hakkın: <b className="text-primary">{credits.dailyFreeRemaining}</b> — beğenirsen baskıya geç, sonra her gün ücretsiz kredi 🎁</>
@@ -134,47 +170,67 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
             </p>
           )}
           {blocked && (
-            <p className="mt-3 text-sm text-red-700">
+            <p className="text-sm text-red-700">
               {credits?.trial
                 ? <>Deneme hakkın doldu — bir baskı siparişi verince her gün ücretsiz kredi kazanırsın.{" "}</>
                 : <>Krediniz doldu — her 1000 ₺&apos;lik baskıda yeni kredi kazanırsınız.{" "}</>}
               <Link href="/urunler" className="font-semibold underline">Baskıya göz at →</Link>
             </p>
           )}
+
+          {!isLoggedIn && (
+            <div className="flex items-center gap-3 flex-wrap text-sm bg-primary/5 border border-primary/20 rounded-2xl px-5 py-3 text-text">
+              <span>Araçları kullanmak için giriş yapın.</span>
+              <Link href="/giris?redirect=/studyo" className="font-semibold text-primary hover:underline whitespace-nowrap">Giriş / Kayıt →</Link>
+            </div>
+          )}
         </div>
-        {!isLoggedIn && (
-          <div className="mb-8 flex items-center justify-center gap-3 flex-wrap text-sm bg-primary/5 border border-primary/20 rounded-2xl px-5 py-3 text-text">
-            <span>Araçları kullanmak için giriş yapın.</span>
-            <Link href="/giris?redirect=/studyo" className="font-semibold text-primary hover:underline whitespace-nowrap">Giriş / Kayıt →</Link>
+
+        {/* Önce / Sonra örnekleri */}
+        <div className="flex flex-col gap-4">
+          <h2 className="font-serif text-xl text-text">Neler yapabilirsin?</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {EXAMPLES.map((ex) => (
+              <div key={ex.label} className="flex flex-col gap-2">
+                <p className="text-xs font-semibold text-secondary uppercase tracking-wide">{ex.label}</p>
+                <BeforeAfterSlider before={ex.before} after={ex.after} />
+              </div>
+            ))}
           </div>
-        )}
-        {tools === null && (
-          <p className="text-center text-secondary text-sm py-12">Araçlar yükleniyor...</p>
-        )}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {(tools ?? []).map((t) => (
-            <button
-              key={t.slug}
-              disabled={!t.active}
-              onClick={() => selectTool(t)}
-              className={`text-left p-6 rounded-3xl border transition-all ${
-                t.active
-                  ? "bg-white border-border hover:border-primary hover:-translate-y-0.5 cursor-pointer"
-                  : "bg-bg border-border/60 opacity-60 cursor-not-allowed"
-              }`}
-            >
-              <div className="text-3xl mb-3">{t.icon}</div>
-              <p className="font-semibold text-text flex items-center gap-2">
-                {t.name}
-                {!t.active && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-accent/30 text-text-light">Yakında</span>}
-              </p>
-              <p className="text-sm text-secondary mt-1">{t.description}</p>
-            </button>
-          ))}
         </div>
-        <p className="text-center text-xs text-secondary/70 mt-8">
-          Fotoğrafın yalnızca işlem için kullanılır, sunucularımızda saklanmaz.
-        </p>
+
+        {/* Araç kartları */}
+        <div className="flex flex-col gap-4">
+          <h2 className="font-serif text-xl text-text">Bir araç seç</h2>
+          {tools === null && (
+            <p className="text-secondary text-sm py-8 text-center">Araçlar yükleniyor...</p>
+          )}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {(tools ?? []).map((t) => (
+              <button
+                key={t.slug}
+                disabled={!t.active}
+                onClick={() => selectTool(t)}
+                className={`text-left p-6 rounded-3xl border transition-all ${
+                  t.active
+                    ? "bg-white border-border hover:border-primary hover:-translate-y-0.5 cursor-pointer"
+                    : "bg-bg border-border/60 opacity-60 cursor-not-allowed"
+                }`}
+              >
+                <div className="text-3xl mb-3">{t.icon}</div>
+                <p className="font-semibold text-text flex items-center gap-2">
+                  {t.name}
+                  {!t.active && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-accent/30 text-text-light">Yakında</span>}
+                </p>
+                <p className="text-sm text-secondary mt-1">{t.description}</p>
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-secondary/70 text-center pt-2">
+            Fotoğrafın yalnızca işlem için kullanılır, sunucularımızda saklanmaz.
+          </p>
+        </div>
+
       </div>
     );
   }
@@ -211,6 +267,23 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
             {busy ? "Aktarılıyor..." : "Baskıya Geç →"}
           </button>
         </div>
+
+        {/* Baskı seçenekleri */}
+        <div className="border-t border-border pt-5 flex flex-col gap-3">
+          <p className="text-xs text-secondary font-semibold uppercase tracking-widest text-center">Bu görseli ne üzerine bastıralım?</p>
+          <div className="flex flex-wrap gap-2 justify-center">
+            {PRINT_OPTIONS.map((opt) => (
+              <Link
+                key={opt.name}
+                href={opt.href}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border bg-white text-text text-xs font-medium hover:border-primary hover:text-primary transition-colors"
+              >
+                <span>{opt.icon}</span> {opt.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+
         <button onClick={reset} className="text-xs text-secondary hover:text-primary transition-colors text-center">
           Yeni fotoğraf
         </button>
