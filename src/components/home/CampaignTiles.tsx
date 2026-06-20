@@ -16,7 +16,7 @@ export default function CampaignTiles({ cards }: { cards: CampaignCard[] }) {
             <Link
               key={c.id}
               href={c.cta_url}
-              className="group relative overflow-hidden rounded-3xl min-h-[200px] flex flex-col justify-end p-5 hover:-translate-y-1 hover:shadow-hover transition-all duration-300"
+              className="group relative overflow-hidden rounded-3xl aspect-[4/3] flex flex-col justify-end p-5 hover:-translate-y-1 hover:shadow-hover transition-all duration-300"
             >
               <Image
                 src={c.image_url}

@@ -158,8 +158,15 @@ export default function CampaignForm({ initial, categories, products, coupons }:
       {/* Görsel */}
       <div className="flex flex-col gap-2">
         <label className="text-sm font-semibold text-text">Görsel <span className="text-red-500">*</span></label>
+        <p className="text-xs text-text-light">
+          {form.placement === "hero"
+            ? "📐 Banner için önerilen boyut: 1920×600px (en-boy 21:9) — geniş yatay görsel"
+            : "📐 Kart için önerilen boyut: 800×600px (en-boy 4:3) — kare ağırlıklı görsel"}
+        </p>
         {form.image_url && (
-          <div className="relative w-full h-48 rounded-xl border border-border overflow-hidden bg-bg">
+          <div className={`relative w-full rounded-xl border border-border overflow-hidden bg-bg ${
+            form.placement === "hero" ? "aspect-[21/9]" : "aspect-[4/3] max-w-sm"
+          }`}>
             <Image src={form.image_url} alt="" fill className="object-cover" sizes="800px" />
           </div>
         )}

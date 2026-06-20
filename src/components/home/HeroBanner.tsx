@@ -35,7 +35,35 @@ export default function HeroBanner({ banners }: { banners: Banner[] }) {
     return () => clearInterval(id);
   }, [single, paused, active, scrollToIndex]);
 
-  if (!count) return null;
+  if (!count) return (
+    <section className="px-4 pt-4">
+      <div className="relative max-w-7xl mx-auto">
+        <div className="relative w-full aspect-[21/9] rounded-3xl overflow-hidden bg-gradient-to-br from-text via-text/90 to-primary/40 flex items-center">
+          <div className="absolute inset-0 opacity-20"
+            style={{ backgroundImage: "radial-gradient(circle at 20% 50%, #e07a5f 0%, transparent 50%), radial-gradient(circle at 80% 30%, #f2cc8f 0%, transparent 50%)" }} />
+          <div className="relative px-8 md:px-14 max-w-xl flex flex-col gap-5">
+            <h2 className="font-serif text-3xl md:text-5xl text-white leading-tight">
+              Dijital anılarınızı<br />
+              <em className="not-italic text-accent">dokunulur</em> kılın
+            </h2>
+            <p className="text-white/70 text-base md:text-lg">Telefonunuzda kalan kareler; baskıya, kitaba ve tabloya dönüşüyor.</p>
+            <Link href="/urunler"
+              className="self-start inline-flex items-center gap-2 px-6 py-3 bg-white text-text font-semibold rounded-full text-sm hover:gap-3 transition-all">
+              Baskıya Başla <span aria-hidden>→</span>
+            </Link>
+          </div>
+          <div className="absolute bottom-4 right-6 flex gap-4 text-white/50 text-xs">
+            {[["50.000+","Mutlu Müşteri"],["2–5 gün","Teslimat"],["4.9 ★","Puan"]].map(([n,l]) => (
+              <div key={l} className="text-center">
+                <p className="font-semibold text-white text-sm">{n}</p>
+                <p>{l}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 
   return (
     <section className="px-4 pt-4">
