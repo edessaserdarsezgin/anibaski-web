@@ -2,9 +2,9 @@
 
 import { useRef, useState } from "react";
 
-export default function BeforeAfterSlider({ before, after }: { before: string; after: string }) {
+export default function BeforeAfterSlider({ before, after, aspectRatio: forcedRatio }: { before: string; after: string; aspectRatio?: number }) {
   const [pos, setPos] = useState(50);
-  const [ratio, setRatio] = useState<number | null>(null); // sonuç görselinin en/boy oranı
+  const [ratio, setRatio] = useState<number | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   function move(clientX: number) {
@@ -19,7 +19,7 @@ export default function BeforeAfterSlider({ before, after }: { before: string; a
     <div
       ref={ref}
       className="relative w-full overflow-hidden rounded-2xl select-none bg-bg border border-border cursor-ew-resize"
-      style={{ aspectRatio: ratio ?? 1 }}
+      style={{ aspectRatio: forcedRatio ?? ratio ?? 1 }}
       onMouseMove={(e) => e.buttons === 1 && move(e.clientX)}
       onTouchMove={(e) => move(e.touches[0].clientX)}
       onClick={(e) => move(e.clientX)}

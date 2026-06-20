@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/server";
 import { GUIDE_NEEDS, GUIDE_GIFTS, type GuideRef } from "@/lib/guide";
 import GuideProductCard, { type ResolvedGuideProduct } from "@/components/product/GuideProductCard";
+import BeforeAfterSlider from "@/components/studio/BeforeAfterSlider";
 
 export const metadata = { title: "Baskı Rehberi | AnıBaskı" };
 
@@ -9,7 +10,13 @@ const NAV = [
   { href: "#urun", label: "Ürün Rehberi" },
   { href: "#cozunurluk", label: "Çözünürlük" },
   { href: "#ipuclari", label: "Çekim İpuçları" },
+  { href: "#ai-studyo", label: "AI Stüdyo" },
   { href: "#hediye", label: "Hediye" },
+];
+
+const AI_EXAMPLES = [
+  { label: "Anime Efekti", before: "/IMG-20240703-WA0002a.jpg", after: "/anibaski-studyoa.png" },
+  { label: "Pixel Art", before: "/deniz-once.jpeg", after: "/deniz-pixelart.png" },
 ];
 
 const RES_TABLE: { size: string; res: string }[] = [
@@ -156,7 +163,40 @@ export default async function BaskiRehberiPage() {
         </div>
       </section>
 
-      {/* 4 — Hediye */}
+      {/* 4 — AI Stüdyo */}
+      <section id="ai-studyo" className="scroll-mt-20 mb-14">
+        <Eyebrow>AI Stüdyo</Eyebrow>
+        <h2 className="font-serif text-3xl text-text mb-3">Fotoğrafın baskıya hazır değil mi?</h2>
+        <p className="text-text-light text-sm leading-relaxed mb-6 max-w-2xl">
+          Eski, bulanık veya küçük çözünürlüklü fotoğraflar büyük baskılarda sorun çıkarabilir.
+          AI Stüdyo ile fotoğrafını kalitesini yükseltebilir, sanatsal efektler uygulayabilir —
+          sonucu beğenince tek tıkla baskıya gönderebilirsin.
+        </p>
+
+        <div className="grid sm:grid-cols-2 gap-5 mb-6 max-w-2xl">
+          {AI_EXAMPLES.map((ex) => (
+            <div key={ex.label} className="flex flex-col gap-2">
+              <p className="text-xs font-semibold text-secondary uppercase tracking-wide">{ex.label}</p>
+              <BeforeAfterSlider before={ex.before} after={ex.after} aspectRatio={4 / 3} />
+            </div>
+          ))}
+        </div>
+
+        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 max-w-2xl">
+          <div className="flex-1">
+            <p className="font-semibold text-text mb-1">AI Stüdyo — ücretsiz dene</p>
+            <p className="text-sm text-text-light">Her gün ücretsiz kredi · Baskıdan ekstra kredi kazan</p>
+          </div>
+          <Link
+            href="/studyo"
+            className="shrink-0 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-full transition-colors"
+          >
+            Stüdyo&apos;ya Git ✨
+          </Link>
+        </div>
+      </section>
+
+      {/* 5 — Hediye */}
       <section id="hediye" className="scroll-mt-20 mb-14">
         <Eyebrow>Hediye</Eyebrow>
         <h2 className="font-serif text-3xl text-text mb-6">Hediye önerileri</h2>

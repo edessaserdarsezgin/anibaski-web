@@ -193,7 +193,7 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
             {EXAMPLES.map((ex) => (
               <div key={ex.label} className="flex flex-col gap-2">
                 <p className="text-xs font-semibold text-secondary uppercase tracking-wide">{ex.label}</p>
-                <BeforeAfterSlider before={ex.before} after={ex.after} />
+                <BeforeAfterSlider before={ex.before} after={ex.after} aspectRatio={4 / 3} />
               </div>
             ))}
           </div>
