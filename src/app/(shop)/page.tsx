@@ -4,7 +4,6 @@ import { getShippingSettings } from "@/lib/shipping";
 import HomeCategoryRows from "@/components/home/HomeCategoryRows";
 import FeaturedStrip from "@/components/home/FeaturedStrip";
 import HeroBanner from "@/components/home/HeroBanner";
-import FlashDealsStrip from "@/components/home/FlashDealsStrip";
 import CampaignTiles from "@/components/home/CampaignTiles";
 import ReprintStrip from "@/components/home/ReprintStrip";
 import RecentlyViewed from "@/components/home/RecentlyViewed";
@@ -17,7 +16,6 @@ import {
   getCategoryProductsForHome,
   getFeaturedProducts,
   getHeroBanners,
-  getFlashDeals,
   getCampaignCards,
   getReprintSuggestions
 } from "@/lib/catalog";
@@ -37,11 +35,10 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const { freeShippingThreshold } = await getShippingSettings();
 
-  const [homeCats, featRaw, bannerRaw, flash, campaignCards] = await Promise.all([
+  const [homeCats, featRaw, bannerRaw, campaignCards] = await Promise.all([
     getHomeCategories(),
     getFeaturedProducts(12),
     getHeroBanners(),
-    getFlashDeals(8),
     getCampaignCards(),
   ]);
 
@@ -78,25 +75,34 @@ export default async function HomePage() {
       <div className="overflow-hidden">
 
         {/* 1. Hero Banner — admin'den yönetilen dinamik banner (placement='hero') */}
+        <h1 className="sr-only">AnıBaskı — Fotoğraf Baskısı, Fotokitap, Tablo ve Polaroid</h1>
         <HeroBanner banners={heroBanners} />
 
-        {/* 3. Süreli fırsatlar */}
-        <FlashDealsStrip
-          products={flash.products as unknown as Parameters<typeof FlashDealsStrip>[0]["products"]}
-          endsAt={flash.endsAt}
-        />
+        {/* 2. Güven Şeridi — hero'nun hemen altında */}
+        <section className="py-10 px-8 bg-primary">
+          <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            {[
+              { icon: "🚚", title: "Ücretsiz Kargo", desc: `${freeShippingThreshold} ₺ ve üzeri siparişlerde` },
+              { icon: "🔒", title: "Güvenli Ödeme", desc: "256-bit SSL şifreleme" },
+              { icon: "🎁", title: "Özel Paketleme", desc: "Hediyeye hazır kutularda" },
+              { icon: "↩️", title: "Memnuniyet Garantisi", desc: "Sorun varsa yeniden basıyoruz" },
+            ].map((t) => (
+              <div key={t.title} className="flex items-center gap-3">
+                <span className="text-2xl shrink-0">{t.icon}</span>
+                <div>
+                  <p className="text-sm font-semibold text-white">{t.title}</p>
+                  <p className="text-xs text-white/65">{t.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
-        {/* 4. Kampanya kartları */}
+        {/* 3. Kampanya kartları */}
         <CampaignTiles cards={campaignCards} />
 
-        {/* 5. AI Stüdyo tanıtımı */}
-        <AIStudioPromo />
-
-        {/* 6. AI Stüdyo → baskı seçenekleri */}
-        <AIStudioPrintOptions />
-
-        {/* ── Kategoriler — Asimetrik grid ─────────────── */}
-        <section className="py-28 px-4 sm:px-8 bg-bg">
+        {/* 4. Kategoriler */}
+        <section className="py-24 px-4 sm:px-8 bg-bg">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-end justify-between mb-12">
               <div>
@@ -112,7 +118,6 @@ export default async function HomePage() {
               <HomeCategoryRows rows={catRows} />
             ) : (
             <div className="grid grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 gap-4 lg:h-[480px]">
-              {/* Featured — large */}
               <Link href="/kategoriler/fotograf-baskilari"
                 className="cat-large group col-span-2 lg:row-span-2 relative overflow-hidden rounded-3xl bg-primary flex flex-col justify-end p-8 min-h-[280px] hover:shadow-hover transition-all duration-500">
                 <div className="absolute inset-0 bg-gradient-to-t from-text/50 via-text/10 to-transparent" />
@@ -125,8 +130,6 @@ export default async function HomePage() {
                   </span>
                 </div>
               </Link>
-
-              {/* Small cards */}
               {[
                 { title: "Duvar Dekorasyonu", desc: "Evinizi sanata dönüştürün.", slug: "duvar-dekorasyonu", icon: "🏠", bg: "bg-amber-50" },
                 { title: "Albümler ve Kitaplar", desc: "Hikayenizi sayfalarca anlatın.", slug: "albumler-ve-kitaplar", icon: "📖", bg: "bg-emerald-50" },
@@ -146,6 +149,12 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {/* 5. AI Stüdyo tanıtımı */}
+        <AIStudioPromo />
+
+        {/* 6. AI Stüdyo → baskı seçenekleri */}
+        <AIStudioPrintOptions />
+
         {/* 7. Öne çıkan ürünler */}
         <FeaturedStrip products={featured} />
 
@@ -153,34 +162,13 @@ export default async function HomePage() {
         <ReprintStrip products={reprint as unknown as Parameters<typeof ReprintStrip>[0]["products"]} />
         <RecentlyViewed />
 
-        {/* ── Güven Şeridi — Terracotta ─────────────────── */}
-        <section className="py-12 px-8 bg-primary">
-          <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            {[
-              { icon: "🚚", title: "Ücretsiz Kargo", desc: `${freeShippingThreshold} ₺ ve üzeri siparişlerde` },
-              { icon: "🔒", title: "Güvenli Ödeme", desc: "256-bit SSL şifreleme" },
-              { icon: "🎁", title: "Özel Paketleme", desc: "Hediyeye hazır kutularda" },
-              { icon: "↩️", title: "Memnuniyet Garantisi", desc: "Sorun varsa yeniden basıyoruz" },
-            ].map((t) => (
-              <div key={t.title} className="flex items-center gap-3">
-                <span className="text-2xl shrink-0">{t.icon}</span>
-                <div>
-                  <p className="text-sm font-semibold text-white">{t.title}</p>
-                  <p className="text-xs text-white/65">{t.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Nasıl Çalışır ─────────────────────────────── */}
+        {/* 9. Nasıl Çalışır */}
         <section className="py-28 px-8 bg-white border-y border-border">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-20">
               <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase mb-4">Süreç</p>
               <h2 className="font-serif text-3xl md:text-5xl text-text">Üç adımda tamamdır</h2>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-0 relative">
               <div className="hidden md:block absolute top-[2.6rem] left-[calc(16.66%+2.75rem)] right-[calc(16.66%+2.75rem)] border-t-2 border-dashed border-border" />
               {[
@@ -201,33 +189,10 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* ── Müşteri Yorumları ─────────────────────────── */}
+        {/* 10. Müşteri Yorumları */}
         <TestimonialsStrip />
 
-        {/* ── Premium Kalite ────────────────────────────── */}
-        <section className="py-28 px-8 bg-white">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-              <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase mb-4">Neden AnıBaskı?</p>
-              <h2 className="font-serif text-3xl md:text-5xl text-text">Farkımız kalitemizden gelir</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                { icon: "✨", title: "Premium Kalite", desc: "Solmayan, canlı renkler veren Fujifilm fotoğraf kağıtlarına basıyoruz.", bg: "bg-accent/20", border: "border-accent/30" },
-                { icon: "📱", title: "Kolay Tasarım", desc: "Telefonunuzdan veya bilgisayarınızdan saniyeler içinde fotoğraf yükleyin.", bg: "bg-primary/8", border: "border-primary/20" },
-                { icon: "🎁", title: "Özenli Paketleme", desc: "Hediyeye hazır, şık ve zarar görmeyecek özel kutularda gönderilir.", bg: "bg-rose-50", border: "border-rose-100" },
-              ].map((f) => (
-                <div key={f.title} className={`p-8 rounded-3xl border ${f.bg} ${f.border} flex flex-col gap-4 hover:shadow-soft transition-shadow`}>
-                  <span className="text-3xl">{f.icon}</span>
-                  <h3 className="font-serif text-xl text-text">{f.title}</h3>
-                  <p className="text-sm text-text-light leading-relaxed">{f.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── Son CTA — Koyu bölüm ──────────────────────── */}
+        {/* 11. Son CTA */}
         <section className="relative py-36 px-8 bg-text overflow-hidden">
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-primary/20 blur-3xl" />
