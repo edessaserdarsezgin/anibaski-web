@@ -10,6 +10,15 @@ const EXAMPLES = [
   { label: "Pixel Art", icon: "🎮", before: "/deniz-once.jpeg", after: "/deniz-pixelart.png" },
 ];
 
+const PRINT_OPTIONS = [
+  { icon: "🖼️", name: "Fotoğraf Baskısı", href: "/kategoriler/klasik-baskilar" },
+  { icon: "🎨", name: "Kanvas Tablo", href: "/kategoriler/kanvas-tablolar" },
+  { icon: "☕", name: "Kupa", href: "/kategoriler/kupalar" },
+  { icon: "🪟", name: "Cam Baskı", href: "/kategoriler/cam-baski" },
+  { icon: "🖼️", name: "Çerçeveli Baskı", href: "/kategoriler/cerceveler" },
+  { icon: "🧲", name: "Magnet", href: "/kategoriler/magnetler" },
+];
+
 function BeforeAfter({ example }: { example: typeof EXAMPLES[0] }) {
   const [sliderX, setSliderX] = useState(50);
   const [dragging, setDragging] = useState(false);
@@ -34,17 +43,14 @@ function BeforeAfter({ example }: { example: typeof EXAMPLES[0] }) {
         onTouchMove={(e) => { if (dragging) handleMove(e.touches[0].clientX, e.currentTarget.getBoundingClientRect()); }}
         onTouchEnd={() => setDragging(false)}
       >
-        {/* SONRA */}
         <img src={example.after} alt="AI sonrası" className="absolute inset-0 w-full h-full object-cover" draggable={false} />
         <div className="absolute bottom-2 right-2 text-[9px] font-bold text-white/90 tracking-widest uppercase bg-black/40 px-1.5 py-0.5 rounded pointer-events-none">SONRA</div>
 
-        {/* ÖNCE */}
         <div className="absolute inset-0 pointer-events-none" style={{ clipPath: `inset(0 ${100 - sliderX}% 0 0)` }}>
           <img src={example.before} alt="Orijinal" className="w-full h-full object-cover" draggable={false} />
           <div className="absolute bottom-2 left-2 text-[9px] font-bold text-white/90 tracking-widest uppercase bg-black/40 px-1.5 py-0.5 rounded">ÖNCE</div>
         </div>
 
-        {/* Handle */}
         <div className="absolute top-0 bottom-0 z-10 flex items-center justify-center pointer-events-none" style={{ left: `calc(${sliderX}% - 1px)` }}>
           <div className="w-0.5 h-full bg-white/70" />
           <div className="absolute w-8 h-8 rounded-full bg-white shadow-xl flex items-center justify-center">
@@ -52,10 +58,6 @@ function BeforeAfter({ example }: { example: typeof EXAMPLES[0] }) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l-4 3 4 3M16 9l4 3-4 3" />
             </svg>
           </div>
-        </div>
-
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-white/15 text-xs tracking-wider select-none">← sürükle →</span>
         </div>
       </div>
     </div>
@@ -73,94 +75,108 @@ export default function AIStudioPromo() {
   }, []);
 
   return (
-    <section className="py-24 px-4 sm:px-8 bg-text overflow-hidden relative">
-      {/* Decorative blobs */}
+    <section className="py-20 px-4 sm:px-8 bg-text overflow-hidden relative">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-24 -right-24 w-[400px] h-[400px] rounded-full bg-primary/15 blur-3xl" />
         <div className="absolute bottom-0 left-0 w-[300px] h-[300px] rounded-full bg-accent/10 blur-3xl" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto flex flex-col gap-14">
+      <div className="relative max-w-7xl mx-auto flex flex-col gap-12">
 
-        {/* Üst — ortalı başlık */}
-        <div className="text-center flex flex-col items-center gap-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-accent/40 bg-accent/10 text-accent text-xs font-semibold">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
-            YENİ · AI Stüdyo
-          </div>
-
-          <div>
-            <h2 className="font-serif text-4xl md:text-5xl text-white leading-tight">
-              Fotoğrafını baskıya{" "}
-              <em className="not-italic text-accent">hazırla</em>
+        {/* Başlık + akış + CTA */}
+        <div className="flex flex-col lg:flex-row lg:items-center gap-8 lg:gap-16">
+          <div className="flex flex-col gap-5 lg:max-w-md">
+            <div className="inline-flex items-center gap-2 self-start px-3 py-1.5 rounded-full border border-accent/40 bg-accent/10 text-accent text-xs font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
+              YENİ · AI Stüdyo
+            </div>
+            <h2 className="font-serif text-3xl md:text-4xl text-white leading-tight">
+              Fotoğrafını baskıya<br />
+              <em className="not-italic text-accent">AI ile hazırla</em>
             </h2>
-            <p className="mt-4 text-white/60 text-lg leading-relaxed max-w-xl mx-auto">
-              Photoshop gerekmez. Fotoğrafını yapay zeka ile işle, beğenince tek tıkla baskıya gönder —
-              sonuç doğrudan kapına gelsin.
+            <p className="text-white/60 text-sm leading-relaxed">
+              Photoshop gerekmez. Fotoğrafını yapay zeka ile işle, beğenince tek tıkla baskıya gönder.
             </p>
-          </div>
-
-          {/* Adım akışı */}
-          <div className="flex items-center gap-2 flex-wrap justify-center text-sm">
-            <div className="flex items-center gap-2 bg-white/8 border border-white/10 rounded-full px-4 py-2">
-              <span>📤</span>
-              <span className="text-white/80 font-medium">Fotoğraf yükle</span>
-            </div>
-            <svg className="w-4 h-4 text-white/30 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
-            <div className="flex items-center gap-2 bg-white/8 border border-white/10 rounded-full px-4 py-2">
-              <span>✨</span>
-              <span className="text-white/80 font-medium">AI ile işle</span>
-            </div>
-            <svg className="w-4 h-4 text-white/30 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
-            <div className="flex items-center gap-2 bg-primary/30 border border-primary/50 rounded-full px-4 py-2">
-              <span>🖨️</span>
-              <span className="text-white font-semibold">Baskıya gönder</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 flex-wrap justify-center">
             <Link
               href="/studyo"
-              className="px-8 py-3.5 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full transition-all hover:-translate-y-0.5 shadow-lg"
+              className="self-start px-6 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full text-sm transition-all hover:-translate-y-0.5"
             >
               AI Stüdyo&apos;yu Dene ✨
             </Link>
-            <span className="text-white/40 text-xs">Her gün ücretsiz kredi · Baskıdan kredi kazan</span>
+          </div>
+
+          {/* Adım akışı */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 lg:flex-1">
+            {[
+              { icon: "📤", label: "Fotoğraf yükle" },
+              { icon: "✨", label: "AI ile işle" },
+              { icon: "🖨️", label: "Baskıya gönder", accent: true },
+            ].map((step, i) => (
+              <div key={step.label} className="flex items-center gap-3">
+                <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-full text-sm font-medium ${
+                  step.accent
+                    ? "bg-primary/30 border border-primary/50 text-white"
+                    : "bg-white/8 border border-white/12 text-white/80"
+                }`}>
+                  <span>{step.icon}</span>
+                  <span>{step.label}</span>
+                </div>
+                {i < 2 && <span className="text-white/25 hidden sm:block">›</span>}
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Üç before/after çerçeve */}
+        {/* Önce / Sonra örnekleri */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {EXAMPLES.map((ex) => (
             <BeforeAfter key={ex.label} example={ex} />
           ))}
         </div>
 
-        {/* Alt — araç kartları */}
-        {tools.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {tools.map((t) => (
-              <Link
-                key={t.slug}
-                href={t.active ? "/studyo" : "#"}
-                className={`relative flex flex-col gap-2 rounded-2xl border p-4 transition-all ${
-                  t.active
-                    ? "bg-white/6 border-white/12 hover:bg-white/10 hover:border-white/25 hover:-translate-y-0.5"
-                    : "bg-white/3 border-white/6 opacity-50 cursor-default pointer-events-none"
-                }`}
-              >
-                <span className="text-2xl">{t.icon}</span>
-                <p className="text-white text-sm font-semibold leading-tight">{t.name}</p>
-                <p className="text-white/45 text-[11px] leading-snug">{t.description}</p>
-                {!t.active && (
-                  <span className="absolute top-3 right-3 text-[9px] font-bold px-1.5 py-0.5 rounded bg-accent/20 text-accent">
-                    YAKINDA
+        {/* Araçlar + Baskı seçenekleri — kompakt alt şerit */}
+        <div className="border-t border-white/10 pt-8 flex flex-col gap-6">
+
+          {/* Araç pilleri */}
+          {tools.length > 0 && (
+            <div className="flex flex-col gap-3">
+              <p className="text-white/40 text-xs font-semibold uppercase tracking-widest">Araçlar</p>
+              <div className="flex flex-wrap gap-2">
+                {tools.map((t) => (
+                  <span
+                    key={t.slug}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                      t.active
+                        ? "bg-white/10 border-white/20 text-white hover:bg-white/15"
+                        : "bg-white/4 border-white/8 text-white/30"
+                    }`}
+                  >
+                    <span>{t.icon}</span>
+                    <span>{t.name}</span>
+                    {!t.active && <span className="text-accent/60 text-[9px] font-bold">YAKINDA</span>}
                   </span>
-                )}
-              </Link>
-            ))}
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Baskı seçenekleri */}
+          <div className="flex flex-col gap-3">
+            <p className="text-white/40 text-xs font-semibold uppercase tracking-widest">Ürün olarak al</p>
+            <div className="flex flex-wrap gap-2">
+              {PRINT_OPTIONS.map((opt) => (
+                <Link
+                  key={opt.name}
+                  href={opt.href}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white/8 border border-white/12 rounded-full text-white/80 text-sm hover:bg-white/14 hover:text-white transition-colors"
+                >
+                  <span className="text-base">{opt.icon}</span>
+                  <span>{opt.name}</span>
+                </Link>
+              ))}
+            </div>
           </div>
-        )}
+        </div>
 
       </div>
     </section>

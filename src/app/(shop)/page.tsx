@@ -9,7 +9,6 @@ import ReprintStrip from "@/components/home/ReprintStrip";
 import RecentlyViewed from "@/components/home/RecentlyViewed";
 import TestimonialsStrip from "@/components/home/TestimonialsStrip";
 import AIStudioPromo from "@/components/home/AIStudioPromo";
-import AIStudioPrintOptions from "@/components/home/AIStudioPrintOptions";
 import { createClient } from "@/lib/supabase/server";
 import {
   getHomeCategories,
@@ -149,11 +148,8 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* 5. AI Stüdyo tanıtımı */}
+        {/* 5. AI Stüdyo */}
         <AIStudioPromo />
-
-        {/* 6. AI Stüdyo → baskı seçenekleri */}
-        <AIStudioPrintOptions />
 
         {/* 7. Öne çıkan ürünler */}
         <FeaturedStrip products={featured} />
