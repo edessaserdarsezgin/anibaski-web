@@ -38,7 +38,7 @@ export default function HeroBanner({ banners }: { banners: Banner[] }) {
   if (!count) return (
     <section>
       <div className="relative w-full">
-        <div className="relative w-full aspect-[21/9] min-h-[320px] max-h-[480px] overflow-hidden bg-gradient-to-br from-text via-text/90 to-primary/40 flex items-center">
+        <div className="relative w-full aspect-[21/9] min-h-[320px] max-h-[540px] overflow-hidden bg-gradient-to-br from-text via-text/90 to-primary/40 flex items-center">
           <div className="absolute inset-0 opacity-20"
             style={{ backgroundImage: "radial-gradient(circle at 20% 50%, #e07a5f 0%, transparent 50%), radial-gradient(circle at 80% 30%, #f2cc8f 0%, transparent 50%)" }} />
           <div className="relative px-8 md:px-14 max-w-xl flex flex-col gap-5">
@@ -79,7 +79,7 @@ export default function HeroBanner({ banners }: { banners: Banner[] }) {
         >
           {banners.map((b) => (
             <Link key={b.id} href={b.cta_url}
-              className="group relative shrink-0 w-full snap-center aspect-[21/9] min-h-[320px] max-h-[480px] overflow-hidden bg-bg">
+              className="group relative shrink-0 w-full snap-center aspect-[21/9] min-h-[320px] max-h-[540px] overflow-hidden bg-bg">
               <Image src={b.image_url} alt={b.title} fill priority sizes="100vw" className="object-cover" />
               <div className="absolute inset-0 bg-gradient-to-r from-text/65 via-text/25 to-transparent" />
               <div className="absolute inset-0 flex flex-col justify-center p-8 md:p-14 max-w-xl">
