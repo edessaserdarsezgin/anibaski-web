@@ -34,7 +34,7 @@ export default async function Header() {
   return (
     <>
     <header id="site-header" className="sticky top-0 z-50 bg-bg border-b border-border">
-      <div className="w-full px-8 h-16 flex items-center">
+      <div className="w-full px-8 h-[72px] flex items-center">
         <Link href="/" className="font-serif text-3xl text-text shrink-0">
           Anı<span className="text-primary">Baskı</span>
         </Link>
