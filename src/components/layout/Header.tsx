@@ -35,7 +35,7 @@ export default async function Header() {
     <>
     <header id="site-header" className="sticky top-0 z-50 bg-bg border-b border-border">
       <div className="w-full px-8 h-16 flex items-center">
-        <Link href="/" className="font-serif text-2xl text-text">
+        <Link href="/" className="font-serif text-3xl text-text shrink-0">
           Anı<span className="text-primary">Baskı</span>
         </Link>
 
@@ -46,7 +46,7 @@ export default async function Header() {
 
         <div className="flex items-center gap-2 ml-auto">
           {/* Ana linkler (md+ inline; mobilde hamburger menüde) */}
-          <nav className="hidden md:flex items-center gap-3 lg:gap-4 text-[15px] font-bold mr-1 lg:mr-2">
+          <nav className="hidden md:flex items-center gap-3 lg:gap-4 text-base font-bold mr-1 lg:mr-2">
             <Link href="/kampanyalar" className="text-text hover:text-primary transition-colors">Kampanyalar</Link>
             <Link href="/urun-rehberi" className="text-text hover:text-primary transition-colors">Rehber</Link>
             <Link href="/studyo" className="text-primary hover:text-primary-hover transition-colors whitespace-nowrap">AI Stüdyo</Link>

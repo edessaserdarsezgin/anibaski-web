@@ -18,7 +18,7 @@ function Chevron({ open }: { open: boolean }) {
   );
 }
 
-const link = "px-2.5 py-1.5 rounded-lg text-[15px] font-bold whitespace-nowrap transition-colors";
+const link = "px-2.5 py-1.5 rounded-lg text-base font-bold whitespace-nowrap transition-colors";
 
 export default function HeaderCategoryBar({ categories }: { categories: MenuCategory[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
