@@ -22,7 +22,9 @@ export default function StudioCreditBadge() {
     return () => window.removeEventListener("studio-credits-updated", refresh);
   }, [refresh]);
 
-  if (total === null) return null;
+  if (total === null) return (
+    <div className="hidden md:inline-flex w-[88px] h-7 rounded-full" aria-hidden />
+  );
 
   return (
     <Link

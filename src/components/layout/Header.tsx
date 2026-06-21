@@ -44,7 +44,7 @@ export default async function Header() {
           <SearchBar />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ml-auto">
           {/* Ana linkler (md+ inline; mobilde hamburger menüde) */}
           <nav className="hidden md:flex items-center gap-3 lg:gap-4 text-[15px] font-bold mr-1 lg:mr-2">
             <Link href="/kampanyalar" className="text-text hover:text-primary transition-colors">Kampanyalar</Link>
