@@ -1,11 +1,13 @@
 import Link from "next/link";
 import ProductCard from "@/components/product/ProductCard";
 import ProductFilterBar from "@/components/product/ProductFilterBar";
+import CategoryIconStrip from "@/components/layout/CategoryIconStrip";
 import { getReadyMadeCategoryIds } from "@/lib/readyMade";
 import {
   getTags,
   getProductIdsByTag,
-  getProductsForCatalog
+  getProductsForCatalog,
+  getNavCategories,
 } from "@/lib/catalog";
 
 type Props = { searchParams: Promise<{ sort?: string; tag?: string }> };
@@ -29,16 +31,19 @@ export default async function UrunlerPage({ searchParams }: Props) {
   const { sort = "newest", tag } = await searchParams;
   const { column, ascending } = getSortOrder(sort);
 
-  const [allTags, tagProductIds, readyMadeIds] = await Promise.all([
+  const [allTags, tagProductIds, readyMadeIds, navCategories] = await Promise.all([
     getTags(),
     tag ? getProductIdsByTag(tag) : Promise.resolve(null),
     getReadyMadeCategoryIds(),
+    getNavCategories(),
   ]);
 
   const products = await getProductsForCatalog(column, ascending, tagProductIds, readyMadeIds);
 
   return (
     <>
+      <CategoryIconStrip categories={navCategories} />
+
       {/* ── Sayfa Başlığı ───────────────────────────── */}
       <section className="relative bg-bg border-b border-border overflow-hidden">
         <div className="pointer-events-none absolute inset-0">
