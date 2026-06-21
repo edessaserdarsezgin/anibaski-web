@@ -39,11 +39,9 @@ export default async function Header() {
           Anı<span className="text-primary">Baskı</span>
         </Link>
 
-        {/* Arama — geniş ekranda üst satırda ortada; md/mobilde alt satırda (sığması için) */}
-        <div className="hidden lg:flex flex-1 justify-center px-6">
-          <div className="w-full max-w-3xl">
-            <SearchBar />
-          </div>
+        {/* Arama — geniş ekranda üst satırda logo ile nav arasını doldurur */}
+        <div className="hidden lg:flex flex-1 px-6">
+          <SearchBar />
         </div>
 
         <div className="flex items-center gap-2">
