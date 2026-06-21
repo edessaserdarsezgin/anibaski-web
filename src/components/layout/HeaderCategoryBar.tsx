@@ -47,6 +47,9 @@ export default function HeaderCategoryBar({ categories }: { categories: MenuCate
         <Link href="/urunler" className={`${link} text-text hover:text-primary hover:bg-white`}>
           Tüm Ürünler
         </Link>
+        <Link href="/kategoriler/hazir-urunler" className={`${link} text-text hover:text-primary hover:bg-white`}>
+          Hazır Ürünler
+        </Link>
 
         {categories.map((cat) => {
           if (cat.children.length === 0) {

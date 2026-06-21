@@ -49,7 +49,6 @@ export default async function Header() {
         <div className="flex items-center gap-2">
           {/* Ana linkler (md+ inline; mobilde hamburger menüde) */}
           <nav className="hidden md:flex items-center gap-3 lg:gap-4 text-[15px] font-bold mr-1 lg:mr-2">
-            <Link href="/kategoriler/hazir-urunler" className="text-text hover:text-primary transition-colors whitespace-nowrap">Hazır Ürünler</Link>
             <Link href="/kampanyalar" className="text-text hover:text-primary transition-colors">Kampanyalar</Link>
             <Link href="/urun-rehberi" className="text-text hover:text-primary transition-colors">Rehber</Link>
             <Link href="/studyo" className="text-primary hover:text-primary-hover transition-colors whitespace-nowrap">AI Stüdyo</Link>
