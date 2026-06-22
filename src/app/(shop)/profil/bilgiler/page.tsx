@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import BackButton from "@/components/ui/BackButton";
 import ProfileForm from "../ProfileForm";
 import PhoneVerification from "../PhoneVerification";
+import PasswordChangeForm from "../PasswordChangeForm";
 
 export const metadata = { title: "Bilgilerim", robots: { index: false, follow: false } };
 
@@ -12,6 +13,9 @@ export default async function BilgilerimPage() {
   if (!user) redirect("/giris?redirect=/profil/bilgiler");
 
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+
+  const isEmailUser = user.app_metadata?.provider === "email" ||
+    user.identities?.some((id) => id.provider === "email");
 
   return (
     <div className="max-w-2xl mx-auto px-8 py-12">
@@ -33,6 +37,7 @@ export default async function BilgilerimPage() {
           marketingConsent={profile?.marketing_consent ?? false}
         />
       </div>
+      {isEmailUser && <PasswordChangeForm />}
     </div>
   );
 }
