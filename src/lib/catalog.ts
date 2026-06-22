@@ -210,17 +210,20 @@ export const getHeroBanners = unstable_cache(
 export const getTags = unstable_cache(
   async () => {
     const db = createAdminClient();
-    const { data } = await db
+    // Adım 1: En az bir aktif ürüne atanmış tagId'lerini al
+    const { data: ptRows } = await db
       .from("product_tags")
-      .select("tags!inner(id, name, color, text_color, is_active), products!inner(isActive)")
-      .eq("tags.is_active", true)
+      .select("tagId, products!inner(isActive)")
       .eq("products.isActive", true);
-    const map = new Map<string, { id: string; name: string; color: string }>();
-    for (const row of (data ?? []) as unknown as { tags: { id: string; name: string; color: string } }[]) {
-      const t = row.tags;
-      if (t && !map.has(t.id)) map.set(t.id, { id: t.id, name: t.name, color: t.color });
-    }
-    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "tr"));
+    if (!ptRows?.length) return [];
+    const assignedIds = [...new Set((ptRows as unknown as { tagId: string }[]).map(r => r.tagId))];
+    // Adım 2: O tagId'lerin aktif etiket bilgilerini çek
+    const { data: tagRows } = await db
+      .from("tags")
+      .select("id, name, color")
+      .eq("is_active", true)
+      .in("id", assignedIds);
+    return (tagRows ?? []).sort((a, b) => a.name.localeCompare(b.name, "tr"));
   },
   ["catalog-tags"],
   { tags: ["tags", "products"] }
