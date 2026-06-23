@@ -38,6 +38,7 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [credits, setCredits] = useState<{ dailyFreeRemaining: number; earnedAvailable: number; total: number; trial: boolean } | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [tools, setTools] = useState<StudioTool[] | null>(null);
+  const blockedRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
     fetch("/api/ai/studio/credits")
@@ -57,7 +58,11 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
   function selectTool(t: StudioTool) {
     if (!t.active) return;
     if (!isLoggedIn) { router.push("/giris?redirect=/studyo"); return; }
-    if (credits && credits.total <= 0) { setBlocked(true); return; }
+    if (credits && credits.total <= 0) {
+      setBlocked(true);
+      setTimeout(() => blockedRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
+      return;
+    }
     setBlocked(false);
     setTool(t);
     setStep("upload");
@@ -170,7 +175,7 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
             </p>
           )}
           {blocked && (
-            <p className="text-sm text-red-700">
+            <p ref={blockedRef} className="text-sm text-red-700">
               {credits?.trial
                 ? <>Deneme hakkın doldu — bir baskı siparişi verince her gün ücretsiz kredi kazanırsın.{" "}</>
                 : <>Krediniz doldu — her 1000 ₺&apos;lik baskıda yeni kredi kazanırsınız.{" "}</>}
