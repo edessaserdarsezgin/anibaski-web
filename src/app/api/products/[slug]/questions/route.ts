@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { sendQuestionNotification } from "@/lib/email/questionNotification";
+import { notifyAdminNewQuestion } from "@/lib/whatsapp/notify";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -59,6 +60,13 @@ export async function POST(req: NextRequest, { params }: Props) {
     customerName: profile?.fullName ?? null,
     question: q,
   }).catch(() => {});
+
+  notifyAdminNewQuestion({
+    productName: product.name,
+    productSlug: slug,
+    customerName: profile?.fullName ?? null,
+    question: q,
+  });
 
   return NextResponse.json({ ok: true });
 }

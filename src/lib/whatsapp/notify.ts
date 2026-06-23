@@ -1,4 +1,18 @@
+import { createAdminClient } from "@/lib/supabase/server";
+
 const N8N_WEBHOOK_URL = process.env.N8N_WHATSAPP_WEBHOOK_URL;
+
+async function getAdminPhone(): Promise<string | null> {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("profiles")
+    .select("phone")
+    .eq("role", "ADMIN")
+    .not("phone", "is", null)
+    .limit(1)
+    .single();
+  return data?.phone ?? null;
+}
 
 function formatPhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");
@@ -112,8 +126,50 @@ export function notifyAbandonedCart(params: {
   });
 }
 
-export function notifyAdminCancelRequest(params: { orderNo: string; customerName: string }) {
-  const adminPhone = process.env.ADMIN_WHATSAPP_PHONE;
+export async function notifyAdminCancelRequest(params: { orderNo: string; customerName: string }) {
+  const adminPhone = await getAdminPhone();
   if (!adminPhone) return;
   post({ event: "admin_cancel_request", phone: formatPhone(adminPhone), orderNo: params.orderNo, customerName: params.customerName });
+}
+
+export async function notifyAdminNewReview(params: {
+  productName: string;
+  productSlug: string;
+  customerName: string | null;
+  rating: number;
+  title?: string | null;
+  body?: string | null;
+}) {
+  const adminPhone = await getAdminPhone();
+  if (!adminPhone) return;
+  const stars = "⭐".repeat(params.rating);
+  post({
+    event: "admin_new_review",
+    phone: formatPhone(adminPhone),
+    productName: params.productName,
+    productSlug: params.productSlug,
+    customerName: params.customerName ?? "Anonim",
+    rating: params.rating,
+    stars,
+    ...(params.title ? { title: params.title } : {}),
+    ...(params.body ? { body: params.body } : {}),
+  });
+}
+
+export async function notifyAdminNewQuestion(params: {
+  productName: string;
+  productSlug: string;
+  customerName: string | null;
+  question: string;
+}) {
+  const adminPhone = await getAdminPhone();
+  if (!adminPhone) return;
+  post({
+    event: "admin_new_question",
+    phone: formatPhone(adminPhone),
+    productName: params.productName,
+    productSlug: params.productSlug,
+    customerName: params.customerName ?? "Anonim",
+    question: params.question,
+  });
 }
