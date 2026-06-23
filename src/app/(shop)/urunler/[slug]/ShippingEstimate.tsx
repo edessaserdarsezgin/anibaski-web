@@ -15,10 +15,13 @@ export default function ShippingEstimate({
   cutoffHour = 14,
   dispatchBusinessDays = 1,
   extraHolidays = "",
+  mode = "cart",
 }: {
   cutoffHour?: number;
   dispatchBusinessDays?: number;
   extraHolidays?: string;
+  /** "cart": ürün sayfası metni; "order": sipariş sonrası tahmini teslimat metni */
+  mode?: "cart" | "order";
 }) {
   const [est, setEst] = useState<Estimate | null>(null);
 
@@ -78,7 +81,12 @@ export default function ShippingEstimate({
       <div className="text-sm">
         <p className="font-semibold text-text">Ne zaman kargoda?</p>
         {est ? (
-          est.acceptedToday ? (
+          mode === "order" ? (
+            <p className="text-text-light mt-0.5">
+              Siparişiniz tahminen{" "}
+              <span className="font-semibold text-primary">{est.label}</span> kargoya verilecek
+            </p>
+          ) : est.acceptedToday ? (
             <p className="text-text-light mt-0.5">
               Bugün saat <span className="font-semibold text-text">{String(est.cutoffHour).padStart(2, "0")}:00</span>&apos;a kadar sipariş ver →{" "}
               <span className="font-semibold text-primary">{est.label}</span> kargoda

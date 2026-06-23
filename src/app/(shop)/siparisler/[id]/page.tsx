@@ -4,6 +4,8 @@ import Image from "next/image";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { signUploadedImages } from "@/lib/uploads";
 import { getCompanyInfo, sellerForContracts } from "@/lib/company";
+import { getShippingSettings } from "@/lib/shipping";
+import ShippingEstimate from "@/app/(shop)/urunler/[slug]/ShippingEstimate";
 import LegalAccordion from "@/components/legal/LegalAccordion";
 import CancelRequestButton from "./CancelRequestButton";
 import ReprintButton from "./ReprintButton";
@@ -61,7 +63,7 @@ export default async function SiparisDetayPage({ params }: Props) {
     .select("email, fullName, phone")
     .eq("id", order.userId)
     .single();
-  const company = await getCompanyInfo();
+  const [company, shippingInfo] = await Promise.all([getCompanyInfo(), getShippingSettings()]);
   // Kredi kartıyla oluşturulmuş ama ödeme tamamlanmamış siparişleri gizle
   if (!isAdmin && order.paymentMethod === "credit_card" && order.paymentStatus === "pending") notFound();
 
@@ -203,6 +205,18 @@ export default async function SiparisDetayPage({ params }: Props) {
           </>
         )}
       </div>
+
+      {/* Tahmini kargo tarihi — sadece beklemede/hazırlanıyor durumunda göster */}
+      {(order.status === "PENDING" || order.status === "PREPARING") && (
+        <div className="mb-6">
+          <ShippingEstimate
+            cutoffHour={shippingInfo.dispatchCutoffHour}
+            dispatchBusinessDays={shippingInfo.dispatchBusinessDays}
+            extraHolidays={shippingInfo.extraHolidays}
+            mode="order"
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 

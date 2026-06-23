@@ -2,7 +2,9 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import { getShippingSettings } from "@/lib/shipping";
 import CartClearer from "./CartClearer";
+import ShippingEstimate from "@/app/(shop)/urunler/[slug]/ShippingEstimate";
 
 export const metadata = { title: "Siparişiniz Alındı", robots: { index: false, follow: false } };
 
@@ -21,11 +23,14 @@ export default async function SiparisTamamlandiPage({ params }: Props) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect(`/giris?redirect=/siparis-tamamlandi/${id}`);
 
-  const { data: order } = await supabase
-    .from("orders")
-    .select("id, userId, status, total, subtotal, shippingFee, createdAt, paymentMethod, items:order_items(id, quantity, unitPrice, product:products(name, images, slug))")
-    .eq("id", id)
-    .single();
+  const [{ data: order }, shippingInfo] = await Promise.all([
+    supabase
+      .from("orders")
+      .select("id, userId, status, total, subtotal, shippingFee, createdAt, paymentMethod, items:order_items(id, quantity, unitPrice, product:products(name, images, slug))")
+      .eq("id", id)
+      .single(),
+    getShippingSettings(),
+  ]);
 
   if (!order || order.userId !== user.id) notFound();
 
@@ -101,6 +106,16 @@ export default async function SiparisTamamlandiPage({ params }: Props) {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* ── Tahmini kargo tarihi ───────────────────── */}
+        <div className="anim-up-4 mb-5">
+          <ShippingEstimate
+            cutoffHour={shippingInfo.dispatchCutoffHour}
+            dispatchBusinessDays={shippingInfo.dispatchBusinessDays}
+            extraHolidays={shippingInfo.extraHolidays}
+            mode="order"
+          />
         </div>
 
         {/* ── Sipariş özeti ──────────────────────────── */}
