@@ -23,9 +23,9 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
   );
 }
 
-type Props = { slug: string; isLoggedIn: boolean; hasReview: boolean };
+type Props = { slug: string; isLoggedIn: boolean; hasReview: boolean; hasPurchased: boolean };
 
-export default function ReviewForm({ slug, isLoggedIn, hasReview }: Props) {
+export default function ReviewForm({ slug, isLoggedIn, hasReview, hasPurchased }: Props) {
   const [rating, setRating] = useState(0);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -35,12 +35,20 @@ export default function ReviewForm({ slug, isLoggedIn, hasReview }: Props) {
 
   if (!isLoggedIn) {
     return (
-      <p className="text-sm text-text-light bg-bg border border-border rounded-xl px-5 py-4">
+      <p className="text-sm text-text-light bg-bg border border-border rounded-xl px-5 py-3">
         Yorum yapmak için{" "}
         <a href={`/giris?redirect=/urunler/${slug}`} className="text-primary font-semibold hover:underline">
           giriş yapın
         </a>
         .
+      </p>
+    );
+  }
+
+  if (isLoggedIn && !hasPurchased) {
+    return (
+      <p className="text-sm text-text-light bg-bg border border-border rounded-xl px-5 py-3">
+        Yorum yapabilmek için bu ürünü satın alıp teslim almış olmanız gerekiyor.
       </p>
     );
   }

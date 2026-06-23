@@ -61,7 +61,11 @@ export async function POST(req: NextRequest, { params }: Props) {
     .eq("order.status", "DELIVERED")
     .maybeSingle();
 
-  const verifiedPurchase = !!orderItem;
+  if (!orderItem)
+    return NextResponse.json(
+      { error: "Yorum yapabilmek için bu ürünü satın almış ve teslim almış olmanız gerekiyor." },
+      { status: 403 }
+    );
 
   const { error } = await admin
     .from("product_reviews")
@@ -72,7 +76,7 @@ export async function POST(req: NextRequest, { params }: Props) {
         rating,
         title: title?.trim() || null,
         body: body?.trim() || null,
-        verifiedPurchase,
+        verifiedPurchase: true,
         isApproved: true,
       },
       { onConflict: "productId,userId" }
@@ -84,5 +88,5 @@ export async function POST(req: NextRequest, { params }: Props) {
     return NextResponse.json({ error: "Yorum kaydedilemedi." }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, verifiedPurchase });
+  return NextResponse.json({ ok: true });
 }
