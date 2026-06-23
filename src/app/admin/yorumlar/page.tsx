@@ -3,6 +3,129 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
+type Product = { id: string; name: string; slug: string };
+
+function AddReviewForm({ onSaved }: { onSaved: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productId, setProductId] = useState("");
+  const [rating, setRating] = useState(5);
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open && products.length === 0) {
+      fetch("/api/admin/products").then(r => r.json()).then(setProducts);
+    }
+  }, [open, products.length]);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!productId) { setError("Ürün seçin."); return; }
+    setSaving(true);
+    setError(null);
+    const res = await fetch("/api/admin/reviews", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId, rating, title, body }),
+    });
+    setSaving(false);
+    if (!res.ok) { setError((await res.json()).error); return; }
+    setProductId(""); setRating(5); setTitle(""); setBody("");
+    setOpen(false);
+    onSaved();
+  }
+
+  return (
+    <div className="mb-6 bg-white border border-border rounded-2xl overflow-hidden">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-bg transition-colors"
+      >
+        <span className="font-semibold text-text">+ Yorum Ekle</span>
+        <span className="text-text-light text-lg">{open ? "−" : "+"}</span>
+      </button>
+
+      {open && (
+        <form onSubmit={submit} className="px-5 pb-5 border-t border-border pt-4 flex flex-col gap-4">
+          <div>
+            <label className="text-xs font-semibold text-text-light mb-1 block">Ürün</label>
+            <select
+              value={productId}
+              onChange={e => setProductId(e.target.value)}
+              className="w-full border border-border rounded-xl px-3 py-2 text-sm bg-bg focus:outline-none focus:border-primary"
+              required
+            >
+              <option value="">— Ürün seçin —</option>
+              {products.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-text-light mb-1 block">Puan</label>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map(n => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setRating(n)}
+                  className={`text-2xl transition-colors ${n <= rating ? "text-amber-400" : "text-border"}`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-text-light mb-1 block">Başlık (opsiyonel)</label>
+            <input
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="Yorum başlığı"
+              className="w-full border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-text-light mb-1 block">Yorum</label>
+            <textarea
+              value={body}
+              onChange={e => setBody(e.target.value)}
+              rows={3}
+              placeholder="Yorum metni…"
+              className="w-full border border-border rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:border-primary"
+            />
+          </div>
+
+          {error && <p className="text-xs text-red-600">{error}</p>}
+
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2 bg-primary text-white text-sm font-semibold rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {saving ? "Kaydediliyor…" : "Kaydet"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="px-5 py-2 text-sm font-semibold rounded-full border border-border text-text-light hover:border-primary transition-colors"
+            >
+              İptal
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
+
 type Review = {
   id: string;
   rating: number;
@@ -73,6 +196,8 @@ export default function AdminYorumlarPage() {
   return (
     <div>
       <h1 className="font-serif text-3xl text-text mb-6">Ürün Yorumları</h1>
+
+      <AddReviewForm onSaved={load} />
 
       {/* Filtre */}
       <div className="flex gap-2 mb-6">
