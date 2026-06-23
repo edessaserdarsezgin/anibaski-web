@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { sendReviewNotification } from "@/lib/email/reviewNotification";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest, { params }: Props) {
 
   const { data: product } = await admin
     .from("products")
-    .select("id")
+    .select("id, name")
     .eq("slug", slug)
     .single();
 
@@ -87,6 +88,22 @@ export async function POST(req: NextRequest, { params }: Props) {
       return NextResponse.json({ error: "Bu ürün için zaten bir yorum yaptınız." }, { status: 409 });
     return NextResponse.json({ error: "Yorum kaydedilemedi." }, { status: 500 });
   }
+
+  // Kullanıcı adını al ve admin'e bildirim gönder (hata varsa yutulur)
+  const { data: profile } = await admin
+    .from("profiles")
+    .select('"fullName"')
+    .eq("id", user.id)
+    .single();
+
+  sendReviewNotification({
+    productName: product.name,
+    productSlug: slug,
+    customerName: profile?.fullName ?? null,
+    rating,
+    title: title?.trim() || null,
+    body: body?.trim() || null,
+  }).catch(() => {});
 
   return NextResponse.json({ ok: true });
 }

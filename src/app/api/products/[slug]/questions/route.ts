@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { sendQuestionNotification } from "@/lib/email/questionNotification";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest, { params }: Props) {
     return NextResponse.json({ error: "Soru en az 5 karakter olmalı." }, { status: 400 });
 
   const admin = createAdminClient();
-  const { data: product } = await admin.from("products").select("id").eq("slug", slug).single();
+  const { data: product } = await admin.from("products").select("id, name").eq("slug", slug).single();
   if (!product) return NextResponse.json({ error: "Ürün bulunamadı." }, { status: 404 });
 
   const { error } = await admin
@@ -44,5 +45,20 @@ export async function POST(req: NextRequest, { params }: Props) {
     .insert({ productId: product.id, userId: user.id, question: q });
 
   if (error) return NextResponse.json({ error: "Soru gönderilemedi." }, { status: 500 });
+
+  // Kullanıcı adını al ve admin'e bildirim gönder (hata varsa yutulur)
+  const { data: profile } = await admin
+    .from("profiles")
+    .select('"fullName"')
+    .eq("id", user.id)
+    .single();
+
+  sendQuestionNotification({
+    productName: product.name,
+    productSlug: slug,
+    customerName: profile?.fullName ?? null,
+    question: q,
+  }).catch(() => {});
+
   return NextResponse.json({ ok: true });
 }
