@@ -38,7 +38,6 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [credits, setCredits] = useState<{ dailyFreeRemaining: number; earnedAvailable: number; total: number; trial: boolean } | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [tools, setTools] = useState<StudioTool[] | null>(null);
-  const blockedRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
     fetch("/api/ai/studio/credits")
@@ -58,11 +57,7 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
   function selectTool(t: StudioTool) {
     if (!t.active) return;
     if (!isLoggedIn) { router.push("/giris?redirect=/studyo"); return; }
-    if (credits && credits.total <= 0) {
-      setBlocked(true);
-      setTimeout(() => blockedRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
-      return;
-    }
+    if (credits && credits.total <= 0) { setBlocked(true); return; }
     setBlocked(false);
     setTool(t);
     setStep("upload");
@@ -138,6 +133,43 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
     return (
       <div className="max-w-5xl mx-auto px-4 sm:px-8 py-16 flex flex-col gap-16">
 
+        {/* Kredi yetersiz modal */}
+        {blocked && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+            onClick={() => setBlocked(false)}
+          >
+            <div
+              className="bg-bg rounded-3xl border border-border p-8 max-w-sm w-full flex flex-col gap-5 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-4xl text-center">🎁</div>
+              <div className="text-center">
+                <h2 className="font-serif text-xl text-text mb-2">
+                  {credits?.trial ? "Deneme hakkın doldu" : "Kredin doldu"}
+                </h2>
+                <p className="text-sm text-text-light leading-relaxed">
+                  {credits?.trial
+                    ? "Bir baskı siparişi verince her gün ücretsiz AI Stüdyo kredisi kazanmaya başlarsın."
+                    : "Her 1.000 ₺'lik baskıda yeni kredi kazanırsınız. Şimdi bir baskı seç, kredin otomatik yüklensin."}
+                </p>
+              </div>
+              <Link
+                href="/urunler"
+                className="w-full text-center py-3 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-full transition-colors"
+              >
+                Baskılara Göz At →
+              </Link>
+              <button
+                onClick={() => setBlocked(false)}
+                className="text-xs text-text-light hover:text-text transition-colors text-center"
+              >
+                Şimdi değil
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Başlık + akış */}
         <div className="text-center flex flex-col items-center gap-5">
           <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase">AnıBaskı AI Stüdyo</p>
@@ -174,15 +206,6 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
                   : <>Hakkın doldu — her 1000 ₺&apos;lik baskıda yeni kredi kazan 🎁</>}
             </p>
           )}
-          {blocked && (
-            <p ref={blockedRef} className="text-sm text-red-700">
-              {credits?.trial
-                ? <>Deneme hakkın doldu — bir baskı siparişi verince her gün ücretsiz kredi kazanırsın.{" "}</>
-                : <>Krediniz doldu — her 1000 ₺&apos;lik baskıda yeni kredi kazanırsınız.{" "}</>}
-              <Link href="/urunler" className="font-semibold underline">Baskıya göz at →</Link>
-            </p>
-          )}
-
           {!isLoggedIn && (
             <div className="flex items-center gap-3 flex-wrap text-sm bg-primary/5 border border-primary/20 rounded-2xl px-5 py-3 text-text">
               <span>Araçları kullanmak için giriş yapın.</span>
