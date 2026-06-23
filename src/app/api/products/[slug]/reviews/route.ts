@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { sendReviewNotification } from "@/lib/email/reviewNotification";
-import { notifyAdminNewReview } from "@/lib/whatsapp/notify";
+import { notifyAdminNewReview, getAdminPhone } from "@/lib/whatsapp/notify";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -90,12 +90,11 @@ export async function POST(req: NextRequest, { params }: Props) {
     return NextResponse.json({ error: "Yorum kaydedilemedi." }, { status: 500 });
   }
 
-  // Kullanıcı adını al ve admin'e bildirim gönder (hata varsa yutulur)
-  const { data: profile } = await admin
-    .from("profiles")
-    .select('"fullName"')
-    .eq("id", user.id)
-    .single();
+  // Kullanıcı adını ve admin telefonunu al, ardından bildirimleri gönder
+  const [{ data: profile }, adminPhone] = await Promise.all([
+    admin.from("profiles").select('"fullName"').eq("id", user.id).single(),
+    getAdminPhone(),
+  ]);
 
   sendReviewNotification({
     productName: product.name,
@@ -106,14 +105,16 @@ export async function POST(req: NextRequest, { params }: Props) {
     body: body?.trim() || null,
   }).catch(() => {});
 
-  notifyAdminNewReview({
-    productName: product.name,
-    productSlug: slug,
-    customerName: profile?.fullName ?? null,
-    rating,
-    title: title?.trim() || null,
-    body: body?.trim() || null,
-  });
+  if (adminPhone) {
+    notifyAdminNewReview(adminPhone, {
+      productName: product.name,
+      productSlug: slug,
+      customerName: profile?.fullName ?? null,
+      rating,
+      title: title?.trim() || null,
+      body: body?.trim() || null,
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

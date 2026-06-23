@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { sendQuestionNotification } from "@/lib/email/questionNotification";
-import { notifyAdminNewQuestion } from "@/lib/whatsapp/notify";
+import { notifyAdminNewQuestion, getAdminPhone } from "@/lib/whatsapp/notify";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -47,12 +47,11 @@ export async function POST(req: NextRequest, { params }: Props) {
 
   if (error) return NextResponse.json({ error: "Soru gönderilemedi." }, { status: 500 });
 
-  // Kullanıcı adını al ve admin'e bildirim gönder (hata varsa yutulur)
-  const { data: profile } = await admin
-    .from("profiles")
-    .select('"fullName"')
-    .eq("id", user.id)
-    .single();
+  // Kullanıcı adını ve admin telefonunu paralel çek
+  const [{ data: profile }, adminPhone] = await Promise.all([
+    admin.from("profiles").select('"fullName"').eq("id", user.id).single(),
+    getAdminPhone(),
+  ]);
 
   sendQuestionNotification({
     productName: product.name,
@@ -61,12 +60,14 @@ export async function POST(req: NextRequest, { params }: Props) {
     question: q,
   }).catch(() => {});
 
-  notifyAdminNewQuestion({
-    productName: product.name,
-    productSlug: slug,
-    customerName: profile?.fullName ?? null,
-    question: q,
-  });
+  if (adminPhone) {
+    notifyAdminNewQuestion(adminPhone, {
+      productName: product.name,
+      productSlug: slug,
+      customerName: profile?.fullName ?? null,
+      question: q,
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

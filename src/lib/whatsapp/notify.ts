@@ -2,7 +2,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 
 const N8N_WEBHOOK_URL = process.env.N8N_WHATSAPP_WEBHOOK_URL;
 
-async function getAdminPhone(): Promise<string | null> {
+export async function getAdminPhone(): Promise<string | null> {
   const admin = createAdminClient();
   const { data } = await admin
     .from("profiles")
@@ -132,7 +132,7 @@ export async function notifyAdminCancelRequest(params: { orderNo: string; custom
   post({ event: "admin_cancel_request", phone: formatPhone(adminPhone), orderNo: params.orderNo, customerName: params.customerName });
 }
 
-export async function notifyAdminNewReview(params: {
+export function notifyAdminNewReview(adminPhone: string, params: {
   productName: string;
   productSlug: string;
   customerName: string | null;
@@ -140,8 +140,6 @@ export async function notifyAdminNewReview(params: {
   title?: string | null;
   body?: string | null;
 }) {
-  const adminPhone = await getAdminPhone();
-  if (!adminPhone) return;
   const stars = "⭐".repeat(params.rating);
   post({
     event: "admin_new_review",
@@ -156,14 +154,12 @@ export async function notifyAdminNewReview(params: {
   });
 }
 
-export async function notifyAdminNewQuestion(params: {
+export function notifyAdminNewQuestion(adminPhone: string, params: {
   productName: string;
   productSlug: string;
   customerName: string | null;
   question: string;
 }) {
-  const adminPhone = await getAdminPhone();
-  if (!adminPhone) return;
   post({
     event: "admin_new_question",
     phone: formatPhone(adminPhone),
