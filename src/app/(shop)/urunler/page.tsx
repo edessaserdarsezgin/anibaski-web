@@ -25,6 +25,7 @@ function getSortOrder(sort: string): { column: string; ascending: boolean } {
 export const metadata = {
   title: "Tüm Ürünler | AnıBaskı",
   description: "Fotoğraf baskısı, fotokitap, tablo, polaroid ve daha fazlası. Tüm ürünleri keşfedin, anılarınızı kalıcı hediyelere dönüştürün.",
+  alternates: { canonical: "/urunler" },
 };
 
 export default async function UrunlerPage({ searchParams }: Props) {

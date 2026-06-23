@@ -1,4 +1,4 @@
-export const metadata = { title: "Kullanım Koşulları | AnıBaskı" };
+export const metadata = { title: "Kullanım Koşulları | AnıBaskı", alternates: { canonical: "/politikalar/kullanim-kosullari" } };
 
 export default function KullanimKosullariPage() {
   return (

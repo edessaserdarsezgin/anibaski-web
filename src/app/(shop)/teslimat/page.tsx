@@ -1,6 +1,6 @@
 import { getShippingSettings } from "@/lib/shipping";
 
-export const metadata = { title: "Teslimat | AnıBaskı" };
+export const metadata = { title: "Teslimat | AnıBaskı", alternates: { canonical: "/teslimat" } };
 
 const tl = (n: number) => `${n.toLocaleString("tr-TR")} ₺`;
 

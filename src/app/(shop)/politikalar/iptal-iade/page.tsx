@@ -1,4 +1,4 @@
-export const metadata = { title: "İptal ve İade Politikası | AnıBaskı" };
+export const metadata = { title: "İptal ve İade Politikası | AnıBaskı", alternates: { canonical: "/politikalar/iptal-iade" } };
 
 export default function IptalIadePage() {
   return (

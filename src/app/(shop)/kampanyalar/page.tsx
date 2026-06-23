@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 export const metadata = {
   title: "Kampanyalar",
   description: "AnıBaskı'nın güncel kampanyaları, indirim fırsatları ve özel teklifleri.",
+  alternates: { canonical: "/kampanyalar" },
 };
 
 type Campaign = {

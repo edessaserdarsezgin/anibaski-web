@@ -37,6 +37,7 @@ export async function generateMetadata({ params }: Props) {
   return {
     title: `${category.name} | AnıBaskı`,
     description,
+    alternates: { canonical: `/kategoriler/${slug}` },
     openGraph: { title: category.name, description },
   };
 }

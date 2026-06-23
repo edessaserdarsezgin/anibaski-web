@@ -22,6 +22,7 @@ export const metadata: Metadata = {
   title: "AnıBaskı | Anılarınızı Dokunulur Kılın",
   description:
     "Fotoğraf baskısı, fotokitap, tablo ve polaroid ile dijital anılarınızı kalıcı hediyelere dönüştürün. 2-5 iş günü teslimat, Türkiye geneli kargo.",
+  alternates: { canonical: "/" },
   openGraph: {
     title: "AnıBaskı | Anılarınızı Dokunulur Kılın",
     description:

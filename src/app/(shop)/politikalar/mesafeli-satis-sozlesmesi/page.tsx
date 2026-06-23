@@ -1,4 +1,4 @@
-export const metadata = { title: "Mesafeli Satış Sözleşmesi | AnıBaskı" };
+export const metadata = { title: "Mesafeli Satış Sözleşmesi | AnıBaskı", alternates: { canonical: "/politikalar/mesafeli-satis-sozlesmesi" } };
 
 export default function MesafeliSatisSozlesmesiPage() {
   return (

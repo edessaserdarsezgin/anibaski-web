@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import StudyoClient from "./StudyoClient";
 
-export const metadata = { title: "AI Stüdyo | AnıBaskı" };
+export const metadata = { title: "AI Stüdyo | AnıBaskı", alternates: { canonical: "/studyo" } };
 
 export default async function StudyoPage() {
   const supabase = await createClient();
