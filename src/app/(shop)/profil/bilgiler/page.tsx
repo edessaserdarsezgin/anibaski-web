@@ -4,6 +4,7 @@ import BackButton from "@/components/ui/BackButton";
 import ProfileForm from "../ProfileForm";
 import PhoneVerification from "../PhoneVerification";
 import PasswordChangeForm from "../PasswordChangeForm";
+import AccountDeleteRequest from "../AccountDeleteRequest";
 
 export const metadata = { title: "Bilgilerim", robots: { index: false, follow: false } };
 
@@ -38,6 +39,10 @@ export default async function BilgilerimPage() {
         />
       </div>
       {isEmailUser && <PasswordChangeForm />}
+      <div className="mt-10 pt-8 border-t border-border">
+        <p className="text-xs text-text-light mb-3">Hesap İşlemleri</p>
+        <AccountDeleteRequest />
+      </div>
     </div>
   );
 }
