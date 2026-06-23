@@ -12,6 +12,12 @@ export type ReviewItem = {
   profile: { fullName: string | null } | null;
 };
 
+function abbreviateName(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return parts[0] + " " + parts[parts.length - 1][0].toUpperCase() + ".";
+}
+
 function Stars({ rating, size = "sm" }: { rating: number; size?: "sm" | "lg" }) {
   return (
     <span className={`${size === "lg" ? "text-xl" : "text-sm"} leading-none`} aria-label={`${rating} yıldız`}>
@@ -88,8 +94,9 @@ export default function ReviewGrid({ reviews, avgRating }: { reviews: ReviewItem
       ) : (
         <div className="flex flex-col gap-4">
           {filtered.map((r) => {
-            const name = r.profile?.fullName ?? "Anonim";
-            const initials = name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+            const fullName = r.profile?.fullName ?? "Anonim";
+            const displayName = abbreviateName(fullName);
+            const initials = fullName.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
             const date = new Date(r.createdAt).toLocaleDateString("tr-TR", {
               day: "numeric", month: "long", year: "numeric",
             });
@@ -101,18 +108,18 @@ export default function ReviewGrid({ reviews, avgRating }: { reviews: ReviewItem
                       {initials}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-text leading-tight">{name}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-text leading-tight">{displayName}</p>
+                        {r.verifiedPurchase && (
+                          <span className="text-[10px] font-semibold text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5 leading-tight">
+                            ✓ Doğrulanmış Alıcı
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-text-light">{date}</p>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    <Stars rating={r.rating} />
-                    {r.verifiedPurchase && (
-                      <span className="text-[10px] font-semibold text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
-                        ✓ Satın Aldı
-                      </span>
-                    )}
-                  </div>
+                  <Stars rating={r.rating} />
                 </div>
                 {r.title && <p className="text-sm font-semibold text-text mb-1">{r.title}</p>}
                 {r.body && <p className="text-sm text-text-light leading-relaxed">{r.body}</p>}
