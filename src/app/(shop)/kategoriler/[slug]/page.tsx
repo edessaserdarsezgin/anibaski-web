@@ -70,8 +70,21 @@ export default async function KategoriPage({ params, searchParams }: Props) {
     tagProductIds
   );
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const breadcrumbItems = [
+    { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: siteUrl },
+    ...(parentCategory ? [{ "@type": "ListItem", position: 2, name: parentCategory.name, item: `${siteUrl}/kategoriler/${parentCategory.slug}` }] : []),
+    { "@type": "ListItem", position: parentCategory ? 3 : 2, name: category.name, item: `${siteUrl}/kategoriler/${slug}` },
+  ];
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: breadcrumbItems,
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {/* ── Hero ────────────────────────────────────── */}
       <section className="relative bg-bg border-b border-border overflow-hidden">
         <div className="pointer-events-none absolute inset-0">

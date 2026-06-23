@@ -63,8 +63,36 @@ export default async function HomePage() {
     (b) => (!b.starts_at || b.starts_at <= nowIso) && (!b.ends_at || b.ends_at >= nowIso)
   );
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${siteUrl}/#organization`,
+        name: "AnıBaskı",
+        url: siteUrl,
+        logo: { "@type": "ImageObject", url: `${siteUrl}/next.svg` },
+        contactPoint: { "@type": "ContactPoint", contactType: "customer service", availableLanguage: "Turkish" },
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${siteUrl}/#website`,
+        url: siteUrl,
+        name: "AnıBaskı",
+        publisher: { "@id": `${siteUrl}/#organization` },
+        potentialAction: {
+          "@type": "SearchAction",
+          target: { "@type": "EntryPoint", urlTemplate: `${siteUrl}/urunler?q={search_term_string}` },
+          "query-input": "required name=search_term_string",
+        },
+      },
+    ],
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
       <style>{`
         .cat-large:hover .cat-icon { transform: scale(1.15); opacity: 0.5; }
         .cat-large .cat-icon { transition: transform 0.5s ease, opacity 0.5s ease; }

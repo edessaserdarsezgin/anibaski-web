@@ -95,8 +95,33 @@ export default async function UrunDetayPage({ params }: Props) {
 
   const category = product.category as unknown as { id: string; name: string; slug: string } | null;
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const productUrl = `${siteUrl}/urunler/${product.slug}`;
+  const productPrice = Number(product.basePrice).toFixed(2);
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description ? String(product.description).slice(0, 500) : undefined,
+    image: product.images?.length ? product.images : undefined,
+    url: productUrl,
+    brand: { "@type": "Brand", name: "AnıBaskı" },
+    offers: {
+      "@type": "Offer",
+      url: productUrl,
+      priceCurrency: "TRY",
+      price: productPrice,
+      availability: "https://schema.org/InStock",
+      seller: { "@type": "Organization", name: "AnıBaskı" },
+    },
+    ...(category && {
+      category: category.name,
+    }),
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
       <TrackRecentlyViewed
         item={{ slug: product.slug, name: product.name, image: product.images?.[0] ?? null, price: Number(product.basePrice) }}
       />
