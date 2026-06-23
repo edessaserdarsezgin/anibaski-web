@@ -134,6 +134,28 @@ export default async function SiparisDetayPage({ params }: Props) {
               {order.status === "PENDING" && (
                 <CancelRequestButton orderId={order.id} />
               )}
+              {(order.status === "PREPARING" || order.status === "SHIPPED") && (() => {
+                const contactPhone = (company.supportPhone || company.phone).replace(/\D/g, "");
+                const waLink = contactPhone ? `https://wa.me/90${contactPhone.replace(/^0/, "")}` : null;
+                return (
+                  <p className="text-xs text-text-light text-right max-w-xs">
+                    Siparişiniz işleme girdiği için iptal edilemiyor.{" "}
+                    Yardım için{" "}
+                    <a href={`mailto:${company.email}`} className="text-primary font-semibold hover:underline">
+                      e-posta
+                    </a>
+                    {waLink && (
+                      <>
+                        {" "}veya{" "}
+                        <a href={waLink} target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:underline">
+                          WhatsApp
+                        </a>
+                      </>
+                    )}
+                    {" "}ile bize ulaşın.
+                  </p>
+                );
+              })()}
             </div>
           )}
         </div>
