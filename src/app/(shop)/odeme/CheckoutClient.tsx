@@ -422,7 +422,7 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
               <div className="flex flex-col gap-3">
                 {[
                   { value: "credit_card", label: "Kredi / Banka Kartı", desc: "Güvenli ödeme altyapısı ile" },
-                  { value: "cod", label: "Kapıda Ödeme", desc: `+${COD_FEE} ₺ hizmet bedeli` },
+                  { value: "cod", label: "Kapıda Ödeme", desc: `+${COD_FEE.toLocaleString("tr-TR")} ₺ hizmet bedeli` },
                 ].map(opt => (
                   <label key={opt.value}
                     className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-colors ${
@@ -503,13 +503,13 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
                 <div className="flex justify-between">
                   <span className="text-text-light">Kargo</span>
                   <span className="font-semibold">
-                    {shippingFee === 0 ? <span className="text-green-600">Ücretsiz</span> : `${shippingFee} ₺`}
+                    {shippingFee === 0 ? <span className="text-green-600">Ücretsiz</span> : `${shippingFee.toLocaleString("tr-TR")} ₺`}
                   </span>
                 </div>
                 {codFee > 0 && (
                   <div className="flex justify-between">
                     <span className="text-text-light">Kapıda ödeme bedeli</span>
-                    <span className="font-semibold">{codFee} ₺</span>
+                    <span className="font-semibold">{codFee.toLocaleString("tr-TR")} ₺</span>
                   </div>
                 )}
               </div>

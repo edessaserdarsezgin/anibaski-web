@@ -431,13 +431,13 @@ export default function SepetPage() {
                       <span className="text-green-600">Ücretsiz</span>
                     </>
                   ) : (
-                    `${shippingFee} ₺`
+                    `${shippingFee.toLocaleString("tr-TR")} ₺`
                   )}
                 </span>
               </div>
               {shippingFee > 0 && (
                 <p className="text-xs text-text-light">
-                  {freeShippingThreshold} ₺ üzeri alışverişlerde kargo ücretsiz.
+                  {freeShippingThreshold.toLocaleString("tr-TR")} ₺ üzeri alışverişlerde kargo ücretsiz.
                 </p>
               )}
             </div>
