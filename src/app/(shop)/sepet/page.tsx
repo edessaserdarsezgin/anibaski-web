@@ -22,6 +22,31 @@ export default function SepetPage() {
   const { items, total, updateQuantity, removeItem, repriceCart } = useCart();
   const { toast } = useToast();
 
+  const [photoUrls, setPhotoUrls] = useState<Record<number, string[]>>({});
+
+  useEffect(() => {
+    const allPaths = items.flatMap((item, idx) =>
+      (item.uploadedImages ?? []).map((p) => ({ idx, path: p }))
+    );
+    if (allPaths.length === 0) return;
+    fetch("/api/cart/photo-thumbs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paths: allPaths.map((x) => x.path) }),
+    })
+      .then((r) => r.json())
+      .then(({ urls }: { urls: string[] }) => {
+        const map: Record<number, string[]> = {};
+        allPaths.forEach(({ idx }, i) => {
+          if (!map[idx]) map[idx] = [];
+          if (urls[i]) map[idx].push(urls[i]);
+        });
+        setPhotoUrls(map);
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.length]);
+
   const [shippingFeeVal, setShippingFeeVal] = useState(49);
   const [freeShippingThreshold, setFreeShippingThreshold] = useState(500);
 
@@ -268,6 +293,26 @@ export default function SepetPage() {
                     </p>
                   </div>
                 </div>
+
+                {/* Yüklenen fotoğraf thumbnail'ları */}
+                {(photoUrls[index]?.length ?? 0) > 0 && (
+                  <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+                    {photoUrls[index].slice(0, 5).map((url, i) => (
+                      <div key={i} className="relative w-9 h-9 rounded-md overflow-hidden border border-border bg-bg shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt="" className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                    {photoUrls[index].length > 5 && (
+                      <span className="text-[11px] text-text-light font-semibold">
+                        +{photoUrls[index].length - 5} fotoğraf
+                      </span>
+                    )}
+                    <span className="text-[11px] text-text-light ml-1">
+                      {photoUrls[index].length} fotoğraf yüklendi
+                    </span>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between mt-3">
                   <div className="flex items-center gap-2">
