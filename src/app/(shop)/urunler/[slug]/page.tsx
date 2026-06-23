@@ -9,6 +9,7 @@ import ProductGallery from "./ProductGallery";
 import ProductDetailsTabs from "./ProductDetailsTabs";
 import ShippingEstimate from "./ShippingEstimate";
 import ReviewList from "./ReviewList";
+import ProductQA from "./ProductQA";
 import { getShippingSettings } from "@/lib/shipping";
 import {
   getProductBySlug,
@@ -292,9 +293,10 @@ export default async function UrunDetayPage({ params }: Props) {
         />
       </div>
 
-      {/* Yorumlar */}
+      {/* Yorumlar + Soru-Cevap */}
       <div className="max-w-7xl mx-auto px-8">
         <ReviewList productId={product.id} slug={slug} userId={user?.id ?? null} />
+        <ProductQA productId={product.id} slug={slug} userId={user?.id ?? null} />
       </div>
 
       <RelatedProducts products={related} />
