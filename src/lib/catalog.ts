@@ -265,7 +265,7 @@ export const getProductsForCatalog = unstable_cache(
       }
     }
 
-    const { data } = await baseQuery;
+    const { data } = await baseQuery.limit(200);
     return withItemPromotions(data ?? []);
   },
   ["catalog-products"],
@@ -362,7 +362,7 @@ export const getProductsInCategory = unstable_cache(
       }
     }
 
-    const { data } = await baseQuery;
+    const { data } = await baseQuery.limit(200);
     return withItemPromotions(data ?? []);
   },
   ["products-in-category"],
