@@ -4,6 +4,7 @@ import { GUIDE_NEEDS, GUIDE_GIFTS, type GuideRef } from "@/lib/guide";
 import GuideProductCard, { type ResolvedGuideProduct } from "@/components/product/GuideProductCard";
 import BeforeAfterSlider from "@/components/studio/BeforeAfterSlider";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Baskı Rehberi | AnıBaskı", alternates: { canonical: "/urun-rehberi" } };
 
 const NAV = [
