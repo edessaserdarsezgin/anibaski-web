@@ -69,7 +69,7 @@ export async function POST(req: NextRequest, { params }: Props) {
       { status: 403 }
     );
 
-  const { error } = await admin
+  const { data: reviewRow, error } = await admin
     .from("product_reviews")
     .upsert(
       {
@@ -82,7 +82,9 @@ export async function POST(req: NextRequest, { params }: Props) {
         isApproved: true,
       },
       { onConflict: "productId,userId" }
-    );
+    )
+    .select("id")
+    .single();
 
   if (error) {
     if (error.code === "23505")
@@ -105,8 +107,8 @@ export async function POST(req: NextRequest, { params }: Props) {
     body: body?.trim() || null,
   }).catch(() => {});
 
-  if (adminPhone) {
-    notifyAdminNewReview(adminPhone, {
+  if (adminPhone && reviewRow) {
+    const sent = await notifyAdminNewReview(adminPhone, {
       productName: product.name,
       productSlug: slug,
       customerName: profile?.fullName ?? null,
@@ -114,6 +116,11 @@ export async function POST(req: NextRequest, { params }: Props) {
       title: title?.trim() || null,
       body: body?.trim() || null,
     });
+    if (sent) {
+      await admin.from("product_reviews")
+        .update({ waNotifiedAt: new Date().toISOString() })
+        .eq("id", reviewRow.id);
+    }
   }
 
   return NextResponse.json({ ok: true });

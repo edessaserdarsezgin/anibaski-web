@@ -30,6 +30,21 @@ function post(body: Record<string, unknown>) {
   }).catch((err) => console.error("[WA notify]", err));
 }
 
+async function postAsync(body: Record<string, unknown>): Promise<boolean> {
+  if (!N8N_WEBHOOK_URL) return false;
+  try {
+    const res = await fetch(N8N_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error("[WA notify]", err);
+    return false;
+  }
+}
+
 export function notifyOrderCreated(params: {
   phone: string;
   orderNo: string;
@@ -132,16 +147,16 @@ export async function notifyAdminCancelRequest(params: { orderNo: string; custom
   post({ event: "admin_cancel_request", phone: formatPhone(adminPhone), orderNo: params.orderNo, customerName: params.customerName });
 }
 
-export function notifyAdminNewReview(adminPhone: string, params: {
+export async function notifyAdminNewReview(adminPhone: string, params: {
   productName: string;
   productSlug: string;
   customerName: string | null;
   rating: number;
   title?: string | null;
   body?: string | null;
-}) {
+}): Promise<boolean> {
   const stars = "⭐".repeat(params.rating);
-  post({
+  return postAsync({
     event: "admin_new_review",
     phone: formatPhone(adminPhone),
     productName: params.productName,
@@ -154,13 +169,13 @@ export function notifyAdminNewReview(adminPhone: string, params: {
   });
 }
 
-export function notifyAdminNewQuestion(adminPhone: string, params: {
+export async function notifyAdminNewQuestion(adminPhone: string, params: {
   productName: string;
   productSlug: string;
   customerName: string | null;
   question: string;
-}) {
-  post({
+}): Promise<boolean> {
+  return postAsync({
     event: "admin_new_question",
     phone: formatPhone(adminPhone),
     productName: params.productName,

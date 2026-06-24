@@ -41,9 +41,11 @@ export async function POST(req: NextRequest, { params }: Props) {
   const { data: product } = await admin.from("products").select("id, name").eq("slug", slug).single();
   if (!product) return NextResponse.json({ error: "Ürün bulunamadı." }, { status: 404 });
 
-  const { error } = await admin
+  const { data: questionRow, error } = await admin
     .from("product_questions")
-    .insert({ productId: product.id, userId: user.id, question: q });
+    .insert({ productId: product.id, userId: user.id, question: q })
+    .select("id")
+    .single();
 
   if (error) return NextResponse.json({ error: "Soru gönderilemedi." }, { status: 500 });
 
@@ -60,13 +62,18 @@ export async function POST(req: NextRequest, { params }: Props) {
     question: q,
   }).catch(() => {});
 
-  if (adminPhone) {
-    notifyAdminNewQuestion(adminPhone, {
+  if (adminPhone && questionRow) {
+    const sent = await notifyAdminNewQuestion(adminPhone, {
       productName: product.name,
       productSlug: slug,
       customerName: profile?.fullName ?? null,
       question: q,
     });
+    if (sent) {
+      await admin.from("product_questions")
+        .update({ waNotifiedAt: new Date().toISOString() })
+        .eq("id", questionRow.id);
+    }
   }
 
   return NextResponse.json({ ok: true });
