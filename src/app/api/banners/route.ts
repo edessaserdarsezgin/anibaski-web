@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 
-export const revalidate = 60; // her 60 saniyede bir yenile
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const adminDb = createAdminClient();
