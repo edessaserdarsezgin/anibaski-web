@@ -1,0 +1,121 @@
+version: "3.8"
+
+# AnıBaskı — VPS Servis Stack
+# Yereldeki kurulumla uyumlu: Evolution API v2.3.7, aynı env var isimleri, aynı DB schema
+# Coolify'a "Docker Compose Empty" olarak ekle, env değişkenleri UI'dan gir.
+
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: anibaski_db
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-whatsappsaas}
+      POSTGRES_USER: ${POSTGRES_USER:-saasuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saasuser -d whatsappsaas"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - anibaski_internal
+
+  redis:
+    image: redis:alpine
+    container_name: evolution-redis
+    restart: always
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - anibaski_internal
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB:-whatsappsaas}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER:-saasuser}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+      GENERIC_TIMEZONE: Europe/Istanbul
+      TZ: Europe/Istanbul
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL}
+      N8N_CORS_ALLOWED_ORIGINS: "*"
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "false"
+      N8N_SECURE_COOKIE: "false"
+      N8N_COMMUNITY_PACKAGES_ENABLED: "true"
+      N8N_CUSTOM_EXTENSIONS: "/home/node/.n8n"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    ports:
+      - "5678:5678"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.n8n.rule=Host(`n8n.anibaski.com`)"
+      - "traefik.http.routers.n8n.entrypoints=http"
+      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
+    networks:
+      - anibaski_internal
+      - coolify
+
+  evolution-api:
+    image: evoapicloud/evolution-api:latest
+    container_name: evolution-api
+    restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      SERVER_URL: ${EVOLUTION_PUBLIC_URL}
+      SERVER_PORT: "8080"
+      CACHE_REDIS_ENABLED: "true"
+      CACHE_REDIS_URI: redis://redis:6379/6
+      CACHE_REDIS_PREFIX_KEY: evolution
+      CACHE_REDIS_SAVE_INSTANCES: "false"
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://${POSTGRES_USER:-saasuser}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-whatsappsaas}?schema=evolution_api
+      AUTHENTICATION_TYPE: apikey
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
+      AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: "true"
+    volumes:
+      - evolution_data:/evolution/instances
+    ports:
+      - "8090:8080"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.evolution.rule=Host(`evolution.anibaski.com`)"
+      - "traefik.http.routers.evolution.entrypoints=http"
+      - "traefik.http.services.evolution.loadbalancer.server.port=8080"
+    networks:
+      - anibaski_internal
+      - coolify
+
+volumes:
+  postgres_data:
+  redis_data:
+  n8n_data:
+  evolution_data:
+
+networks:
+  anibaski_internal:
+    driver: bridge
+  coolify:
+    external: true
