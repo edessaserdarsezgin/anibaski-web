@@ -14,9 +14,6 @@ export default function AuthSessionListener() {
       if (event === "SIGNED_OUT") {
         router.refresh();
       }
-      if (event === "TOKEN_REFRESHED") {
-        router.refresh();
-      }
     });
 
     return () => subscription.unsubscribe();
