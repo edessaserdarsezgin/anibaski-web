@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
+import { downloadFromR2, uploadToR2, signR2Images } from "@/lib/r2";
 import sharp from "sharp";
 
 export async function POST(req: NextRequest) {
@@ -12,19 +13,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Geçersiz dosya yolu" }, { status: 400 });
   }
 
-  const adminSupabase = createAdminClient();
+  const original = await downloadFromR2(path);
+  if (!original) return NextResponse.json({ error: "Dosya indirilemedi" }, { status: 500 });
 
-  const { data: fileData, error: downloadError } = await adminSupabase.storage
-    .from("uploads")
-    .download(path);
-
-  if (downloadError || !fileData) {
-    return NextResponse.json({ error: "Dosya indirilemedi" }, { status: 500 });
-  }
-
-  const buffer = Buffer.from(await fileData.arrayBuffer());
-
-  const optimized = await sharp(buffer)
+  const optimized = await sharp(original)
     .rotate()                                  // EXIF yönüne göre düzelt
     .normalize()                               // Otomatik ton düzeltme (auto-levels)
     .modulate({ saturation: 1.12 })            // Baskıda soluk görünümü önle
@@ -33,19 +25,8 @@ export async function POST(req: NextRequest) {
     .toBuffer();
 
   const optimizedPath = path.replace(/\.[^/.]+$/, "-optimized.jpg");
+  await uploadToR2(optimizedPath, optimized, "image/jpeg");
 
-  const { error: uploadError } = await adminSupabase.storage
-    .from("uploads")
-    .upload(optimizedPath, optimized, { contentType: "image/jpeg", upsert: true });
-
-  if (uploadError) {
-    console.error("[optimize-image] yükleme hatası:", uploadError);
-    return NextResponse.json({ error: "Görsel işlenemedi" }, { status: 500 });
-  }
-
-  const { data: signed } = await adminSupabase.storage
-    .from("uploads")
-    .createSignedUrl(optimizedPath, 60 * 60 * 24 * 7);
-
-  return NextResponse.json({ url: signed?.signedUrl, path: optimizedPath });
+  const [url] = await signR2Images([optimizedPath], 60 * 60 * 24 * 7);
+  return NextResponse.json({ url, path: optimizedPath });
 }
