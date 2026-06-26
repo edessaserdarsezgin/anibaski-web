@@ -27,7 +27,7 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const protectedPaths = ["/siparisler", "/odeme", "/admin"];
+  const protectedPaths = ["/siparisler", "/odeme", "/admin", "/profil", "/favorilerim"];
   const isProtected = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   );
