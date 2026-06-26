@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { notifyStatusUpdate, notifyCancelApproved, notifyCancelRejected } from "@/lib/whatsapp/notify";
 import { requireAdmin } from "@/lib/auth";
+import { deleteFromR2 } from "@/lib/r2";
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -24,8 +25,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!current) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const prevStatus = current.status;
 
-  // DELIVERED'a ilk geçişte teslim zamanını işaretle (retention tetiği — teslim + 30 gün).
-  const patch: { status: string; deliveredAt?: string } =
+  const patch: { status: string; deliveredAt?: string; photosPurgedAt?: string } =
     status === "DELIVERED" && prevStatus !== "DELIVERED"
       ? { status, deliveredAt: new Date().toISOString() }
       : { status };
@@ -38,6 +38,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // PREPARING'e geçince fotoğrafları R2'den sil — admin indirdi, artık gerekmez.
+  if (status === "PREPARING" && prevStatus !== "PREPARING") {
+    const { data: items } = await admin.supabase
+      .from("order_items")
+      .select("uploadedImages")
+      .eq("orderId", id);
+    const paths = (items ?? []).flatMap((it) => (it.uploadedImages as string[] | null) ?? []);
+    deleteFromR2(paths).catch((e) => console.error("[upload-purge] R2 sil hatası:", e));
+    admin.supabase.from("orders").update({ photosPurgedAt: new Date().toISOString() }).eq("id", id).then(() => {});
+  }
 
   // WhatsApp bildirimi — fire-and-forget
   // Not: SHIPPED bildirimi yalnızca kargo kodu kaydedilince gider (tracking/route.ts)

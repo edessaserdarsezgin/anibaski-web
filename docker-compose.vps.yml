@@ -1,8 +1,14 @@
 version: "3.8"
 
 # AnıBaskı — VPS Servis Stack
-# Yereldeki kurulumla uyumlu: Evolution API v2.3.7, aynı env var isimleri, aynı DB schema
 # Coolify'a "Docker Compose Empty" olarak ekle, env değişkenleri UI'dan gir.
+#
+# Next.js uygulaması bu stack'te değil — Coolify'da ayrı Git kaynağı olarak yönetilir.
+# Next.js için Coolify Environment Variables'a eklenmesi gereken R2 değişkenleri:
+#   R2_ACCOUNT_ID=10484e4d9a578be0953f56cc921c326c
+#   R2_ACCESS_KEY_ID=f0ae6919ff4d9dabfd86ab373c6c3e07
+#   R2_SECRET_ACCESS_KEY=<secrets dosyasına bak>
+#   R2_BUCKET_NAME=anibaski-uploads
 
 services:
 
@@ -22,7 +28,10 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - anibaski_internal
+      default:
+      coolify:
+        aliases:
+          - anibaski-postgres
 
   redis:
     image: redis:alpine
@@ -36,7 +45,10 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - anibaski_internal
+      default:
+      coolify:
+        aliases:
+          - anibaski-redis
 
   n8n:
     image: n8nio/n8n:latest
@@ -47,7 +59,7 @@ services:
         condition: service_healthy
     environment:
       DB_TYPE: postgresdb
-      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_HOST: anibaski-postgres
       DB_POSTGRESDB_PORT: 5432
       DB_POSTGRESDB_DATABASE: ${POSTGRES_DB:-whatsappsaas}
       DB_POSTGRESDB_USER: ${POSTGRES_USER:-saasuser}
@@ -70,7 +82,7 @@ services:
       - "traefik.http.routers.n8n.entrypoints=http"
       - "traefik.http.services.n8n.loadbalancer.server.port=5678"
     networks:
-      - anibaski_internal
+      - default
       - coolify
 
   evolution-api:
@@ -86,12 +98,13 @@ services:
       SERVER_URL: ${EVOLUTION_PUBLIC_URL}
       SERVER_PORT: "8080"
       CACHE_REDIS_ENABLED: "true"
-      CACHE_REDIS_URI: redis://redis:6379/6
+      CACHE_REDIS_URI: redis://anibaski-redis:6379/6
       CACHE_REDIS_PREFIX_KEY: evolution
       CACHE_REDIS_SAVE_INSTANCES: "false"
       DATABASE_ENABLED: "true"
       DATABASE_PROVIDER: postgresql
-      DATABASE_CONNECTION_URI: postgresql://${POSTGRES_USER:-saasuser}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-whatsappsaas}?schema=evolution_api
+      DATABASE_CONNECTION_URI: postgresql://${POSTGRES_USER:-saasuser}:${POSTGRES_PASSWORD}@anibaski-postgres:5432/${POSTGRES_DB:-whatsappsaas}?schema=evolution_api
+      DATABASE_URL: postgresql://${POSTGRES_USER:-saasuser}:${POSTGRES_PASSWORD}@anibaski-postgres:5432/${POSTGRES_DB:-whatsappsaas}?schema=evolution_api
       AUTHENTICATION_TYPE: apikey
       AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
       AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: "true"
@@ -105,7 +118,7 @@ services:
       - "traefik.http.routers.evolution.entrypoints=http"
       - "traefik.http.services.evolution.loadbalancer.server.port=8080"
     networks:
-      - anibaski_internal
+      - default
       - coolify
 
 volumes:
@@ -115,7 +128,7 @@ volumes:
   evolution_data:
 
 networks:
-  anibaski_internal:
+  default:
     driver: bridge
   coolify:
     external: true

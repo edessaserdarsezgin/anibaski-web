@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { deleteFromR2 } from "@/lib/r2";
 
 const RETENTION_DAYS = 30;          // teslim + 30 gün → müşteri fotoğrafları silinir
 const BATCH = 100;                  // tek çalışmada en fazla N sipariş
@@ -70,13 +71,13 @@ export async function GET(req: NextRequest) {
     );
 
     if (paths.length > 0) {
-      const { error: rmErr } = await adminClient.storage.from("uploads").remove(paths);
-      if (rmErr) {
-        // Silme başarısızsa işaretleme → ertesi gün tekrar denenir
-        console.error(`[photo-retention] storage remove hatası (order ${order.id}):`, rmErr);
+      try {
+        await deleteFromR2(paths);
+        deletedFiles += paths.length;
+      } catch (rmErr) {
+        console.error(`[photo-retention] R2 sil hatası (order ${order.id}):`, rmErr);
         continue;
       }
-      deletedFiles += paths.length;
     }
 
     const { error: updErr } = await adminClient

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { uploadToR2, signR2Images, R2_BUCKET } from "@/lib/r2";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -28,22 +29,20 @@ export async function POST(req: NextRequest) {
     "image/heif": "heif",
   };
   const ext = ALLOWED_EXTENSIONS[file.type];
-  const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const key = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-  const { error } = await supabase.storage
-    .from("uploads")
-    .upload(path, file, { contentType: file.type, upsert: false });
-
-  if (error) {
-    console.error("[upload] yükleme hatası:", error);
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await uploadToR2(key, buffer, file.type);
+  } catch (err) {
+    console.error("[upload] R2 yükleme hatası:", err);
     return NextResponse.json({ error: "Yükleme başarısız" }, { status: 500 });
   }
 
-  const { data: signed, error: signError } = await supabase.storage
-    .from("uploads")
-    .createSignedUrl(path, 60 * 60 * 24 * 7); // 7 gün geçerli
-
-  if (signError || !signed) return NextResponse.json({ error: "İmzalı URL oluşturulamadı" }, { status: 500 });
-
-  return NextResponse.json({ url: signed.signedUrl, path });
+  const [url] = await signR2Images([key], 60 * 60 * 24 * 7);
+  return NextResponse.json({ url, path: key });
 }
+
+export const runtime = "nodejs";
+// R2_BUCKET referansı tree-shaking'i engeller
+void R2_BUCKET;

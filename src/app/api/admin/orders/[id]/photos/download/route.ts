@@ -31,10 +31,11 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           buffer = await res.arrayBuffer();
           ext = value.split("?")[0].split(".").pop() ?? "jpg";
         } else {
-          // Stabil path → admin client ile storage'tan indir (imzaya gerek yok)
-          const { data, error } = await admin.supabase.storage.from("uploads").download(value);
-          if (error || !data) continue;
-          buffer = await data.arrayBuffer();
+          // Stabil R2 key → R2'den indir
+          const { downloadFromR2 } = await import("@/lib/r2");
+          const data = await downloadFromR2(value);
+          if (!data) continue;
+          buffer = data.buffer as ArrayBuffer;
           ext = value.split(".").pop() ?? "jpg";
         }
         zip.file(`${String(fileIndex).padStart(3, "0")}_${productName}.${ext}`, buffer);
