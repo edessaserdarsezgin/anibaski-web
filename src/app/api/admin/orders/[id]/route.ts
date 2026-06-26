@@ -50,18 +50,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     admin.supabase.from("orders").update({ photosPurgedAt: new Date().toISOString() }).eq("id", id).then(() => {});
   }
 
-  // WhatsApp bildirimi — fire-and-forget
-  // Not: SHIPPED bildirimi yalnızca kargo kodu kaydedilince gider (tracking/route.ts)
+  // WhatsApp bildirimi — tamamen fire-and-forget, response'u bloke etmez
   const notifyStatuses = ["PREPARING", "DELIVERED", "CANCELLED", "CANCEL_REQUESTED"];
   if (current.userId && notifyStatuses.includes(status)) {
-    const [{ data: profile }, { data: address }] = await Promise.all([
-      admin.supabase.from("profiles").select("phone").eq("id", current.userId).single(),
-      admin.supabase.from("addresses").select("phone").eq("id", current.addressId).single(),
-    ]);
-
-    const phone = profile?.phone || address?.phone;
-    if (phone) {
-      const orderNo = id.slice(0, 8).toUpperCase();
+    const userId = current.userId;
+    const addressId = current.addressId;
+    const orderNo = id.slice(0, 8).toUpperCase();
+    Promise.all([
+      admin.supabase.from("profiles").select("phone").eq("id", userId).single(),
+      admin.supabase.from("addresses").select("phone").eq("id", addressId).single(),
+    ]).then(([{ data: profile }, { data: address }]) => {
+      const phone = profile?.phone || address?.phone;
+      if (!phone) return;
       if (prevStatus === "CANCEL_REQUESTED" && status === "CANCELLED") {
         notifyCancelApproved({ phone, orderNo });
       } else if (prevStatus === "CANCEL_REQUESTED" && status !== "CANCELLED") {
@@ -69,7 +69,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       } else if (["PREPARING", "DELIVERED", "CANCELLED"].includes(status)) {
         notifyStatusUpdate({ phone, orderNo, status: status as "PREPARING" | "DELIVERED" | "CANCELLED" });
       }
-    }
+    }).catch((e) => console.error("[notify] WP bildirim hatası:", e));
   }
 
   return NextResponse.json(order);

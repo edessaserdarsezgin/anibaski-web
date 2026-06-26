@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "dsxlrkkkyvltdapoizks.supabase.co",
       },
+      {
+        protocol: "https",
+        hostname: "*.r2.cloudflarestorage.com",
+      },
     ],
   },
   // Güvenlik HTTP header'ları (tüm yollar). CSP bilinçli eklenmedi (ayrı test ister).
