@@ -121,7 +121,7 @@ export default async function AdminSiparislerPage({ searchParams }: Props) {
                     {Number(order.total).toLocaleString("tr-TR")} ₺
                   </td>
                   <td className="px-4 py-4">
-                    <Link href={`/siparisler/${order.id}`} className="text-xs text-primary hover:underline font-semibold">
+                    <Link href={`/siparisler/${order.id}?from=admin`} className="text-xs text-primary hover:underline font-semibold">
                       Detay
                     </Link>
                   </td>

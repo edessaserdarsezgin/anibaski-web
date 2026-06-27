@@ -10,7 +10,7 @@ import LegalAccordion from "@/components/legal/LegalAccordion";
 import CancelRequestButton from "./CancelRequestButton";
 import ReprintButton from "./ReprintButton";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ from?: string }> };
 
 const STATUS_STEPS = ["PENDING", "PREPARING", "SHIPPED", "DELIVERED"];
 const STATUS_LABEL: Record<string, string> = {
@@ -40,8 +40,10 @@ type OrderItem = {
   product: { name: string; images: string[]; slug: string } | null;
 };
 
-export default async function SiparisDetayPage({ params }: Props) {
+export default async function SiparisDetayPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const { from } = await searchParams;
+  const fromAdmin = from === "admin";
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect(`/giris?redirect=/siparisler/${id}`);
@@ -84,8 +86,8 @@ export default async function SiparisDetayPage({ params }: Props) {
       {/* Başlık */}
       <div className="mb-8">
         <p className="text-sm text-text-light mb-2">
-          <Link href={isAdmin ? "/admin/siparisler" : "/siparisler"} className="hover:text-primary">
-            {isAdmin ? "← Admin / Siparişler" : "← Siparişlerim"}
+          <Link href={fromAdmin ? "/admin/siparisler" : "/siparisler"} className="hover:text-primary">
+            {fromAdmin ? "← Admin / Siparişler" : "← Siparişlerim"}
           </Link>
         </p>
         <div className="flex flex-wrap items-center justify-between gap-3">
