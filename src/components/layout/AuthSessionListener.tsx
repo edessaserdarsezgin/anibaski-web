@@ -12,6 +12,8 @@ export default function AuthSessionListener() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
+        localStorage.removeItem("cart");
+        window.dispatchEvent(new Event("cart-updated"));
         router.refresh();
       }
     });
