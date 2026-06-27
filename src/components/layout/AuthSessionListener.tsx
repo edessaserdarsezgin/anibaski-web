@@ -10,10 +10,19 @@ export default function AuthSessionListener() {
   useEffect(() => {
     const supabase = createClient();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN") {
+        const newUserId = session?.user?.id;
+        const cartUserId = localStorage.getItem("cart_user_id");
+        if (cartUserId && newUserId && cartUserId !== newUserId) {
+          localStorage.removeItem("cart");
+          window.dispatchEvent(new Event("cart-updated"));
+        }
+        if (newUserId) {
+          localStorage.setItem("cart_user_id", newUserId);
+        }
+      }
       if (event === "SIGNED_OUT") {
-        localStorage.removeItem("cart");
-        window.dispatchEvent(new Event("cart-updated"));
         router.refresh();
       }
     });
