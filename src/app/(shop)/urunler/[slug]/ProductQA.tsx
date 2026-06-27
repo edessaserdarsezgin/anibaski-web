@@ -31,6 +31,13 @@ export default async function ProductQA({
 
   const items = (data ?? []) as unknown as QAItem[];
 
+  function maskName(fullName: string | null | undefined): string {
+    if (!fullName) return "Kullanıcı";
+    const parts = fullName.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0];
+    return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`;
+  }
+
   return (
     <section className="mt-10 pt-8 border-t border-border">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
@@ -56,7 +63,7 @@ export default async function ProductQA({
                 <div>
                   <p className="text-sm text-text">{item.question}</p>
                   <p className="text-xs text-text-light mt-1">
-                    {item.profile?.fullName ?? "Kullanıcı"} ·{" "}
+                    {maskName(item.profile?.fullName)} ·{" "}
                     {new Date(item.createdAt).toLocaleDateString("tr-TR", { day: "numeric", month: "long" })}
                   </p>
                 </div>

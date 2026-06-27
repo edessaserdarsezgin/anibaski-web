@@ -84,7 +84,7 @@ export default async function SiparisDetayPage({ params }: Props) {
       {/* Başlık */}
       <div className="mb-8">
         <p className="text-sm text-text-light mb-2">
-          <Link href="/siparisler" className="hover:text-primary">
+          <Link href={isAdmin ? "/admin/siparisler" : "/siparisler"} className="hover:text-primary">
             {isAdmin ? "← Admin / Siparişler" : "← Siparişlerim"}
           </Link>
         </p>
