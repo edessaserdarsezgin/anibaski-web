@@ -56,8 +56,10 @@ next-env.d.ts
 .superpowers/
 .lazyweb/
 
-# test/dev scripts
-scripts/
+# test/dev scripts (infra/ hariç)
+scripts/*.mjs
+scripts/*.ts
+scripts/*.js
 urun-ozellikleri/10x15-20-aciklama.txt
 urun-ozellikleri/10x15-20-detay.txt
 urun-ozellikleri/10x15-24-aciklama.txt
