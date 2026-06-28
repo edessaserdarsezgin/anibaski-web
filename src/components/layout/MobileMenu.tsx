@@ -39,6 +39,18 @@ export default function MobileMenu({ isAdmin, categories = [] }: Props) {
         <>
           <div className="fixed inset-0 top-16 z-40 bg-black/20" onClick={() => setOpen(false)} />
           <div className="md:hidden fixed left-0 right-0 top-16 bottom-0 z-50 bg-bg border-b border-border shadow-hover overflow-y-auto overscroll-contain">
+            <div className="flex items-center justify-between px-6 py-3 border-b border-border">
+              <span className="text-sm font-semibold text-text-light">Menü</span>
+              <button
+                onClick={() => setOpen(false)}
+                aria-label="Menüyü kapat"
+                className="p-2 -mr-2 text-text hover:text-primary transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
             <nav className="max-w-7xl mx-auto px-6 py-4 pb-24 flex flex-col">
 
               {categories.length > 0 && (
