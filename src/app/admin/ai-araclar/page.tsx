@@ -118,7 +118,7 @@ export default function AiAraclarPage() {
         <div className="bg-white border border-border rounded-2xl p-6 flex flex-col gap-4">
           <h2 className="font-serif text-xl text-text">{draft.id ? "Aracı Düzenle" : "Yeni Araç"}</h2>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className="flex flex-col gap-1">
               <span className="text-sm font-semibold text-text">Slug</span>
               <input value={draft.slug} disabled={!!draft.id}
@@ -155,7 +155,7 @@ export default function AiAraclarPage() {
               className="border border-border rounded-xl px-3 py-2" />
           </label>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className="flex flex-col gap-1">
               <span className="text-sm font-semibold text-text">Motor</span>
               <select value={draft.engine} onChange={(e) => setDraft({ ...draft, engine: e.target.value as Draft["engine"] })}

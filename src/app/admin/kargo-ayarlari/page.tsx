@@ -131,10 +131,10 @@ export default function KargoAyarlariPage() {
 
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-text">Ramazan Bayramı</label>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <input type="date" value={form.ramazanStart}
                 onChange={e => setForm(f => ({ ...f, ramazanStart: e.target.value }))} className={inputCls} />
-              <span className="text-text-light text-sm shrink-0">→</span>
+              <span className="text-text-light text-sm shrink-0 hidden sm:block">→</span>
               <input type="date" value={form.ramazanEnd} min={form.ramazanStart || undefined}
                 onChange={e => setForm(f => ({ ...f, ramazanEnd: e.target.value }))} className={inputCls} />
             </div>
@@ -142,10 +142,10 @@ export default function KargoAyarlariPage() {
 
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-text">Kurban Bayramı</label>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <input type="date" value={form.kurbanStart}
                 onChange={e => setForm(f => ({ ...f, kurbanStart: e.target.value }))} className={inputCls} />
-              <span className="text-text-light text-sm shrink-0">→</span>
+              <span className="text-text-light text-sm shrink-0 hidden sm:block">→</span>
               <input type="date" value={form.kurbanEnd} min={form.kurbanStart || undefined}
                 onChange={e => setForm(f => ({ ...f, kurbanEnd: e.target.value }))} className={inputCls} />
             </div>

@@ -285,7 +285,7 @@ export default function YeniUrunPage() {
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text">İndirim (%) — opsiyonel</label>
           <input name="discount_percent" type="number" min="0" max="100" className={inputCls} placeholder="örn. 20" />
-          <div className="grid grid-cols-2 gap-2 mt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
             <div className="flex flex-col gap-1">
               <label className="text-xs text-text-light">Başlangıç</label>
               <input name="discount_starts_at" type="datetime-local" className={inputCls} />

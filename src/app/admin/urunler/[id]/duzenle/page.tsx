@@ -263,7 +263,7 @@ export default function UrunDuzenle() {
         </div>
 
         {/* Temel Bilgiler */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-text">Ürün Adı</label>
             <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required className={inputCls} />
@@ -281,7 +281,7 @@ export default function UrunDuzenle() {
             <input type="number" min="0" max="100" value={form.discountPercent}
               onChange={e => setForm(f => ({ ...f, discountPercent: e.target.value }))}
               className={inputCls} placeholder="örn. 20" />
-            <div className="grid grid-cols-2 gap-2 mt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
               <div className="flex flex-col gap-1">
                 <label className="text-xs text-text-light">Başlangıç</label>
                 <input type="datetime-local" value={form.discountStartsAt}
