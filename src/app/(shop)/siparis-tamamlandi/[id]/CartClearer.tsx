@@ -8,6 +8,10 @@ export default function CartClearer() {
     window.dispatchEvent(new Event("cart-updated"));
     sessionStorage.removeItem("appliedCoupon");
     sessionStorage.removeItem("source");
+    // Giriş yapınca eski ürünlerin geri dönmesini önle (AuthSessionListener cart_user_* key'inden restore eder)
+    Object.keys(localStorage).forEach((k) => {
+      if (k.startsWith("cart_user_")) localStorage.removeItem(k);
+    });
     // Server snapshot'ı da temizle
     fetch("/api/cart/snapshot", { method: "DELETE" }).catch(() => {});
   }, []);
