@@ -22,6 +22,16 @@ const nextConfig: NextConfig = {
   // Güvenlik HTTP header'ları (tüm yollar). CSP bilinçli eklenmedi (ayrı test ister).
   // X-Frame-Options=SAMEORIGIN: sitenin başka sitelerce iframe'e gömülmesini engeller
   // (clickjacking). PayTR'yi etkilemez — orada bizim sayfa üst-frame, PayTR çocuk-frame.
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.anibaski.com" }],
+        destination: "https://anibaski.com/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

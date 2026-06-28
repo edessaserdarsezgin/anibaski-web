@@ -26,6 +26,9 @@ export const metadata: Metadata = {
   },
   description:
     "Dijital anılarınızı fotoğraf baskısı, fotokitap, tablo ve kişisel hediyelere dönüştürün. Türkiye'nin en hızlı fotoğraf baskı platformu.",
+  alternates: {
+    canonical: "https://anibaski.com",
+  },
   openGraph: {
     siteName: "AnıBaskı",
     locale: "tr_TR",
