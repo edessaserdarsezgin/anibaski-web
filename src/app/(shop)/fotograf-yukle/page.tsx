@@ -25,6 +25,7 @@ type CropModal = {
   photoIndex: number;
   crop: Point;
   zoom: number;
+  rotation: number;
   aspect: number | undefined;
   locked: boolean;
   croppedAreaPixels: Area | null;
@@ -89,7 +90,7 @@ async function readDimensions(src: string): Promise<{ width: number; height: num
   });
 }
 
-async function getCroppedBlob(previewUrl: string, pixelCrop: Area): Promise<Blob> {
+async function getCroppedBlob(previewUrl: string, pixelCrop: Area, rotation = 0): Promise<Blob> {
   // Görüntüyü fetch→blob ile yükle: blob: ve https: kaynaklarda CORS taint olmadan çalışır.
   // (crossOrigin ile uzak Supabase URL'si canvas'ı taint edip toBlob'u çökertiyordu.)
   const resp = await fetch(previewUrl);
@@ -102,11 +103,28 @@ async function getCroppedBlob(previewUrl: string, pixelCrop: Area): Promise<Blob
       i.onerror = reject;
       i.src = objUrl;
     });
+
+    // Rotasyon varsa önce döndürülmüş ara canvas oluştur
+    let source: HTMLCanvasElement | HTMLImageElement = img;
+    if (rotation !== 0) {
+      const rad = (rotation * Math.PI) / 180;
+      const sin = Math.abs(Math.sin(rad));
+      const cos = Math.abs(Math.cos(rad));
+      const rotCanvas = document.createElement("canvas");
+      rotCanvas.width = Math.ceil(img.width * cos + img.height * sin);
+      rotCanvas.height = Math.ceil(img.width * sin + img.height * cos);
+      const rCtx = rotCanvas.getContext("2d")!;
+      rCtx.translate(rotCanvas.width / 2, rotCanvas.height / 2);
+      rCtx.rotate(rad);
+      rCtx.drawImage(img, -img.width / 2, -img.height / 2);
+      source = rotCanvas;
+    }
+
     const canvas = document.createElement("canvas");
     canvas.width = pixelCrop.width;
     canvas.height = pixelCrop.height;
     const ctx = canvas.getContext("2d")!;
-    ctx.drawImage(img, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, pixelCrop.width, pixelCrop.height);
+    ctx.drawImage(source, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, pixelCrop.width, pixelCrop.height);
     return await new Promise<Blob>((resolve, reject) =>
       canvas.toBlob(b => (b ? resolve(b) : reject(new Error("canvas boş"))), "image/jpeg", 0.95)
     );
@@ -257,7 +275,7 @@ export default function FotografYuklePage() {
     const aspect = printRatio
       ? (photo.width >= photo.height ? printRatio.ratio : 1 / printRatio.ratio)
       : undefined;
-    setCropModal({ photoIndex: i, crop: { x: 0, y: 0 }, zoom: 1, aspect, locked: !!printRatio, croppedAreaPixels: null });
+    setCropModal({ photoIndex: i, crop: { x: 0, y: 0 }, zoom: 1, rotation: 0, aspect, locked: !!printRatio, croppedAreaPixels: null });
   }
 
   /* ── Kırp: uygula ─────────────────────────────── */
@@ -266,7 +284,7 @@ export default function FotografYuklePage() {
     setCroppingPhoto(true);
     try {
       const photo = photos[cropModal.photoIndex];
-      const blob = await getCroppedBlob(photo.preview, cropModal.croppedAreaPixels);
+      const blob = await getCroppedBlob(photo.preview, cropModal.croppedAreaPixels, cropModal.rotation);
       const croppedFile = new File([blob], photo.name.replace(/\.[^.]+$/, "-kırpılmış.jpg"), { type: "image/jpeg" });
       const preview = URL.createObjectURL(blob);
       const { width, height } = await readDimensions(preview);
@@ -349,6 +367,17 @@ export default function FotografYuklePage() {
 
         {/* Fotoğraf grid */}
         {photos.length > 0 && (
+          <>
+          {photos.length > 1 && (
+            <div className="flex justify-end mb-2">
+              <button
+                onClick={() => setPhotos([])}
+                className="text-xs text-red-400 hover:text-red-600 transition-colors"
+              >
+                Tümünü Kaldır
+              </button>
+            </div>
+          )}
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-4">
             {photos.map((p, i) => {
               const q = getQuality(p.width, p.height);
@@ -427,6 +456,7 @@ export default function FotografYuklePage() {
               </button>
             ))}
           </div>
+          </>
         )}
 
         {/* Düşük kalite uyarısı */}
@@ -536,11 +566,32 @@ export default function FotografYuklePage() {
               İptal
             </button>
 
-            {/* Oran seçici: Baskı oranı — Yatay / Dikey ↔ Serbest */}
-            <div className="flex gap-1.5">
+            {/* Oran seçici + Rotate */}
+            <div className="flex items-center gap-1.5">
+              {/* Rotate butonları */}
+              <button
+                onClick={() => setCropModal(s => s ? { ...s, rotation: ((s.rotation - 90) + 360) % 360 } : s)}
+                className="w-8 h-8 rounded-full border border-white/20 text-white/60 hover:border-white/50 hover:text-white transition-colors flex items-center justify-center"
+                title="90° sola döndür"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setCropModal(s => s ? { ...s, rotation: (s.rotation + 90) % 360 } : s)}
+                className="w-8 h-8 rounded-full border border-white/20 text-white/60 hover:border-white/50 hover:text-white transition-colors flex items-center justify-center"
+                title="90° sağa döndür"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12h3" />
+                </svg>
+              </button>
+
+              {/* Baskı oranı seçici */}
               {printRatio && (() => {
-                const landscape = printRatio.ratio;       // örn. 1.5  (10×15 yatay)
-                const portrait = 1 / printRatio.ratio;    // örn. 0.66 (10×15 dikey)
+                const landscape = printRatio.ratio;
+                const portrait = 1 / printRatio.ratio;
                 const isLandscape = cropModal.locked && cropModal.aspect != null && cropModal.aspect >= 1;
                 const isPortrait = cropModal.locked && cropModal.aspect != null && cropModal.aspect < 1;
                 const btn = (active: boolean) =>
@@ -550,31 +601,15 @@ export default function FotografYuklePage() {
                   }`;
                 return (
                   <>
-                    <button
-                      onClick={() => setCropModal(s => s ? { ...s, aspect: landscape, locked: true } : s)}
-                      className={btn(isLandscape)}
-                    >
+                    <button onClick={() => setCropModal(s => s ? { ...s, aspect: landscape, locked: true } : s)} className={btn(isLandscape)}>
                       Yatay {printRatio.label}
                     </button>
-                    <button
-                      onClick={() => setCropModal(s => s ? { ...s, aspect: portrait, locked: true } : s)}
-                      className={btn(isPortrait)}
-                    >
+                    <button onClick={() => setCropModal(s => s ? { ...s, aspect: portrait, locked: true } : s)} className={btn(isPortrait)}>
                       Dikey {printRatio.label}
                     </button>
                   </>
                 );
               })()}
-              <button
-                onClick={() => setCropModal(s => s ? { ...s, aspect: undefined, locked: false } : s)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
-                  !cropModal.locked
-                    ? "bg-primary border-primary text-white"
-                    : "border-white/20 text-white/60 hover:border-white/50 hover:text-white"
-                }`}
-              >
-                Serbest
-              </button>
             </div>
 
             <button
@@ -597,9 +632,11 @@ export default function FotografYuklePage() {
               image={photos[cropModal.photoIndex].preview}
               crop={cropModal.crop}
               zoom={cropModal.zoom}
+              rotation={cropModal.rotation}
               aspect={cropModal.aspect}
               onCropChange={crop => setCropModal(s => s ? { ...s, crop } : s)}
               onZoomChange={zoom => setCropModal(s => s ? { ...s, zoom } : s)}
+              onRotationChange={rotation => setCropModal(s => s ? { ...s, rotation } : s)}
               onCropComplete={onCropComplete}
               style={{ containerStyle: { background: "#111" } }}
             />
