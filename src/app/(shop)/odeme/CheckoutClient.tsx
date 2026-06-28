@@ -169,6 +169,7 @@ export default function CheckoutClient({ initialAddresses, shippingFee: SHIPPING
   // PayTR iframe'den gelen yükseklik mesajlarını dinle
   useEffect(() => {
     if (!paytrToken) return;
+    window.scrollTo({ top: 0, behavior: "smooth" });
 
     const handleMessage = (e: MessageEvent) => {
       if (e.origin !== "https://www.paytr.com") return;

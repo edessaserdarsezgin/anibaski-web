@@ -53,6 +53,8 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
       .catch(() => setTools([]));
   }, []);
 
+  function scrollTop() { window.scrollTo({ top: 0, behavior: "smooth" }); }
+
   // Araç seçimi: kredi yoksa içeri hiç girme, uyarı göster (krediyi yüklemeden önce kontrol et)
   function selectTool(t: StudioTool) {
     if (!t.active) return;
@@ -61,6 +63,7 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
     setBlocked(false);
     setTool(t);
     setStep("upload");
+    scrollTop();
   }
 
   const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/avif", "image/bmp"];
@@ -80,6 +83,7 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
     if (!file || !tool) return;
     setError(null);
     setStep("processing");
+    scrollTop();
     try {
       const before = URL.createObjectURL(file);
       const after = tool.engine === "edit"
@@ -88,6 +92,7 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
       setBeforeUrl(before);
       setAfterUrl(after);
       setStep("result");
+      scrollTop();
       // Header rozeti + diğer dinleyiciler anında tazelensin (sayfa yenilemeden)
       window.dispatchEvent(new Event("studio-credits-updated"));
     } catch (err) {
@@ -127,6 +132,7 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
 
   function reset() {
     setFile(null); setBeforeUrl(null); setAfterUrl(null); setError(null); setTool(null); setStep("gallery");
+    scrollTop();
   }
 
   if (step === "gallery") {
