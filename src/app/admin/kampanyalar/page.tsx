@@ -73,8 +73,14 @@ export default async function AdminKampanyalarPage() {
             </div>
             <div className="flex items-center justify-between border-t border-border pt-2">
               <div className="flex items-center gap-3">
-                <CampaignHomeToggle id={c.id} on={c.show_on_home} />
-                <CampaignToggle id={c.id} active={c.is_active} />
+                <div className="flex items-center gap-1.5">
+                  <CampaignHomeToggle id={c.id} on={c.show_on_home} />
+                  <span className="text-xs text-text-light">Anasayfa</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <CampaignToggle id={c.id} active={c.is_active} />
+                  <span className="text-xs text-text-light">Aktif</span>
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 <Link href={`/admin/kampanyalar/${c.id}/duzenle`} className="text-xs text-primary font-semibold">Düzenle</Link>
