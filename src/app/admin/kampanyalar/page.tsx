@@ -46,7 +46,47 @@ export default async function AdminKampanyalarPage() {
         </Link>
       </div>
 
-      <div className="bg-white rounded-2xl border border-border overflow-hidden">
+      {/* Mobil kart düzeni */}
+      <div className="md:hidden flex flex-col gap-3">
+        {!campaigns.length ? (
+          <p className="text-sm text-text-light bg-white rounded-2xl border border-border p-6">Henüz kampanya yok.</p>
+        ) : campaigns.map((c) => (
+          <div key={c.id} className="bg-white rounded-2xl border border-border p-4 flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <div className="relative w-14 h-14 rounded-lg bg-bg border border-border overflow-hidden shrink-0">
+                <Image src={c.image_url} alt={c.title} fill className="object-cover" sizes="56px" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-text truncate">{c.title}</p>
+                <p className="text-xs text-text-light font-mono truncate">{c.slug}</p>
+              </div>
+              <span className={`shrink-0 px-2 py-0.5 rounded-full text-[11px] font-semibold ${c.placement === "card" ? "bg-accent/25 text-text" : "bg-primary/10 text-primary"}`}>
+                {c.placement === "card" ? "Kart" : "Hero"}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 text-xs border-t border-border pt-2">
+              {c.coupon_code && <span className="font-mono text-primary">{c.coupon_code}</span>}
+              <span className="text-text-light">
+                {c.ends_at ? `Bitiş: ${new Date(c.ends_at).toLocaleDateString("tr-TR")}` : c.starts_at ? `Başlangıç: ${new Date(c.starts_at).toLocaleDateString("tr-TR")}` : "Süresiz"}
+              </span>
+              <span className="text-text-light ml-auto">Sıra: {c.position}</span>
+            </div>
+            <div className="flex items-center justify-between border-t border-border pt-2">
+              <div className="flex items-center gap-3">
+                <CampaignHomeToggle id={c.id} on={c.show_on_home} />
+                <CampaignToggle id={c.id} active={c.is_active} />
+              </div>
+              <div className="flex items-center gap-3">
+                <Link href={`/admin/kampanyalar/${c.id}/duzenle`} className="text-xs text-primary font-semibold">Düzenle</Link>
+                <CampaignDelete id={c.id} />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Masaüstü tablo */}
+      <div className="hidden md:block bg-white rounded-2xl border border-border overflow-hidden">
         {!campaigns.length ? (
           <p className="text-sm text-text-light p-6">Henüz kampanya yok.</p>
         ) : (

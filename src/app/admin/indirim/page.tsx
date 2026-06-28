@@ -172,7 +172,7 @@ export default function IndirimPage() {
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-border p-6 mb-6 flex flex-col gap-4">
           {editingId && <p className="text-sm font-semibold text-primary -mb-1">İndirim düzenleniyor (tür değiştirilemez)</p>}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">Ad</label>
               <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Tablolarda %20" className={inputCls} /></div>
             <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">Tür</label>
@@ -216,7 +216,7 @@ export default function IndirimPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">Başlangıç (ops.)</label>
               <input type="date" value={form.startsAt} onChange={e => setForm(f => ({ ...f, startsAt: e.target.value }))} className={inputCls} /></div>
             <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">Bitiş (ops.)</label>
@@ -224,7 +224,7 @@ export default function IndirimPage() {
           </div>
 
           {form.kind === "kupon" && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">Kupon Kodu</label>
                 <input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))} placeholder="HOSGELDIN15" className={inputCls} /></div>
               <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">Maks. Kullanım (ops.)</label>
@@ -308,7 +308,34 @@ export default function IndirimPage() {
         </form>
       )}
 
-      <div className="bg-white rounded-2xl border border-border overflow-hidden">
+      {/* Mobil kart düzeni */}
+      {!loading && promos.length > 0 && (
+        <div className="md:hidden flex flex-col gap-3 mb-0">
+          {promos.map(p => (
+            <div key={p.id} className={`bg-white rounded-2xl border border-border p-4 flex flex-col gap-3 ${!p.is_active ? "opacity-50" : ""}`}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold text-text">{p.name}</p>
+                  {p.code && <p className="font-mono text-xs text-text-light">{p.code}</p>}
+                  <p className="text-xs text-text-light mt-0.5">{KIND_LABEL[kindOf(p)]}</p>
+                </div>
+                <p className="font-semibold text-primary whitespace-nowrap">{fmtVal(p)}</p>
+              </div>
+              <div className="flex items-center justify-between border-t border-border pt-2">
+                <span className="text-xs text-text-light">{fmtScope(p)}</span>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => toggle(p)} className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition-colors ${p.is_active ? "text-green-700 bg-green-50 border-green-200" : "text-text-light bg-bg border-border"}`}>{p.is_active ? "Aktif" : "Pasif"}</button>
+                  <button onClick={() => startEdit(p)} className="text-xs text-primary font-semibold">Düzenle</button>
+                  <button onClick={() => del(p)} className="text-xs text-red-500 font-semibold">Sil</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Masaüstü tablo */}
+      <div className="hidden md:block bg-white rounded-2xl border border-border overflow-hidden">
         {loading ? <p className="text-sm text-text-light p-6">Yükleniyor...</p>
           : !promos.length ? <p className="text-sm text-text-light p-6">Henüz indirim yok.</p>
           : (

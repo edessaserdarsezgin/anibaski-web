@@ -83,9 +83,9 @@ export default async function AdminSiparislerPage({ searchParams }: Props) {
                 {address?.city && <p className="text-xs text-text-light">{address.city}</p>}
               </div>
 
-              {/* Ürünler */}
+              {/* Ürünler — max 2 göster */}
               <div className="border-t border-border pt-2">
-                {order.items?.map((item) => {
+                {(order.items ?? []).slice(0, 2).map((item) => {
                   const product = item.product as unknown as { name: string } | null;
                   const variants = item.variantSelections as Record<string, { label: string }> | null;
                   const variantText = variants && Object.keys(variants).length > 0
@@ -98,6 +98,9 @@ export default async function AdminSiparislerPage({ searchParams }: Props) {
                     </div>
                   );
                 })}
+                {(order.items?.length ?? 0) > 2 && (
+                  <p className="text-xs text-text-light mt-1">+{(order.items?.length ?? 0) - 2} ürün daha</p>
+                )}
               </div>
 
               {/* Durum + Kargo */}

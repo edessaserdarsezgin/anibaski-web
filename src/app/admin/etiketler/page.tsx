@@ -99,17 +99,17 @@ export default function AdminEtiketlerPage() {
 
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-text">Renk</label>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <ColorPairPicker
                   bgColor={form.color} textColor={form.text_color}
                   onBgChange={c => setForm(f => ({ ...f, color: c }))}
                   onTextChange={c => setForm(f => ({ ...f, text_color: c }))}
                 />
                 <input value={form.color} onChange={e => setForm(f => ({ ...f, color: e.target.value }))}
-                  className={inputCls + " flex-1 font-mono uppercase"}
+                  className={inputCls + " flex-1 min-w-0 font-mono uppercase"}
                   placeholder="#e07a5f" pattern="^#[0-9A-Fa-f]{6}$" />
                 <span
-                  className="px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
+                  className="px-3 py-1 rounded-full text-xs font-semibold"
                   style={{ backgroundColor: form.color, color: form.text_color }}
                 >
                   {form.name || "Önizleme"}

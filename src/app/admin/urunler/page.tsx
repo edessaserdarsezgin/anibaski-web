@@ -21,7 +21,36 @@ export default async function AdminUrunlerPage() {
         </Link>
       </div>
 
-      <div className="bg-white rounded-2xl border border-border overflow-hidden">
+      {/* Mobil kart düzeni */}
+      <div className="md:hidden flex flex-col gap-3">
+        {!products?.length ? (
+          <p className="text-sm text-text-light bg-white rounded-2xl border border-border p-6">Henüz ürün yok.</p>
+        ) : products.map((product) => {
+          const cat = (product.category as unknown as { name: string } | null)?.name;
+          return (
+            <div key={product.id} className={`bg-white rounded-2xl border border-border p-4 flex flex-col gap-3 ${product.isActive === false ? "opacity-50" : ""}`}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold text-text">{product.name}</p>
+                  <p className="text-xs text-text-light font-mono truncate">{product.slug}</p>
+                </div>
+                <p className="font-semibold text-primary whitespace-nowrap">{Number(product.basePrice).toLocaleString("tr-TR")} ₺</p>
+              </div>
+              <div className="flex items-center justify-between border-t border-border pt-2">
+                <span className="text-xs text-text-light">{cat}</span>
+                <div className="flex items-center gap-3">
+                  <ToggleActiveButton id={product.id} isActive={product.isActive ?? true} />
+                  <Link href={`/admin/urunler/${product.id}/duzenle`} className="text-xs text-primary font-semibold">Düzenle</Link>
+                  <DuplicateButton id={product.id} />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Masaüstü tablo */}
+      <div className="hidden md:block bg-white rounded-2xl border border-border overflow-hidden">
         {!products?.length ? (
           <p className="text-sm text-text-light p-6">Henüz ürün yok.</p>
         ) : (
