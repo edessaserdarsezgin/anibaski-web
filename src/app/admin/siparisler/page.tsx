@@ -3,6 +3,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import OrderStatusSelect from "./OrderStatusSelect";
 import OrderTrackingInput from "./OrderTrackingInput";
+import OrderNoteInput from "./OrderNoteInput";
 
 export const metadata = { title: "Siparişler | Admin" };
 
@@ -21,7 +22,7 @@ export default async function AdminSiparislerPage({ searchParams }: Props) {
   const supabase = createAdminClient();
   const { data: allOrders } = await supabase
     .from("orders")
-    .select(`id, type, status, total, createdAt, "trackingCode", "paymentMethod", "paymentStatus", items:order_items(id, quantity, variantSelections, product:products(name)), address:addresses!orders_addressId_fkey(fullName, city), buyer:profiles!orders_userId_fkey(fullName, email)`)
+    .select(`id, type, status, total, createdAt, "trackingCode", "adminNote", "paymentMethod", "paymentStatus", items:order_items(id, quantity, variantSelections, product:products(name)), address:addresses!orders_addressId_fkey(fullName, city), buyer:profiles!orders_userId_fkey(fullName, email)`)
     .order("createdAt", { ascending: false });
 
   // Tamamlanmamış kredi kartı siparişleri admin listesinde de gizlensin
@@ -109,6 +110,11 @@ export default async function AdminSiparislerPage({ searchParams }: Props) {
                 <OrderTrackingInput orderId={order.id} currentCode={trackingCode} />
               </div>
 
+              {/* İç Not */}
+              <div className="border-t border-border pt-2">
+                <OrderNoteInput orderId={order.id} currentNote={(order as unknown as { adminNote: string | null }).adminNote} />
+              </div>
+
               <Link href={`/siparisler/${order.id}?from=admin`} className="text-xs text-primary font-semibold">
                 Detayı Görüntüle →
               </Link>
@@ -137,7 +143,7 @@ export default async function AdminSiparislerPage({ searchParams }: Props) {
               </thead>
               <tbody>
                 {orders.map((order) => (
-                  <tr key={order.id} className="border-b border-border last:border-0 hover:bg-bg transition-colors">
+                  <><tr key={order.id} className="border-b border-border hover:bg-bg transition-colors">
                     <td className="px-6 py-4">
                       <p className="font-mono text-text-light text-xs">#{order.id.slice(0, 8).toUpperCase()}</p>
                       <p className="text-xs text-text-light mt-0.5">
@@ -200,6 +206,11 @@ export default async function AdminSiparislerPage({ searchParams }: Props) {
                       </Link>
                     </td>
                   </tr>
+                  <tr key={`${order.id}-note`} className="border-b border-border last:border-0 bg-bg/40">
+                    <td colSpan={7} className="px-6 pb-3 pt-1">
+                      <OrderNoteInput orderId={order.id} currentNote={(order as unknown as { adminNote: string | null }).adminNote} />
+                    </td>
+                  </tr></>
                 ))}
               </tbody>
             </table>
