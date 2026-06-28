@@ -58,6 +58,7 @@ export default async function IstatistikPage({ searchParams }: Props) {
         {!coupons.length ? (
           <p className="text-sm text-text-light px-6 pb-6">Bu dönemde kupon kullanılmadı.</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="border-y border-border bg-bg text-text-light">
               <tr>
@@ -76,6 +77,7 @@ export default async function IstatistikPage({ searchParams }: Props) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </section>
 
@@ -141,6 +143,7 @@ export default async function IstatistikPage({ searchParams }: Props) {
         {!campaigns.length ? (
           <p className="text-sm text-text-light px-6 pb-6">Kampanya yok.</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="border-y border-border bg-bg text-text-light">
               <tr>
@@ -161,6 +164,7 @@ export default async function IstatistikPage({ searchParams }: Props) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </section>
 

@@ -312,6 +312,7 @@ export default function IndirimPage() {
         {loading ? <p className="text-sm text-text-light p-6">Yükleniyor...</p>
           : !promos.length ? <p className="text-sm text-text-light p-6">Henüz indirim yok.</p>
           : (
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="border-b border-border bg-bg text-text-light"><tr>
                 <th className="text-left px-6 py-3 font-semibold">Ad</th><th className="text-left px-4 py-3 font-semibold">Tür</th>
@@ -336,6 +337,7 @@ export default function IndirimPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
       </div>
     </div>

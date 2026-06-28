@@ -131,6 +131,7 @@ export default async function AdminUyeDetayPage({ params }: Props) {
         {!orders?.length ? (
           <p className="text-sm text-text-light px-6 pb-6">Sipariş yok.</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="border-y border-border bg-bg">
               <tr className="text-text-light">
@@ -175,6 +176,7 @@ export default async function AdminUyeDetayPage({ params }: Props) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </section>
     </div>

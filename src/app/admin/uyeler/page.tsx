@@ -59,6 +59,7 @@ export default async function AdminUyelerPage() {
         {!users.length ? (
           <p className="text-sm text-text-light p-6">Henüz üye yok.</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="border-b border-border bg-bg">
               <tr className="text-text-light">
@@ -108,6 +109,7 @@ export default async function AdminUyelerPage() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>
