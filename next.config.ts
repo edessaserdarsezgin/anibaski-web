@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
+    minimumCacheTTL: 2592000, // 30 gün — ürün görselleri nadiren değişir, URL değişirse zaten yeni transform
     remotePatterns: [
       {
         protocol: "https",

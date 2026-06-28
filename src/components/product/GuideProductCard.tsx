@@ -35,6 +35,7 @@ export default function GuideProductCard({ icon, scenario, blurb, product, categ
             src={product.image}
             alt={product.name}
             fill
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             className="object-cover group-hover:scale-[1.03] transition-transform"
           />
         </div>
