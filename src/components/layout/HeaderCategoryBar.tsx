@@ -42,7 +42,7 @@ export default function HeaderCategoryBar({ categories }: { categories: MenuCate
   if (!categories.length) return null;
 
   return (
-    <div ref={ref} className="hidden md:block border-t border-border bg-bg/95 backdrop-blur-sm">
+    <div ref={ref} className="hidden md:block border-t border-border bg-bg/95 backdrop-blur-sm relative z-10">
       <div className="w-full px-8 flex items-center justify-center gap-0.5 h-11">
         <Link href="/urunler" className={`${link} text-text hover:text-primary hover:bg-white`}>
           Tüm Ürünler
