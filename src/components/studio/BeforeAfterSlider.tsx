@@ -2,9 +2,21 @@
 
 import { useRef, useState } from "react";
 
-export default function BeforeAfterSlider({ before, after, aspectRatio: forcedRatio }: { before: string; after: string; aspectRatio?: number }) {
+export default function BeforeAfterSlider({
+  before,
+  after,
+  aspectRatio: forcedRatio,
+  fit = "cover",
+}: {
+  before: string;
+  after: string;
+  aspectRatio?: number;
+  /** "cover" = kutuyu doldur (örnek/eşli görseller). "contain" = tam göster, kenar kesme (gerçek sonuç). */
+  fit?: "cover" | "contain";
+}) {
   const [pos, setPos] = useState(50);
-  const [ratio, setRatio] = useState<number | null>(null);
+  const [beforeRatio, setBeforeRatio] = useState<number | null>(null);
+  const [afterRatio, setAfterRatio] = useState<number | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   function move(clientX: number) {
@@ -15,32 +27,41 @@ export default function BeforeAfterSlider({ before, after, aspectRatio: forcedRa
     setPos(Math.max(0, Math.min(100, pct)));
   }
 
+  // Kutu oranı: zorlanmış oran > orijinalin (before) oranı > sonucun oranı.
+  // Orijinalden alınca orijinal kendi oranında bozulmadan görünür; sonuç contain ile tam sığar.
+  const boxRatio = forcedRatio ?? beforeRatio ?? afterRatio ?? 1;
+  const imgFit = fit === "contain" ? "object-contain" : "object-cover";
+
   return (
     <div
       ref={ref}
       className="relative w-full overflow-hidden rounded-2xl select-none bg-bg border border-border cursor-ew-resize"
-      style={{ aspectRatio: forcedRatio ?? ratio ?? 1 }}
+      style={{ aspectRatio: boxRatio }}
       onMouseMove={(e) => e.buttons === 1 && move(e.clientX)}
       onTouchMove={(e) => move(e.touches[0].clientX)}
       onClick={(e) => move(e.clientX)}
     >
-      {/* Sonra (alt katman) — kutu en/boy oranı bu görselden alınır, iki katman da aynı kutuyu doldurur */}
+      {/* Sonra (alt katman) */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={after}
         alt="Sonra"
         onLoad={(e) => {
           const t = e.currentTarget;
-          if (t.naturalHeight) setRatio(t.naturalWidth / t.naturalHeight);
+          if (t.naturalHeight) setAfterRatio(t.naturalWidth / t.naturalHeight);
         }}
-        className="absolute inset-0 w-full h-full object-cover"
+        className={`absolute inset-0 w-full h-full ${imgFit}`}
       />
       {/* Önce (üst katman) — clip-path ile kırpılır; aynı kutuyu doldurduğu için hizalı kalır */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={before}
         alt="Önce"
-        className="absolute inset-0 w-full h-full object-cover"
+        onLoad={(e) => {
+          const t = e.currentTarget;
+          if (t.naturalHeight) setBeforeRatio(t.naturalWidth / t.naturalHeight);
+        }}
+        className={`absolute inset-0 w-full h-full ${imgFit}`}
         style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
       />
       {/* Tutamak */}

@@ -283,7 +283,7 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
     return (
       <div className="max-w-2xl mx-auto px-8 py-16 flex flex-col gap-6">
         <h1 className="font-serif text-3xl text-text text-center">İşte sonuç ✨</h1>
-        <BeforeAfterSlider before={beforeUrl} after={afterUrl} />
+        <BeforeAfterSlider before={beforeUrl} after={afterUrl} fit="contain" />
         {error && <p className="text-sm text-red-700 text-center">{error}</p>}
         <div className="flex flex-col sm:flex-row gap-3">
           <a
