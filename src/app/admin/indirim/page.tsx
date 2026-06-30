@@ -2,6 +2,7 @@
 import ColorPairPicker from "@/components/ui/ColorPairPicker";
 
 import { useState, useEffect } from "react";
+import CustomSelect from "@/components/ui/CustomSelect";
 import { useToast } from "@/components/ui/ToastProvider";
 
 type Promo = {
@@ -176,22 +177,23 @@ export default function IndirimPage() {
             <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">Ad</label>
               <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Tablolarda %20" className={inputCls} /></div>
             <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">Tür</label>
-              <select value={form.kind} disabled={!!editingId} onChange={e => setForm(f => ({ ...f, kind: e.target.value as Kind }))} className={`${inputCls} disabled:opacity-60 disabled:cursor-not-allowed`}>
-                <option value="oto-urun">Otomatik İndirim (kartta görünür)</option>
-                <option value="kupon">Kupon (kodlu)</option>
-                <option value="sepet-esikli">Sepet Eşikli (otomatik)</option>
-              </select></div>
+              <CustomSelect value={form.kind} disabled={!!editingId} onChange={v => setForm(f => ({ ...f, kind: v as Kind }))} ariaLabel="Tür" className={inputCls} options={[
+                { value: "oto-urun", label: "Otomatik İndirim (kartta görünür)" },
+                { value: "kupon", label: "Kupon (kodlu)" },
+                { value: "sepet-esikli", label: "Sepet Eşikli (otomatik)" },
+              ]} /></div>
             <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">Kapsam</label>
-              <select value={form.scope} onChange={e => setForm(f => ({ ...f, scope: e.target.value as Promo["scope"] }))} className={inputCls}>
-                <option value="all">Tüm ürünler</option>
-                <option value="categories">Kategoriler</option>
-                <option value="products">Ürünler</option>
-              </select></div>
+              <CustomSelect value={form.scope} onChange={v => setForm(f => ({ ...f, scope: v as Promo["scope"] }))} ariaLabel="Kapsam" className={inputCls} options={[
+                { value: "all", label: "Tüm ürünler" },
+                { value: "categories", label: "Kategoriler" },
+                { value: "products", label: "Ürünler" },
+              ]} /></div>
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">Değer Tipi</label>
-                <select value={form.valueType} onChange={e => setForm(f => ({ ...f, valueType: e.target.value }))} className={inputCls}>
-                  <option value="percentage">Yüzde (%)</option><option value="fixed">Sabit (₺)</option>
-                </select></div>
+                <CustomSelect value={form.valueType} onChange={v => setForm(f => ({ ...f, valueType: v }))} ariaLabel="Değer tipi" className={inputCls} options={[
+                  { value: "percentage", label: "Yüzde (%)" },
+                  { value: "fixed", label: "Sabit (₺)" },
+                ]} /></div>
               <div className="flex flex-col gap-1.5"><label className="text-xs font-semibold text-text">{form.valueType === "percentage" ? "Oran" : "Tutar"}</label>
                 <input required type="number" min="1" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))} className={inputCls} /></div>
             </div>
@@ -249,10 +251,10 @@ export default function IndirimPage() {
                 </span></label>
               {form.firstOrderOnly && (
                 <div className="flex flex-col gap-1.5 col-span-2"><label className="text-xs font-semibold text-text">İlk sipariş kapsamı</label>
-                  <select value={form.firstOrderScope} onChange={e => setForm(f => ({ ...f, firstOrderScope: e.target.value }))} className={inputCls}>
-                    <option value="site">Müşterinin sitedeki ilk siparişi</option>
-                    <option value="product">Müşterinin bu kapsamdaki üründe ilk siparişi</option>
-                  </select>
+                  <CustomSelect value={form.firstOrderScope} onChange={v => setForm(f => ({ ...f, firstOrderScope: v }))} ariaLabel="İlk sipariş kapsamı" className={inputCls} options={[
+                    { value: "site", label: "Müşterinin sitedeki ilk siparişi" },
+                    { value: "product", label: "Müşterinin bu kapsamdaki üründe ilk siparişi" },
+                  ]} />
                   <span className="text-[11px] text-secondary">&quot;Üründe ilk sipariş&quot; için kuponu Ürün/Kategori kapsamına ayarlayın; müşteri o ürünü daha önce almadıysa geçerli.</span></div>
               )}
             </div>
@@ -279,10 +281,10 @@ export default function IndirimPage() {
                     ))}
                   </div>
                   {form.tagMode === "existing" ? (
-                    <select value={form.tagId} onChange={e => setForm(f => ({ ...f, tagId: e.target.value }))} className={inputCls}>
-                      <option value="">Etiket seç…</option>
-                      {tags.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                    </select>
+                    <CustomSelect value={form.tagId} onChange={v => setForm(f => ({ ...f, tagId: v }))} ariaLabel="Etiket" className={inputCls} options={[
+                      { value: "", label: "Etiket seç…" },
+                      ...tags.map(t => ({ value: t.id, label: t.name })),
+                    ]} />
                   ) : (
                     <div className="flex items-center gap-2">
                       <ColorPairPicker

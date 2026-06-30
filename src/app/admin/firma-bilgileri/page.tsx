@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import CustomSelect from "@/components/ui/CustomSelect";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { CompanyInfo } from "@/lib/company";
 
@@ -108,14 +109,16 @@ export default function FirmaBilgileriPage() {
           <h2 className="font-serif text-lg text-text mb-4">Sözleşme Telefonu</h2>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-text">Sözleşmelerde gösterilecek telefon</label>
-            <select
+            <CustomSelect
               value={form.contractPhone}
-              onChange={e => setForm(f => ({ ...f, contractPhone: e.target.value as "phone" | "landline" }))}
-              className={inputCls + " cursor-pointer"}
-            >
-              <option value="phone">Cep Telefonu</option>
-              <option value="landline">Sabit Telefon</option>
-            </select>
+              onChange={v => setForm(f => ({ ...f, contractPhone: v as "phone" | "landline" }))}
+              ariaLabel="Sözleşme telefonu"
+              className={inputCls}
+              options={[
+                { value: "phone", label: "Cep Telefonu" },
+                { value: "landline", label: "Sabit Telefon" },
+              ]}
+            />
             <p className="text-xs text-text-light">Mesafeli satış, ön bilgilendirme ve cayma belgelerinde bu telefon görünür.</p>
           </div>
         </div>

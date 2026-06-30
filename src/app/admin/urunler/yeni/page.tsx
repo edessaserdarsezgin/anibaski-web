@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { localInputToIso } from "@/lib/pricing";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 type Category = { id: string; name: string; slug: string; parentId: string | null };
 type VariantOption = { label: string; priceAddon: number };
@@ -36,6 +37,7 @@ export default function YeniUrunPage() {
   const [productName, setProductName] = useState("");
   const [productSlug, setProductSlug] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categorySlug, setCategorySlug] = useState("");
   const [extraCategoryIds, setExtraCategoryIds] = useState<string[]>([]);
 
   // Gruplu varyant state
@@ -129,6 +131,12 @@ export default function YeniUrunPage() {
 
     const form = new FormData(e.currentTarget);
 
+    if (!categorySlug) {
+      setError("Kategori seçin.");
+      setLoading(false);
+      return;
+    }
+
     // Pending inputları da dahil et
     const finalGroups = groups.map(g => {
       const p = pending[g.type];
@@ -145,7 +153,7 @@ export default function YeniUrunPage() {
       slug: productSlug,
       description: form.get("description"),
       basePrice: Number(form.get("basePrice")),
-      categorySlug: form.get("categorySlug"),
+      categorySlug,
       imageUrls,
       variants,
       requiresPhotoUpload,
@@ -247,20 +255,24 @@ export default function YeniUrunPage() {
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text">Kategori</label>
-          <select name="categorySlug" required className={inputCls}>
-            <option value="">Kategori seçin</option>
-            {categories.filter(c => !c.parentId).map(parent => {
-              const children = categories.filter(c => c.parentId === parent.id);
-              return children.length > 0 ? (
-                <optgroup key={parent.id} label={parent.name}>
-                  <option value={parent.slug}>{parent.name} (tümü)</option>
-                  {children.map(c => <option key={c.id} value={c.slug}>↳ {c.name}</option>)}
-                </optgroup>
-              ) : (
-                <option key={parent.id} value={parent.slug}>{parent.name}</option>
-              );
-            })}
-          </select>
+          <CustomSelect
+            value={categorySlug}
+            onChange={setCategorySlug}
+            ariaLabel="Kategori"
+            className={inputCls + " bg-white"}
+            options={[
+              { value: "", label: "Kategori seçin" },
+              ...categories.filter(c => !c.parentId).flatMap(parent => {
+                const children = categories.filter(c => c.parentId === parent.id);
+                return children.length > 0
+                  ? [
+                      { value: parent.slug, label: `${parent.name} (tümü)` },
+                      ...children.map(c => ({ value: c.slug, label: `↳ ${c.name}` })),
+                    ]
+                  : [{ value: parent.slug, label: parent.name }];
+              }),
+            ]}
+          />
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-text">Ek Kategoriler (opsiyonel)</label>
@@ -436,15 +448,17 @@ export default function YeniUrunPage() {
                       style={{ backgroundColor: tag.color, color: tag.text_color ?? "#ffffff" }}>
                       {tag.name}
                     </span>
-                    <select
+                    <CustomSelect
                       value={st.position}
-                      onChange={e => setSelectedTags(s => s.map(x => x.tagId === st.tagId ? { ...x, position: e.target.value } : x))}
-                      className={inputCls + " w-32 text-xs py-1.5"}
-                    >
-                      <option value="top-left">Sol Üst</option>
-                      <option value="bottom-left">Sol Alt</option>
-                      <option value="bottom-right">Sağ Alt</option>
-                    </select>
+                      onChange={v => setSelectedTags(s => s.map(x => x.tagId === st.tagId ? { ...x, position: v } : x))}
+                      ariaLabel="Etiket konumu"
+                      className={inputCls + " bg-white w-32 text-xs py-1.5"}
+                      options={[
+                        { value: "top-left", label: "Sol Üst" },
+                        { value: "bottom-left", label: "Sol Alt" },
+                        { value: "bottom-right", label: "Sağ Alt" },
+                      ]}
+                    />
                     <button type="button"
                       onClick={() => setSelectedTags(s => s.filter(x => x.tagId !== st.tagId))}
                       className="text-red-400 hover:text-red-600 text-xs font-semibold px-2">
@@ -457,27 +471,31 @@ export default function YeniUrunPage() {
           )}
           {allTags.length > 0 && (
             <div className="flex gap-2 items-center flex-wrap">
-              <select
+              <CustomSelect
                 value={tagSelect}
-                onChange={e => setTagSelect(e.target.value)}
-                className={inputCls + " flex-1 min-w-32"}
-              >
-                <option value="">Etiket seç</option>
-                {allTags.map(t => (
-                  <option key={t.id} value={t.id} disabled={selectedTags.some(s => s.tagId === t.id)}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-              <select
+                onChange={setTagSelect}
+                ariaLabel="Etiket seç"
+                className={inputCls + " bg-white flex-1 min-w-32"}
+                options={[
+                  { value: "", label: "Etiket seç" },
+                  ...allTags.map(t => ({
+                    value: t.id,
+                    label: t.name,
+                    disabled: selectedTags.some(s => s.tagId === t.id),
+                  })),
+                ]}
+              />
+              <CustomSelect
                 value={tagPosition}
-                onChange={e => setTagPosition(e.target.value)}
-                className={inputCls + " w-36"}
-              >
-                <option value="top-left">Sol Üst</option>
-                <option value="bottom-left">Sol Alt</option>
-                <option value="bottom-right">Sağ Alt</option>
-              </select>
+                onChange={setTagPosition}
+                ariaLabel="Etiket konumu"
+                className={inputCls + " bg-white w-36"}
+                options={[
+                  { value: "top-left", label: "Sol Üst" },
+                  { value: "bottom-left", label: "Sol Alt" },
+                  { value: "bottom-right", label: "Sağ Alt" },
+                ]}
+              />
               <button
                 type="button"
                 onClick={() => {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 type Props = {
   userId: string;
@@ -14,8 +15,8 @@ export default function RoleSelect({ userId, currentRole, colorMap }: Props) {
   const [role, setRole] = useState(currentRole);
   const [saving, setSaving] = useState(false);
 
-  async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const newRole = e.target.value;
+  async function handleChange(newRole: string) {
+    if (newRole === role) return;
     if (!confirm(`Bu üyenin rolünü '${newRole}' yapmak istediğine emin misin?`)) return;
     setSaving(true);
     const res = await fetch(`/api/admin/users/${userId}`, {
@@ -34,14 +35,16 @@ export default function RoleSelect({ userId, currentRole, colorMap }: Props) {
   }
 
   return (
-    <select
+    <CustomSelect
       value={role}
       onChange={handleChange}
       disabled={saving}
-      className={`text-xs font-semibold px-3 py-1 rounded-full border outline-none cursor-pointer ${colorMap[role] ?? colorMap.CUSTOMER}`}
-    >
-      <option value="CUSTOMER">CUSTOMER</option>
-      <option value="ADMIN">ADMIN</option>
-    </select>
+      ariaLabel="Üye rolü"
+      className={`text-xs font-semibold px-3 py-1 rounded-full border ${colorMap[role] ?? colorMap.CUSTOMER}`}
+      options={[
+        { value: "CUSTOMER", label: "CUSTOMER" },
+        { value: "ADMIN", label: "ADMIN" },
+      ]}
+    />
   );
 }

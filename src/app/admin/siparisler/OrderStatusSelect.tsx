@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/ToastProvider";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 const STATUSES = ["PENDING", "PREPARING", "DELIVERED", "CANCELLED"];
 const STATUSES_AFTER_SHIPPED = ["SHIPPED", "DELIVERED", "CANCELLED"];
@@ -28,13 +29,11 @@ export default function OrderStatusSelect({
   const { toast } = useToast();
   const router = useRouter();
 
-  async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const next = e.target.value;
+  async function handleChange(next: string) {
     // Kargo kodu girilmeden teslim işaretlenebilir, ama önce uyar (elden teslim/özel durum esnekliği)
     if (next === "DELIVERED" && !currentCode?.trim()) {
       if (!confirm("Bu siparişe kargo kodu girilmemiş. Yine de 'Teslim Edildi' olarak işaretlensin mi?")) {
-        e.target.value = status; // seçimi geri al
-        return;
+        return; // seçimi geri al (state değişmedi)
       }
     }
     setSaving(true);
@@ -60,16 +59,17 @@ export default function OrderStatusSelect({
           ⚠ İptal Talebi
         </span>
       )}
-      <select
+      <CustomSelect
         value={status}
         onChange={handleChange}
         disabled={saving}
-        className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-border bg-white text-text outline-none focus:border-primary transition-colors disabled:opacity-50"
-      >
-        {(isShipped ? STATUSES_AFTER_SHIPPED : STATUSES).map((s) => (
-          <option key={s} value={s}>{STATUS_LABEL[s]}</option>
-        ))}
-      </select>
+        ariaLabel="Sipariş durumu"
+        className="rounded-lg border border-border bg-white text-text text-xs font-semibold px-2.5 py-1.5"
+        options={(isShipped ? STATUSES_AFTER_SHIPPED : STATUSES).map((s) => ({
+          value: s,
+          label: STATUS_LABEL[s],
+        }))}
+      />
     </div>
   );
 }

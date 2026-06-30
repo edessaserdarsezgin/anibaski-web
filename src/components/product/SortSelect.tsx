@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 const OPTIONS = [
   { value: "newest",     label: "Yeniden Eskiye" },
@@ -15,8 +16,7 @@ export default function SortSelect({ current = "newest" }: { current?: string })
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const value = e.target.value;
+  function handleChange(value: string) {
     const params = new URLSearchParams(searchParams.toString());
     if (value === "newest") {
       params.delete("sort");
@@ -28,14 +28,12 @@ export default function SortSelect({ current = "newest" }: { current?: string })
   }
 
   return (
-    <select
+    <CustomSelect
       value={current}
       onChange={handleChange}
-      className="shrink-0 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-border bg-white text-xs sm:text-sm text-text outline-none focus:border-primary transition-colors cursor-pointer"
-    >
-      {OPTIONS.map(o => (
-        <option key={o.value} value={o.value}>{o.label}</option>
-      ))}
-    </select>
+      options={OPTIONS}
+      ariaLabel="Sıralama"
+      className="shrink-0 rounded-lg border border-border bg-white text-text px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
+    />
   );
 }

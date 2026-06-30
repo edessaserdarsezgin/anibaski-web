@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import CustomSelect from "@/components/ui/CustomSelect";
 import type { StudioToolRow } from "@/lib/studioTools";
 
 type Draft = {
@@ -158,12 +159,17 @@ export default function AiAraclarPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className="flex flex-col gap-1">
               <span className="text-sm font-semibold text-text">Motor</span>
-              <select value={draft.engine} onChange={(e) => setDraft({ ...draft, engine: e.target.value as Draft["engine"] })}
-                className="border border-border rounded-xl px-3 py-2">
-                <option value="">Yakında (motorsuz)</option>
-                <option value="upscale">upscale (AuraSR)</option>
-                <option value="edit">edit (Qwen LoRA)</option>
-              </select>
+              <CustomSelect
+                value={draft.engine}
+                onChange={(v) => setDraft({ ...draft, engine: v as Draft["engine"] })}
+                ariaLabel="Motor"
+                className="border border-border rounded-xl px-3 py-2 bg-white text-text"
+                options={[
+                  { value: "", label: "Yakında (motorsuz)" },
+                  { value: "upscale", label: "upscale (AuraSR)" },
+                  { value: "edit", label: "edit (Qwen LoRA)" },
+                ]}
+              />
             </label>
             <label className="flex flex-col gap-1">
               <span className="text-sm font-semibold text-text">Sıra</span>
@@ -177,12 +183,19 @@ export default function AiAraclarPage() {
             <>
               <label className="flex flex-col gap-1">
                 <span className="text-sm font-semibold text-text">LoRA adaptörü</span>
-                <select value={draft.lora} onChange={(e) => setDraft({ ...draft, lora: e.target.value })}
-                  className="border border-border rounded-xl px-3 py-2">
-                  <option value="">— seç —</option>
-                  {loras.map((l) => <option key={l} value={l}>{l}</option>)}
-                  {draft.lora && !loras.includes(draft.lora) && <option value={draft.lora}>{draft.lora} (mevcut)</option>}
-                </select>
+                <CustomSelect
+                  value={draft.lora}
+                  onChange={(v) => setDraft({ ...draft, lora: v })}
+                  ariaLabel="LoRA adaptörü"
+                  className="border border-border rounded-xl px-3 py-2 bg-white text-text"
+                  options={[
+                    { value: "", label: "— seç —" },
+                    ...loras.map((l) => ({ value: l, label: l })),
+                    ...(draft.lora && !loras.includes(draft.lora)
+                      ? [{ value: draft.lora, label: `${draft.lora} (mevcut)` }]
+                      : []),
+                  ]}
+                />
               </label>
               <label className="flex flex-col gap-1">
                 <span className="text-sm font-semibold text-text">Prompt</span>

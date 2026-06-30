@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 type Category = { id: string; name: string; slug: string; description: string | null; parentId: string | null; imageUrl?: string | null; show_on_home?: boolean; home_position?: number };
 
@@ -156,16 +157,16 @@ export default function AdminKategorilerPage() {
               onUpload={async (f) => { setUploading(true); const url = await uploadImage(f); if (url) setForm(fm => ({ ...fm, imageUrl: url })); setUploading(false); }}
               onClear={() => setForm(fm => ({ ...fm, imageUrl: "" }))}
             />
-            <select
+            <CustomSelect
               value={form.parentId}
-              onChange={e => setForm(f => ({ ...f, parentId: e.target.value }))}
+              onChange={v => setForm(f => ({ ...f, parentId: v }))}
+              ariaLabel="Üst kategori"
               className={inputCls}
-            >
-              <option value="">Üst Kategori yok (ana kategori)</option>
-              {parents.map(p => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: "Üst Kategori yok (ana kategori)" },
+                ...parents.map(p => ({ value: p.id, label: p.name })),
+              ]}
+            />
             {error && <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-lg px-4 py-2">{error}</p>}
             <button type="submit" disabled={saving} className="py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-60 text-white text-sm font-semibold rounded-full transition-colors">
               {saving ? "Kaydediliyor..." : "Ekle"}
@@ -199,12 +200,16 @@ export default function AdminKategorilerPage() {
                           onUpload={async (f) => { setUploading(true); const url = await uploadImage(f); if (url) setEditForm(fm => ({ ...fm, imageUrl: url })); setUploading(false); }}
                           onClear={() => setEditForm(fm => ({ ...fm, imageUrl: "" }))}
                         />
-                        <select value={editForm.parentId} onChange={e => setEditForm(f => ({ ...f, parentId: e.target.value }))} className={inputCls}>
-                          <option value="">Ana kategori</option>
-                          {parents.filter(p => p.id !== cat.id).map(p => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
-                          ))}
-                        </select>
+                        <CustomSelect
+                          value={editForm.parentId}
+                          onChange={v => setEditForm(f => ({ ...f, parentId: v }))}
+                          ariaLabel="Üst kategori"
+                          className={inputCls}
+                          options={[
+                            { value: "", label: "Ana kategori" },
+                            ...parents.filter(p => p.id !== cat.id).map(p => ({ value: p.id, label: p.name })),
+                          ]}
+                        />
                         <label className="flex items-center gap-2 text-sm text-text">
                           <input type="checkbox" checked={editForm.show_on_home}
                             onChange={e => setEditForm(f => ({ ...f, show_on_home: e.target.checked }))}

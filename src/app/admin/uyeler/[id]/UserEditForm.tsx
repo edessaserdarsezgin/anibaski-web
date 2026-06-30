@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 type Props = {
   userId: string;
@@ -83,14 +84,16 @@ export default function UserEditForm({ userId, fullName, phone, role, notifyDeli
 
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-semibold text-text">Rol</label>
-        <select
+        <CustomSelect
           value={form.role}
-          onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
-          className={inputCls + " cursor-pointer"}
-        >
-          <option value="CUSTOMER">CUSTOMER</option>
-          <option value="ADMIN">ADMIN</option>
-        </select>
+          onChange={v => setForm(f => ({ ...f, role: v }))}
+          ariaLabel="Rol"
+          className={inputCls}
+          options={[
+            { value: "CUSTOMER", label: "CUSTOMER" },
+            { value: "ADMIN", label: "ADMIN" },
+          ]}
+        />
       </div>
 
       <label className="flex items-start gap-3 p-3 rounded-lg border border-border bg-bg cursor-pointer">

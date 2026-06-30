@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import CustomSelect from "@/components/ui/CustomSelect";
 import Link from "next/link";
 
 type Product = { id: string; name: string; slug: string };
@@ -52,17 +53,16 @@ function AddReviewForm({ onSaved }: { onSaved: () => void }) {
         <form onSubmit={submit} className="px-5 pb-5 border-t border-border pt-4 flex flex-col gap-4">
           <div>
             <label className="text-xs font-semibold text-text-light mb-1 block">Ürün</label>
-            <select
+            <CustomSelect
               value={productId}
-              onChange={e => setProductId(e.target.value)}
-              className="w-full border border-border rounded-xl px-3 py-2 text-sm bg-bg focus:outline-none focus:border-primary"
-              required
-            >
-              <option value="">— Ürün seçin —</option>
-              {products.map(p => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+              onChange={setProductId}
+              ariaLabel="Ürün"
+              className="w-full border border-border rounded-xl px-3 py-2 text-sm bg-bg text-text"
+              options={[
+                { value: "", label: "— Ürün seçin —" },
+                ...products.map(p => ({ value: p.id, label: p.name })),
+              ]}
+            />
           </div>
 
           <div>

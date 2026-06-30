@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import CustomSelect from "@/components/ui/CustomSelect";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -128,17 +129,18 @@ export default function CampaignForm({ initial, categories, products, coupons }:
       {/* Yerleşim */}
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-semibold text-text">Yerleşim</label>
-        <select
+        <CustomSelect
           value={form.placement}
-          onChange={(e) => {
-            const placement = e.target.value;
+          onChange={(placement) => {
             setForm({ ...form, placement, show_on_home: placement === "card" ? true : form.show_on_home });
           }}
-          className={inputCls + " cursor-pointer"}
-        >
-          <option value="hero">Hero Banner (üst slider)</option>
-          <option value="card">Kampanya Kartı (ana sayfa ızgara)</option>
-        </select>
+          ariaLabel="Yerleşim"
+          className={inputCls}
+          options={[
+            { value: "hero", label: "Hero Banner (üst slider)" },
+            { value: "card", label: "Kampanya Kartı (ana sayfa ızgara)" },
+          ]}
+        />
         <p className="text-xs text-text-light">
           Hero: sayfanın üstündeki büyük slider. Kart: ana sayfadaki görselli kampanya ızgarası.
         </p>
@@ -251,16 +253,16 @@ export default function CampaignForm({ initial, categories, products, coupons }:
               </button>
             ))}
           </div>
-          <select
+          <CustomSelect
             value=""
-            onChange={(e) => e.target.value && setForm({ ...form, cta_url: `/urunler/${e.target.value}` })}
-            className={inputCls + " cursor-pointer mt-1"}
-          >
-            <option value="">Belirli bir ürün seç (opsiyonel)…</option>
-            {products.map((p) => (
-              <option key={p.id} value={p.slug}>{p.name}</option>
-            ))}
-          </select>
+            onChange={(v) => v && setForm({ ...form, cta_url: `/urunler/${v}` })}
+            ariaLabel="Ürün seç"
+            className={inputCls + " mt-1"}
+            options={[
+              { value: "", label: "Belirli bir ürün seç (opsiyonel)…" },
+              ...products.map((p) => ({ value: p.slug, label: p.name })),
+            ]}
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -275,16 +277,16 @@ export default function CampaignForm({ initial, categories, products, coupons }:
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs text-text-light">Kupon Kodu (opsiyonel)</label>
-            <select
+            <CustomSelect
               value={form.coupon_code}
-              onChange={(e) => setForm({ ...form, coupon_code: e.target.value })}
-              className={inputCls + " cursor-pointer font-mono"}
-            >
-              <option value="">— Yok —</option>
-              {coupons.map((c) => (
-                <option key={c.id} value={c.code}>{c.code}</option>
-              ))}
-            </select>
+              onChange={(v) => setForm({ ...form, coupon_code: v })}
+              ariaLabel="Kupon kodu"
+              className={inputCls + " font-mono"}
+              options={[
+                { value: "", label: "— Yok —" },
+                ...coupons.map((c) => ({ value: c.code, label: c.code })),
+              ]}
+            />
           </div>
         </div>
       </div>
