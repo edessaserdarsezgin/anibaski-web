@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { callQwenEdit } from "@/lib/aiEdit";
 import { getStudioTool } from "@/lib/studioTools";
 import { hasCredit, recordSuccess, recordError } from "@/lib/studioCredits";
+import { isRateLimited } from "@/lib/rateLimit";
 
 export const maxDuration = 60; // Qwen-Image-Edit üretimi; Vercel'de Pro gerekir
 
@@ -14,6 +15,11 @@ export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Giriş gerekli" }, { status: 401 });
+
+  // 1b. Hız sınırı — upscale ile ortak key (kredi havuzu ortak)
+  if (isRateLimited(`ai-studio:${user.id}`, 15, 60_000)) {
+    return NextResponse.json({ error: "Çok fazla istek. Lütfen biraz bekleyin." }, { status: 429 });
+  }
 
   // 2. Kredi kontrolü (upscale ile ortak havuz)
   if (!(await hasCredit(user.id))) {

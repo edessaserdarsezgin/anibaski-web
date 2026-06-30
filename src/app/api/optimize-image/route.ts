@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { downloadFromR2, uploadToR2, signR2Images } from "@/lib/r2";
+import { isRateLimited } from "@/lib/rateLimit";
 import sharp from "sharp";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // optimizeAll istemcide Promise.all ile paralel ateşlenir → büyük siparişler için cömert sınır.
+  if (isRateLimited(`optimize:${user.id}`, 100, 60_000)) {
+    return NextResponse.json({ error: "Çok fazla istek. Lütfen 1 dakika bekleyin." }, { status: 429 });
+  }
 
   const { path } = await req.json() as { path: string };
   if (!path || !path.startsWith(`${user.id}/`)) {

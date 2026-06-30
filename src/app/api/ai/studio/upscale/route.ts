@@ -3,6 +3,7 @@ import sharp from "sharp";
 import { createClient } from "@/lib/supabase/server";
 import { callAuraSpace } from "@/lib/aiUpscale";
 import { hasCredit, recordSuccess, recordError } from "@/lib/studioCredits";
+import { isRateLimited } from "@/lib/rateLimit";
 
 export const maxDuration = 60; // AuraSR ~17-34sn; Vercel Pro gerekir (Hobby 10s'de keser)
 
@@ -13,6 +14,11 @@ export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Giriş gerekli" }, { status: 401 });
+
+  // 1b. Hız sınırı (kredi yarışını/HF Space hamlelemesini önler)
+  if (isRateLimited(`ai-studio:${user.id}`, 15, 60_000)) {
+    return NextResponse.json({ error: "Çok fazla istek. Lütfen biraz bekleyin." }, { status: 429 });
+  }
 
   // 2. Kredi kontrolü (günlük ücretsiz + kazanılmış)
   if (!(await hasCredit(user.id))) {

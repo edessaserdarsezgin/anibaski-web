@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { uploadToR2, signR2Images, R2_BUCKET } from "@/lib/r2";
+import { isRateLimited } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Foto kitap gibi çok fotoğraflı siparişleri bozmayacak kadar cömert; scriptli kötüye kullanımı durdurur.
+  if (isRateLimited(`upload:${user.id}`, 100, 60_000)) {
+    return NextResponse.json({ error: "Çok fazla yükleme. Lütfen 1 dakika bekleyin." }, { status: 429 });
+  }
 
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
