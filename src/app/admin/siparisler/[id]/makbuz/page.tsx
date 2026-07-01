@@ -23,7 +23,7 @@ export default async function MakbuzPage({ params }: Props) {
   const [{ data: order }, config] = await Promise.all([
     supabase
       .from("orders")
-      .select(`id, status, total, createdAt, "trackingCode", "adminNote", type,
+      .select(`id, status, subtotal, "shippingFee", discount_amount, discount_code, total, createdAt, "trackingCode", "adminNote", type,
         items:order_items(id, quantity, "unitPrice", variantSelections, uploadedImages, product:products(name)),
         address:addresses!orders_addressId_fkey(fullName, phone, address, city, district, zip),
         buyer:profiles!orders_userId_fkey(fullName, phone, email)`)
@@ -126,14 +126,34 @@ export default async function MakbuzPage({ params }: Props) {
             );
           })}
         </tbody>
-        {config.showPrices && (
-          <tfoot>
-            <tr className="border-t-2 border-black">
-              <td colSpan={5} className="px-2 py-2 text-right font-semibold">Genel Toplam</td>
-              <td className="px-2 py-2 text-right font-bold whitespace-nowrap">{tl(Number(order.total))}</td>
-            </tr>
-          </tfoot>
-        )}
+        {config.showPrices && (() => {
+          const subtotal = Number(order.subtotal ?? 0);
+          const shipping = Number(order.shippingFee ?? 0);
+          const discount = Number(order.discount_amount ?? 0);
+          const code = order.discount_code as string | null;
+          return (
+            <tfoot>
+              <tr className="border-t-2 border-black">
+                <td colSpan={5} className="px-2 py-1.5 text-right text-black/60">Ara Toplam</td>
+                <td className="px-2 py-1.5 text-right whitespace-nowrap">{tl(subtotal)}</td>
+              </tr>
+              {discount > 0 && (
+                <tr>
+                  <td colSpan={5} className="px-2 py-1.5 text-right text-black/60">İndirim{code ? ` (${code})` : ""}</td>
+                  <td className="px-2 py-1.5 text-right whitespace-nowrap">−{tl(discount)}</td>
+                </tr>
+              )}
+              <tr>
+                <td colSpan={5} className="px-2 py-1.5 text-right text-black/60">Kargo</td>
+                <td className="px-2 py-1.5 text-right whitespace-nowrap">{shipping > 0 ? tl(shipping) : "Ücretsiz"}</td>
+              </tr>
+              <tr className="border-t border-black/30">
+                <td colSpan={5} className="px-2 py-2 text-right font-semibold">Genel Toplam</td>
+                <td className="px-2 py-2 text-right font-bold whitespace-nowrap">{tl(Number(order.total))}</td>
+              </tr>
+            </tfoot>
+          );
+        })()}
       </table>
     ),
     adminNote: order.adminNote ? (
