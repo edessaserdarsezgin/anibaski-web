@@ -28,15 +28,18 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => ({} as Record<string, unknown>));
-  // Sentry payload'ı sürüme göre değişir; savunmacı çıkarım:
+  // Sentry payload'ı türe göre değişir (Alert Rule → data.event, issue webhook →
+  // data.issue, error webhook → data.error); savunmacı çıkarım:
   const data = (body as { data?: Record<string, unknown> }).data ?? {};
-  const event = (data.event ?? (body as { event?: Record<string, unknown> }).event ?? body) as Record<string, unknown>;
+  const event = (data.event ?? data.error ?? data.issue ??
+    (body as { event?: Record<string, unknown> }).event ?? body) as Record<string, unknown>;
+  const meta = (event.metadata ?? {}) as Record<string, unknown>;
 
-  const title = event.title ?? event.message ?? data.triggered_rule ?? "Sentry uyarısı";
+  const title = event.title ?? event.message ?? meta.value ?? meta.type ?? data.triggered_rule ?? "Sentry uyarısı";
   const level = event.level ?? "error";
   const culprit = event.culprit ?? event.transaction ?? "";
   const environment = event.environment ?? "";
-  const url = event.web_url ?? event.issue_url ?? event.url ?? "https://sentry.io";
+  const url = event.web_url ?? event.permalink ?? event.issue_url ?? event.url ?? "https://sentry.io";
 
   const lines = [
     `🚨 <b>AnıBaskı — Sentry</b>`,
