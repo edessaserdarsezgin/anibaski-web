@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { href: "/admin/ai-kredi", label: "AI Kredi" },
   { href: "/admin/ai-araclar", label: "AI Araçlar" },
   { href: "/admin/firma-bilgileri", label: "Firma Bilgileri" },
+  { href: "/admin/belgeler", label: "Belge Ayarları" },
   { href: "/admin/istatistik", label: "İstatistik" },
 ];
 
