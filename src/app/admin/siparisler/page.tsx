@@ -1,24 +1,18 @@
-import Link from "next/link";
+import { Suspense } from "react";
 import { unstable_noStore as noStore } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
-import OrderStatusSelect from "./OrderStatusSelect";
-import OrderTrackingInput from "./OrderTrackingInput";
-import OrderNoteInput from "./OrderNoteInput";
+import OrderFilters from "./OrderFilters";
+import OrdersManager, { type AdminOrder } from "./OrdersManager";
 
 export const metadata = { title: "Siparişler | Admin" };
 
-const STATUS_LABEL: Record<string, string> = {
-  PENDING: "Beklemede", PREPARING: "Hazırlanıyor",
-  SHIPPED: "Kargoda", DELIVERED: "Teslim Edildi", CANCELLED: "İptal",
-};
-
-type Props = { searchParams: Promise<{ status?: string }> };
+type Props = { searchParams: Promise<{ status?: string; from?: string; to?: string; q?: string }> };
 
 const VALID_STATUS = ["PENDING", "PREPARING", "SHIPPED", "DELIVERED", "CANCELLED", "CANCEL_REQUESTED"];
 
 export default async function AdminSiparislerPage({ searchParams }: Props) {
   noStore();
-  const { status } = await searchParams;
+  const { status, from, to, q } = await searchParams;
   const supabase = createAdminClient();
   const { data: allOrders } = await supabase
     .from("orders")
@@ -26,197 +20,54 @@ export default async function AdminSiparislerPage({ searchParams }: Props) {
     .order("createdAt", { ascending: false });
 
   // Tamamlanmamış kredi kartı siparişleri admin listesinde de gizlensin
-  const completed = (allOrders ?? []).filter(o =>
+  let orders = (allOrders ?? []).filter(o =>
     o.paymentMethod === "cod" || o.paymentStatus === "paid"
   );
 
-  // Dashboard aksiyon linklerinden gelen ?status= filtresi
-  const activeStatus = status && VALID_STATUS.includes(status) ? status : null;
-  const orders = activeStatus ? completed.filter(o => o.status === activeStatus) : completed;
+  // Durum filtresi
+  if (status && VALID_STATUS.includes(status)) {
+    orders = orders.filter(o => o.status === status);
+  }
+  // Tarih aralığı (createdAt, gün bazlı — bitiş günü dahil)
+  if (from) orders = orders.filter(o => o.createdAt >= from);
+  if (to) orders = orders.filter(o => o.createdAt <= `${to}T23:59:59.999Z`);
+  // Ürün adı araması (siparişin herhangi bir kalemi eşleşirse)
+  if (q?.trim()) {
+    const needle = q.trim().toLocaleLowerCase("tr");
+    orders = orders.filter(o =>
+      (o.items ?? []).some(it => {
+        const p = it.product as unknown as { name: string } | null;
+        return p?.name?.toLocaleLowerCase("tr").includes(needle);
+      })
+    );
+  }
+
+  // OrdersManager için serileştirilebilir sadeleştirme
+  const managerOrders: AdminOrder[] = orders.map(o => ({
+    id: o.id,
+    type: (o as { type?: string }).type,
+    status: o.status,
+    total: Number(o.total),
+    createdAt: o.createdAt,
+    trackingCode: (o as { trackingCode: string | null }).trackingCode,
+    adminNote: (o as { adminNote: string | null }).adminNote,
+    items: (o.items ?? []).map(it => ({
+      id: it.id,
+      quantity: it.quantity,
+      variantSelections: it.variantSelections as Record<string, { label: string }> | null,
+      product: it.product as unknown as { name: string } | null,
+    })),
+    address: o.address as unknown as { fullName: string; city: string } | null,
+    buyer: o.buyer as unknown as { fullName: string | null; email: string } | null,
+  }));
 
   return (
     <div>
-      <h1 className="font-serif text-3xl text-text mb-2">Siparişler</h1>
-      {activeStatus && (
-        <p className="text-sm text-text-light mb-6">
-          Filtre: <span className="font-semibold text-text">{STATUS_LABEL[activeStatus] ?? activeStatus}</span>
-          {" · "}
-          <Link href="/admin/siparisler" className="text-primary hover:underline">Tümünü göster</Link>
-        </p>
-      )}
-      {!activeStatus && <div className="mb-6" />}
-
-      {/* Mobil kart düzeni */}
-      <div className="md:hidden flex flex-col gap-3">
-        {!orders?.length ? (
-          <p className="text-sm text-text-light bg-white rounded-2xl border border-border p-6">Henüz sipariş yok.</p>
-        ) : orders.map((order) => {
-          const address = order.address as unknown as { fullName: string; city: string } | null;
-          const buyer = order.buyer as unknown as { fullName: string | null; email: string } | null;
-          const trackingCode = (order as unknown as { trackingCode: string | null }).trackingCode;
-          const isReprint = (order as unknown as { type?: string }).type === "reprint";
-          const buyerName = buyer?.fullName || buyer?.email || "—";
-          const recipientName = address?.fullName ?? "—";
-          const sameRecipient = buyer?.fullName && address?.fullName &&
-            buyer.fullName.trim().toLowerCase() === address.fullName.trim().toLowerCase();
-          return (
-            <div key={order.id} className="bg-white rounded-2xl border border-border p-4 flex flex-col gap-3">
-              {/* Üst satır: ID + Tarih + Toplam */}
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="font-mono text-xs text-text-light">#{order.id.slice(0, 8).toUpperCase()}</p>
-                  <p className="text-xs text-text-light mt-0.5">{new Date(order.createdAt).toLocaleDateString("tr-TR")}</p>
-                  {isReprint && (
-                    <span className="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-accent/40 text-text">
-                      Yeniden Baskı
-                    </span>
-                  )}
-                </div>
-                <p className="font-semibold text-primary">{Number(order.total).toLocaleString("tr-TR")} ₺</p>
-              </div>
-
-              {/* Müşteri */}
-              <div className="text-sm">
-                <p className="font-semibold text-text">{buyerName}</p>
-                {!sameRecipient && (
-                  <p className="text-xs text-text-light mt-0.5">Teslim alan: {recipientName}</p>
-                )}
-                {address?.city && <p className="text-xs text-text-light">{address.city}</p>}
-              </div>
-
-              {/* Ürünler — max 2 göster */}
-              <div className="border-t border-border pt-2">
-                {(order.items ?? []).slice(0, 2).map((item) => {
-                  const product = item.product as unknown as { name: string } | null;
-                  const variants = item.variantSelections as Record<string, { label: string }> | null;
-                  const variantText = variants && Object.keys(variants).length > 0
-                    ? Object.values(variants).map(v => v.label).join(", ")
-                    : null;
-                  return (
-                    <div key={item.id} className="text-xs mb-1 last:mb-0">
-                      <span className="text-text">{product?.name} ×{item.quantity}</span>
-                      {variantText && <span className="text-text-light"> — {variantText}</span>}
-                    </div>
-                  );
-                })}
-                {(order.items?.length ?? 0) > 2 && (
-                  <p className="text-xs text-text-light mt-1">+{(order.items?.length ?? 0) - 2} ürün daha</p>
-                )}
-              </div>
-
-              {/* Durum + Kargo */}
-              <div className="border-t border-border pt-2 flex flex-col gap-2">
-                <OrderStatusSelect orderId={order.id} currentStatus={order.status} currentCode={trackingCode} />
-                <OrderTrackingInput orderId={order.id} currentCode={trackingCode} />
-              </div>
-
-              {/* İç Not */}
-              <div className="border-t border-border pt-2">
-                <OrderNoteInput orderId={order.id} currentNote={(order as unknown as { adminNote: string | null }).adminNote} />
-              </div>
-
-              <Link href={`/siparisler/${order.id}?from=admin`} className="text-xs text-primary font-semibold">
-                Detayı Görüntüle →
-              </Link>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Masaüstü tablo */}
-      <div className="hidden md:block bg-white rounded-2xl border border-border overflow-hidden">
-        {!orders?.length ? (
-          <p className="text-sm text-text-light p-6">Henüz sipariş yok.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="border-b border-border bg-bg">
-                <tr className="text-text-light">
-                  <th className="text-left px-6 py-3 font-semibold">Sipariş</th>
-                  <th className="text-left px-4 py-3 font-semibold">Müşteri</th>
-                  <th className="text-left px-4 py-3 font-semibold">Ürünler</th>
-                  <th className="text-left px-4 py-3 font-semibold">Durum</th>
-                  <th className="text-left px-4 py-3 font-semibold">Kargo Kodu</th>
-                  <th className="text-right px-6 py-3 font-semibold">Toplam</th>
-                  <th className="px-4 py-3" />
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((order) => (
-                  <><tr key={order.id} className="border-b border-border hover:bg-bg transition-colors">
-                    <td className="px-6 py-4">
-                      <p className="font-mono text-text-light text-xs">#{order.id.slice(0, 8).toUpperCase()}</p>
-                      <p className="text-xs text-text-light mt-0.5">
-                        {new Date(order.createdAt).toLocaleDateString("tr-TR")}
-                      </p>
-                      {(order as unknown as { type?: string }).type === "reprint" && (
-                        <span className="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-accent/40 text-text">
-                          Yeniden Baskı
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-4 text-text-light">
-                      {(() => {
-                        const address = order.address as unknown as { fullName: string; city: string } | null;
-                        const buyer = order.buyer as unknown as { fullName: string | null; email: string } | null;
-                        const buyerName = buyer?.fullName || buyer?.email || "—";
-                        const recipientName = address?.fullName ?? "—";
-                        const sameRecipient = buyer?.fullName && address?.fullName &&
-                          buyer.fullName.trim().toLowerCase() === address.fullName.trim().toLowerCase();
-                        return (
-                          <>
-                            <p className="text-text font-semibold text-xs">{buyerName}</p>
-                            {!sameRecipient && (
-                              <p className="text-xs mt-0.5">
-                                <span className="text-text-light">Teslim alan:</span> {recipientName}
-                              </p>
-                            )}
-                            <p className="text-xs mt-0.5">{address?.city}</p>
-                          </>
-                        );
-                      })()}
-                    </td>
-                    <td className="px-4 py-4">
-                      {order.items?.map((item) => {
-                        const product = item.product as unknown as { name: string } | null;
-                        const variants = item.variantSelections as Record<string, { label: string }> | null;
-                        const variantText = variants && Object.keys(variants).length > 0
-                          ? Object.values(variants).map(v => v.label).join(", ")
-                          : null;
-                        return (
-                          <div key={item.id} className="mb-1 last:mb-0">
-                            <p className="text-text">{product?.name} ×{item.quantity}</p>
-                            {variantText && <p className="text-xs text-text-light">{variantText}</p>}
-                          </div>
-                        );
-                      })}
-                    </td>
-                    <td className="px-4 py-4">
-                      <OrderStatusSelect orderId={order.id} currentStatus={order.status} currentCode={(order as unknown as { trackingCode: string | null }).trackingCode} />
-                    </td>
-                    <td className="px-4 py-4">
-                      <OrderTrackingInput orderId={order.id} currentCode={(order as unknown as { trackingCode: string | null }).trackingCode} />
-                    </td>
-                    <td className="px-6 py-4 text-right font-semibold text-primary">
-                      {Number(order.total).toLocaleString("tr-TR")} ₺
-                    </td>
-                    <td className="px-4 py-4">
-                      <Link href={`/siparisler/${order.id}?from=admin`} className="text-xs text-primary hover:underline font-semibold">
-                        Detay
-                      </Link>
-                    </td>
-                  </tr>
-                  <tr key={`${order.id}-note`} className="border-b border-border last:border-0 bg-bg/40">
-                    <td colSpan={7} className="px-6 pb-3 pt-1">
-                      <OrderNoteInput orderId={order.id} currentNote={(order as unknown as { adminNote: string | null }).adminNote} />
-                    </td>
-                  </tr></>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <h1 className="font-serif text-3xl text-text mb-6">Siparişler</h1>
+      <Suspense fallback={<div className="h-20 mb-6" />}>
+        <OrderFilters />
+      </Suspense>
+      <OrdersManager orders={managerOrders} />
     </div>
   );
 }
