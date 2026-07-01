@@ -6,13 +6,14 @@ import OrdersManager, { type AdminOrder } from "./OrdersManager";
 
 export const metadata = { title: "Siparişler | Admin" };
 
-type Props = { searchParams: Promise<{ status?: string; from?: string; to?: string; q?: string }> };
+type Props = { searchParams: Promise<{ status?: string; from?: string; to?: string; q?: string; sf?: string }> };
 
 const VALID_STATUS = ["PENDING", "PREPARING", "SHIPPED", "DELIVERED", "CANCELLED", "CANCEL_REQUESTED"];
 
 export default async function AdminSiparislerPage({ searchParams }: Props) {
   noStore();
-  const { status, from, to, q } = await searchParams;
+  const { status, from, to, q, sf } = await searchParams;
+  const searchField = sf || "makbuz";
   const supabase = createAdminClient();
   const { data: allOrders } = await supabase
     .from("orders")
@@ -31,15 +32,29 @@ export default async function AdminSiparislerPage({ searchParams }: Props) {
   // Tarih aralığı (createdAt, gün bazlı — bitiş günü dahil)
   if (from) orders = orders.filter(o => o.createdAt >= from);
   if (to) orders = orders.filter(o => o.createdAt <= `${to}T23:59:59.999Z`);
-  // Ürün adı araması (siparişin herhangi bir kalemi eşleşirse)
+  // Arama — türüne göre (varsayılan makbuz no)
   if (q?.trim()) {
     const needle = q.trim().toLocaleLowerCase("tr");
-    orders = orders.filter(o =>
-      (o.items ?? []).some(it => {
-        const p = it.product as unknown as { name: string } | null;
-        return p?.name?.toLocaleLowerCase("tr").includes(needle);
-      })
-    );
+    if (searchField === "makbuz") {
+      // Makbuz no = sipariş id ön eki (hex) — ascii karşılaştır
+      const asciiNeedle = q.trim().toLowerCase().replace(/[#\s]/g, "");
+      orders = orders.filter(o => o.id.toLowerCase().includes(asciiNeedle));
+    } else if (searchField === "isim") {
+      orders = orders.filter(o => {
+        const buyer = o.buyer as unknown as { fullName: string | null; email: string } | null;
+        const address = o.address as unknown as { fullName: string } | null;
+        return [buyer?.fullName, buyer?.email, address?.fullName]
+          .some(n => n?.toLocaleLowerCase("tr").includes(needle));
+      });
+    } else {
+      // Ürün adı — siparişin herhangi bir kalemi eşleşirse
+      orders = orders.filter(o =>
+        (o.items ?? []).some(it => {
+          const p = it.product as unknown as { name: string } | null;
+          return p?.name?.toLocaleLowerCase("tr").includes(needle);
+        })
+      );
+    }
   }
 
   // OrdersManager için serileştirilebilir sadeleştirme

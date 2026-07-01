@@ -14,6 +14,18 @@ const STATUS_OPTIONS = [
   { value: "CANCEL_REQUESTED", label: "İptal Talebi" },
 ];
 
+// Arama türü — varsayılan Makbuz No
+const SEARCH_FIELDS = [
+  { value: "makbuz", label: "Makbuz No" },
+  { value: "isim", label: "Müşteri Adı" },
+  { value: "urun", label: "Ürün" },
+];
+const SEARCH_PLACEHOLDER: Record<string, string> = {
+  makbuz: "Makbuz no… (ör. ABC12345)",
+  isim: "Müşteri / teslim alan adı…",
+  urun: "Ürün adı…",
+};
+
 export default function OrderFilters() {
   const router = useRouter();
   const params = useSearchParams();
@@ -41,6 +53,7 @@ export default function OrderFilters() {
   const from = params.get("from") ?? "";
   const to = params.get("to") ?? "";
   const q = params.get("q") ?? "";
+  const sf = params.get("sf") || "makbuz";
   const hasFilter = status || from || to || q;
 
   const inputCls = "px-3 py-2 rounded-lg border border-border bg-white text-sm outline-none focus:border-primary transition-colors";
@@ -59,12 +72,17 @@ export default function OrderFilters() {
         <label className="text-xs text-text-light font-semibold">Bitiş</label>
         <input type="date" value={to} onChange={(e) => setParam("to", e.target.value)} className={inputCls} />
       </div>
+      <div className="flex flex-col gap-1 min-w-[130px]">
+        <label className="text-xs text-text-light font-semibold">Aranan</label>
+        <CustomSelect value={sf} onChange={(v) => setParam("sf", v === "makbuz" ? "" : v)} ariaLabel="Arama türü" className={inputCls} options={SEARCH_FIELDS} />
+      </div>
       <div className="flex flex-col gap-1 flex-1 min-w-[180px]">
-        <label className="text-xs text-text-light font-semibold">Ürün ara</label>
+        <label className="text-xs text-text-light font-semibold">Ara</label>
         <input
+          key={sf}
           type="search"
           defaultValue={q}
-          placeholder="Ürün adı…"
+          placeholder={SEARCH_PLACEHOLDER[sf]}
           onChange={(e) => setQDebounced(e.target.value)}
           className={inputCls}
         />
