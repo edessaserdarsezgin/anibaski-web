@@ -47,6 +47,7 @@ export const getHomeCategories = unstable_cache(
       .from("categories")
       .select('id, name, slug, "imageUrl"')
       .eq("show_on_home", true)
+      .eq("is_active", true)
       .order("home_position", { ascending: true });
     return data ?? [];
   },
@@ -61,6 +62,8 @@ export const getNavCategories = unstable_cache(
     const { data } = await db
       .from("categories")
       .select('id, name, slug, "imageUrl", "parentId"')
+      .eq("is_active", true)
+      .order("sort_order")
       .order("name");
     return (data ?? [])
       .filter((c) => !(c as { parentId?: string | null }).parentId)
@@ -280,7 +283,8 @@ export const getCategoryBySlug = unstable_cache(
       .from("categories")
       .select("id, name, slug, description, parentId")
       .eq("slug", slug)
-      .single();
+      .eq("is_active", true)
+      .maybeSingle();
     return data;
   },
   ["category-by-slug"],
@@ -295,6 +299,8 @@ export const getSubCategories = unstable_cache(
       .from("categories")
       .select("id, name, slug")
       .eq("parentId", parentId)
+      .eq("is_active", true)
+      .order("sort_order")
       .order("name");
     return data ?? [];
   },

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import CustomSelect from "@/components/ui/CustomSelect";
 
-type Category = { id: string; name: string; slug: string; description: string | null; parentId: string | null; imageUrl?: string | null; show_on_home?: boolean; home_position?: number };
+type Category = { id: string; name: string; slug: string; description: string | null; parentId: string | null; imageUrl?: string | null; show_on_home?: boolean; home_position?: number; sort_order?: number; is_active?: boolean };
 
 const TR_MAP: Record<string, string> = {
   ç: "c", ğ: "g", ı: "i", İ: "i", ö: "o", ş: "s", ü: "u",
@@ -46,6 +46,8 @@ export default function AdminKategorilerPage() {
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", slug: "", description: "", parentId: "", imageUrl: "", show_on_home: false, home_position: 0 });
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
 
   async function uploadImage(file: File): Promise<string | null> {
     const fd = new FormData();
@@ -109,6 +111,48 @@ export default function AdminKategorilerPage() {
       body: JSON.stringify({ id }),
     });
     await load();
+  }
+
+  async function toggleActive(cat: Category) {
+    const next = !(cat.is_active ?? true);
+    // İyimser: kendisi + (üst kategoriyse) tüm alt kategorileri
+    setCategories(cs => cs.map(c =>
+      c.id === cat.id || c.parentId === cat.id ? { ...c, is_active: next } : c
+    ));
+    await fetch("/api/admin/categories", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: cat.id, is_active: next }),
+    });
+  }
+
+  /** Sürükleneni hedefin bulunduğu konuma taşı (yalnızca aynı seviye — aynı üst kategori). */
+  async function handleDrop(targetId: string) {
+    setOverId(null);
+    const drag = categories.find(c => c.id === dragId);
+    const target = categories.find(c => c.id === targetId);
+    setDragId(null);
+    if (!drag || !target || drag.id === target.id) return;
+    if ((drag.parentId ?? null) !== (target.parentId ?? null)) return; // seviye atlamak yok
+
+    const siblings = categories.filter(c => (c.parentId ?? null) === (drag.parentId ?? null));
+    const rest = siblings.filter(c => c.id !== drag.id);
+    const targetIdx = rest.findIndex(c => c.id === target.id);
+    rest.splice(targetIdx, 0, drag);
+    const ordered = rest.map((c, i) => ({ ...c, sort_order: i + 1 }));
+
+    // Yerel state'i güncelle
+    const orderMap = new Map(ordered.map(c => [c.id, c.sort_order]));
+    setCategories(cs =>
+      cs.map(c => orderMap.has(c.id) ? { ...c, sort_order: orderMap.get(c.id) } : c)
+        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    );
+
+    await fetch("/api/admin/categories", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: ordered.map(c => ({ id: c.id, sort_order: c.sort_order })) }),
+    });
   }
 
   const inputCls = "px-3 py-2 rounded-lg border border-border bg-bg text-sm outline-none focus:border-primary transition-colors";
@@ -178,6 +222,7 @@ export default function AdminKategorilerPage() {
         <div className="bg-white rounded-2xl border border-border overflow-hidden">
           <div className="px-6 py-4 border-b border-border">
             <h2 className="font-serif text-lg text-text">Mevcut Kategoriler</h2>
+            <p className="text-xs text-text-light mt-1">⠿ tutamağından sürükleyerek sırala · Aktif/Pasif ile menüde göster/gizle</p>
           </div>
           {loading ? (
             <p className="text-sm text-text-light p-6">Yükleniyor...</p>
@@ -187,8 +232,27 @@ export default function AdminKategorilerPage() {
             <ul className="divide-y divide-border">
               {tree.map((cat) => {
                 const isChild = !!cat.parentId;
+                const isActive = cat.is_active ?? true;
+                const parentActive = isChild ? (categories.find(c => c.id === cat.parentId)?.is_active ?? true) : true;
+                const draggable = editingId !== cat.id;
                 return (
-                  <li key={cat.id} className={`px-6 py-3 ${isChild ? "bg-bg/50" : ""}`}>
+                  <li
+                    key={cat.id}
+                    draggable={draggable}
+                    onDragStart={() => setDragId(cat.id)}
+                    onDragOver={(e) => {
+                      // yalnızca aynı seviyedeki hedefte bırakmaya izin ver
+                      const drag = categories.find(c => c.id === dragId);
+                      if (drag && (drag.parentId ?? null) === (cat.parentId ?? null) && drag.id !== cat.id) {
+                        e.preventDefault();
+                        setOverId(cat.id);
+                      }
+                    }}
+                    onDragLeave={() => setOverId(o => (o === cat.id ? null : o))}
+                    onDrop={() => handleDrop(cat.id)}
+                    onDragEnd={() => { setDragId(null); setOverId(null); }}
+                    className={`px-6 py-3 transition-colors ${isChild ? "bg-bg/50" : ""} ${!isActive ? "opacity-50" : ""} ${overId === cat.id ? "border-t-2 border-primary" : ""} ${dragId === cat.id ? "opacity-40" : ""}`}
+                  >
                     {editingId === cat.id ? (
                       <div className="flex flex-col gap-2">
                         <input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} className={inputCls + " w-full"} />
@@ -227,20 +291,32 @@ export default function AdminKategorilerPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-between">
-                        <div className={isChild ? "pl-4 border-l-2 border-primary/30" : ""}>
-                          <div className="flex items-center gap-2">
-                            {isChild && <span className="text-xs text-primary/60">↳</span>}
-                            {cat.imageUrl && (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={cat.imageUrl} alt="" className="w-7 h-7 rounded-md object-cover border border-border" />
-                            )}
-                            <p className="text-sm font-semibold text-text">{cat.name}</p>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="cursor-grab active:cursor-grabbing text-text-light/50 hover:text-text-light select-none" title="Sürükleyerek sırala" aria-hidden>⠿</span>
+                          <div className={isChild ? "pl-3 border-l-2 border-primary/30 min-w-0" : "min-w-0"}>
+                            <div className="flex items-center gap-2">
+                              {isChild && <span className="text-xs text-primary/60">↳</span>}
+                              {cat.imageUrl && (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={cat.imageUrl} alt="" className="w-7 h-7 rounded-md object-cover border border-border" />
+                              )}
+                              <p className="text-sm font-semibold text-text truncate">{cat.name}</p>
+                              {!isActive && <span className="text-[10px] font-semibold text-text-light bg-border/60 rounded-full px-2 py-0.5 shrink-0">Pasif</span>}
+                            </div>
+                            <p className="text-xs text-text-light">{cat.slug}</p>
+                            {cat.show_on_home && <p className="text-[10px] text-primary font-semibold">🏠 Ana sayfada (sıra {cat.home_position ?? 0})</p>}
                           </div>
-                          <p className="text-xs text-text-light">{cat.slug}</p>
-                          {cat.show_on_home && <p className="text-[10px] text-primary font-semibold">🏠 Ana sayfada (sıra {cat.home_position ?? 0})</p>}
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex items-center gap-3 shrink-0">
+                          <button
+                            onClick={() => toggleActive(cat)}
+                            disabled={isChild && !parentActive}
+                            className={`text-xs font-semibold hover:underline disabled:no-underline disabled:cursor-not-allowed disabled:opacity-60 ${isActive ? "text-green-600" : "text-text-light"}`}
+                            title={isChild && !parentActive ? "Üst kategori pasif — önce üstü aktif et" : isActive ? "Pasife al" : "Aktif et"}
+                          >
+                            {isActive ? "Aktif" : "Pasif"}
+                          </button>
                           <button onClick={() => startEdit(cat)} className="text-xs text-primary hover:underline font-semibold">Düzenle</button>
                           <button onClick={() => handleDelete(cat.id)} className="text-xs text-red-500 hover:text-red-700 font-semibold">Sil</button>
                         </div>

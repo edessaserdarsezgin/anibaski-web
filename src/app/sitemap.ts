@@ -8,7 +8,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const [{ data: products }, { data: categories }] = await Promise.all([
     db.from("products").select("slug, updatedAt").eq("active", true),
-    db.from("categories").select("slug, updatedAt"),
+    db.from("categories").select("slug, updatedAt").eq("is_active", true),
   ]);
 
   const staticRoutes: MetadataRoute.Sitemap = [

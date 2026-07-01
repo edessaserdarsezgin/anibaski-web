@@ -21,7 +21,7 @@ export default async function Header() {
 
   const adminDb = createAdminClient();
   const [{ data: cats }, readyMadeIds] = await Promise.all([
-    adminDb.from("categories").select("id, name, slug, parentId, imageUrl").order("name"),
+    adminDb.from("categories").select("id, name, slug, parentId, imageUrl").eq("is_active", true).order("sort_order").order("name"),
     getReadyMadeCategoryIds(),
   ]);
   const menuTree = (cats ?? [])
