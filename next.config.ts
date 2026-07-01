@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["lecherously-fussy-everleigh.ngrok-free.dev"],
@@ -49,4 +50,12 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  // Kaynak haritası yükleme (okunur stack trace) — token yoksa sessizce atlanır
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  // Ad-blocker'ları aşmak için Sentry isteklerini kendi sunucumuz üzerinden geçir
+  tunnelRoute: "/monitoring",
+});
