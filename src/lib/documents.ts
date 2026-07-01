@@ -10,6 +10,7 @@ export type MakbuzConfig = {
   logoUrl: string | null;
   showQr: boolean;
   showPhotos: boolean;
+  showPrices: boolean;
   processSteps: string[];
   footerText: string;
   sections: DocSection[];
@@ -30,6 +31,7 @@ export const DEFAULT_MAKBUZ_CONFIG: MakbuzConfig = {
   logoUrl: null,
   showQr: true,
   showPhotos: true,
+  showPrices: true,
   processSteps: ["Hazırlanıyor", "Baskı", "Kontrol", "Paketleme", "Kargo", "Teslim"],
   footerText: "",
   sections: [
@@ -60,6 +62,7 @@ export function mergeMakbuzConfig(raw: unknown): MakbuzConfig {
     logoUrl: typeof c.logoUrl === "string" ? c.logoUrl : null,
     showQr: c.showQr !== false,
     showPhotos: c.showPhotos !== false,
+    showPrices: c.showPrices !== false,
     processSteps: Array.isArray(c.processSteps) && c.processSteps.length ? c.processSteps.map(String) : DEFAULT_MAKBUZ_CONFIG.processSteps,
     footerText: typeof c.footerText === "string" ? c.footerText : "",
     sections: ordered,

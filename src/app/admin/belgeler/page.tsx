@@ -126,6 +126,9 @@ export default function BelgeAyarlariPage() {
             <label className="flex items-center gap-2 text-sm text-text">
               <input type="checkbox" checked={cfg.showPhotos} onChange={e => patch({ showPhotos: e.target.checked })} className="w-4 h-4 accent-primary" /> Ürün fotoğrafları göster
             </label>
+            <label className="flex items-center gap-2 text-sm text-text">
+              <input type="checkbox" checked={cfg.showPrices} onChange={e => patch({ showPrices: e.target.checked })} className="w-4 h-4 accent-primary" /> Fiyat & toplam göster
+            </label>
           </div>
         </section>
 

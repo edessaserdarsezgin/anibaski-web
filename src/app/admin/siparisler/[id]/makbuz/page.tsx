@@ -24,7 +24,7 @@ export default async function MakbuzPage({ params }: Props) {
     supabase
       .from("orders")
       .select(`id, status, total, createdAt, "trackingCode", "adminNote", type,
-        items:order_items(id, quantity, variantSelections, uploadedImages, product:products(name)),
+        items:order_items(id, quantity, "unitPrice", variantSelections, uploadedImages, product:products(name)),
         address:addresses!orders_addressId_fkey(fullName, phone, address, city, district, zip),
         buyer:profiles!orders_userId_fkey(fullName, phone, email)`)
       .eq("id", id)
@@ -44,6 +44,8 @@ export default async function MakbuzPage({ params }: Props) {
   const address = order.address as unknown as { fullName: string; phone: string; address: string; city: string; district: string; zip: string | null } | null;
   const buyer = order.buyer as unknown as { fullName: string | null; phone: string | null; email: string } | null;
   const orderNo = order.id.slice(0, 8).toUpperCase();
+
+  const tl = (n: number) => `${Number(n).toLocaleString("tr-TR")} ₺`;
 
   const base = process.env.NEXT_PUBLIC_SITE_URL || "https://anibaski.com";
   const qrDataUrl = config.showQr
@@ -91,6 +93,8 @@ export default async function MakbuzPage({ params }: Props) {
             <th className="px-2 py-1.5">Ürün</th>
             <th className="px-2 py-1.5">Seçenekler</th>
             <th className="px-2 py-1.5 w-12 text-center">Adet</th>
+            {config.showPrices && <th className="px-2 py-1.5 w-24 text-right">Birim</th>}
+            {config.showPrices && <th className="px-2 py-1.5 w-24 text-right">Tutar</th>}
           </tr>
         </thead>
         <tbody>
@@ -99,6 +103,7 @@ export default async function MakbuzPage({ params }: Props) {
             const variants = it.variantSelections as Record<string, { label: string }> | null;
             const variantText = variants && Object.keys(variants).length > 0
               ? Object.values(variants).map((v) => v.label).join(", ") : "—";
+            const unit = Number(it.unitPrice ?? 0);
             return (
               <tr key={it.id} className="border-t border-black/10 align-top">
                 <td className="px-2 py-2">{i + 1}</td>
@@ -115,10 +120,20 @@ export default async function MakbuzPage({ params }: Props) {
                 </td>
                 <td className="px-2 py-2">{variantText}</td>
                 <td className="px-2 py-2 text-center font-semibold">{it.quantity}</td>
+                {config.showPrices && <td className="px-2 py-2 text-right whitespace-nowrap">{tl(unit)}</td>}
+                {config.showPrices && <td className="px-2 py-2 text-right font-semibold whitespace-nowrap">{tl(unit * it.quantity)}</td>}
               </tr>
             );
           })}
         </tbody>
+        {config.showPrices && (
+          <tfoot>
+            <tr className="border-t-2 border-black">
+              <td colSpan={5} className="px-2 py-2 text-right font-semibold">Genel Toplam</td>
+              <td className="px-2 py-2 text-right font-bold whitespace-nowrap">{tl(Number(order.total))}</td>
+            </tr>
+          </tfoot>
+        )}
       </table>
     ),
     adminNote: order.adminNote ? (
