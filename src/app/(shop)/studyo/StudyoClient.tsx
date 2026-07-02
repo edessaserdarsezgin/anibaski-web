@@ -38,6 +38,7 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [credits, setCredits] = useState<{ dailyFreeRemaining: number; earnedAvailable: number; total: number; trial: boolean } | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [tools, setTools] = useState<StudioTool[] | null>(null);
+  const [creditInfo, setCreditInfo] = useState<{ orderThreshold: number; orderCreditAmount: number } | null>(null);
 
   useEffect(() => {
     fetch("/api/ai/studio/credits")
@@ -47,11 +48,22 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
   }, [step]);
 
   useEffect(() => {
+    fetch("/api/studio-credit-info")
+      .then((r) => r.json())
+      .then(setCreditInfo)
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     fetch("/api/ai/studio/tools")
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setTools(d))
       .catch(() => setTools([]));
   }, []);
+
+  const creditThreshold = creditInfo?.orderThreshold ?? 1000;
+  const creditAmount = creditInfo?.orderCreditAmount ?? 10;
+  const creditThresholdText = creditThreshold.toLocaleString("tr-TR");
 
   function scrollTop() { window.scrollTo({ top: 0, behavior: "smooth" }); }
 
@@ -157,7 +169,7 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
                 <p className="text-sm text-text-light leading-relaxed">
                   {credits?.trial
                     ? "Bir baskı siparişi verince her gün ücretsiz AI Stüdyo kredisi kazanmaya başlarsın."
-                    : "Her 1.000 ₺'lik baskıda yeni kredi kazanırsınız. Şimdi bir baskı seç, kredin otomatik yüklensin."}
+                    : `${creditThresholdText} ₺ ve üzeri baskı siparişinde ${creditAmount} kredi kazanırsınız. Şimdi bir baskı seç, kredin otomatik yüklensin.`}
                 </p>
               </div>
               <Link
@@ -209,7 +221,7 @@ export default function StudyoClient({ isLoggedIn }: { isLoggedIn: boolean }) {
                       {credits.earnedAvailable > 0 && <> + <b className="text-primary">{credits.earnedAvailable}</b> kazanılmış</>} hakkın var</>
                 : credits.trial
                   ? <>Deneme hakkın doldu — bir baskı siparişi ver, her gün ücretsiz kredi kazan 🎁</>
-                  : <>Hakkın doldu — her 1000 ₺&apos;lik baskıda yeni kredi kazan 🎁</>}
+                  : <>Hakkın doldu — {creditThresholdText} ₺ ve üzeri siparişte {creditAmount} kredi kazan 🎁</>}
             </p>
           )}
           {!isLoggedIn && (
