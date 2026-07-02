@@ -10,6 +10,7 @@ import CardScroller from "@/components/ui/CardScroller";
 import ProductCard from "@/components/product/ProductCard";
 import EmptyState from "@/components/ui/EmptyState";
 import { cartPromoAmount, nextThreshold, isDateValid, type Promotion } from "@/lib/promotionsCalc";
+import RewardProgress, { type Milestone } from "@/components/cart/RewardProgress";
 
 type AppliedCoupon = { code: string; discountAmount: number };
 
@@ -49,6 +50,8 @@ export default function SepetPage() {
 
   const [shippingFeeVal, setShippingFeeVal] = useState(49);
   const [freeShippingThreshold, setFreeShippingThreshold] = useState(500);
+  const [orderThreshold, setOrderThreshold] = useState(0);
+  const [orderCreditAmount, setOrderCreditAmount] = useState(0);
 
   useEffect(() => {
     fetch("/api/shipping-settings")
@@ -56,6 +59,16 @@ export default function SepetPage() {
       .then(d => {
         setShippingFeeVal(d.shippingFee);
         setFreeShippingThreshold(d.freeShippingThreshold);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/studio-credit-info")
+      .then((r) => r.json())
+      .then((d) => {
+        setOrderThreshold(d.orderThreshold);
+        setOrderCreditAmount(d.orderCreditAmount);
       })
       .catch(() => {});
   }, []);
@@ -110,9 +123,29 @@ export default function SepetPage() {
   const shippingFee = discountedTotal >= freeShippingThreshold ? 0 : shippingFeeVal;
   const grandTotal = total + shippingFee - discountAmount;
 
-  // Ücretsiz kargo ilerlemesi
-  const remainingForFreeShipping = Math.max(0, freeShippingThreshold - discountedTotal);
-  const shippingProgress = freeShippingThreshold > 0 ? Math.min(100, (discountedTotal / freeShippingThreshold) * 100) : 100;
+  // Ödül çubuğu kilometre taşları — kredi eşiği (varsa) + ücretsiz kargo. Ortak eksen: indirim sonrası ara toplam.
+  const rewardMilestones: Milestone[] = [
+    ...(orderThreshold > 0
+      ? [{
+          threshold: orderThreshold,
+          colorClass: "bg-accent",
+          icon: "🎨",
+          pending: (r: string) => (
+            <>{r} ₺ daha al, <b className="text-primary">{orderCreditAmount} AI Stüdyo kredisi</b> kazan</>
+          ),
+          done: "AI kredi",
+        }]
+      : []),
+    {
+      threshold: freeShippingThreshold,
+      colorClass: "bg-primary",
+      icon: "🚚",
+      pending: (r: string) => (
+        <>{r} ₺ daha al, <b className="text-primary">ücretsiz kargo</b></>
+      ),
+      done: "ücretsiz kargo",
+    },
+  ];
 
   // Ücretsiz kargo kazancı: kargo bedavaysa normalde ödenecek kargo bedeli kadar tasarruf
   const shippingSavings = shippingFee === 0 ? shippingFeeVal : 0;
@@ -230,23 +263,8 @@ export default function SepetPage() {
       <BackButton className="mb-6" />
       <h1 className="font-serif text-3xl text-text mb-6">Sepetim</h1>
 
-      {/* Ücretsiz kargo ilerleme çubuğu */}
-      <div className="bg-white rounded-2xl border border-border p-4 mb-6">
-        {remainingForFreeShipping > 0 ? (
-          <p className="text-sm text-text mb-2.5">
-            🚚 Ücretsiz kargo için sepetine{" "}
-            <b className="text-primary">{remainingForFreeShipping.toLocaleString("tr-TR")} ₺</b> daha ürün ekle!
-          </p>
-        ) : (
-          <p className="text-sm font-semibold text-green-700 mb-2.5">🎉 Tebrikler, ücretsiz kargo kazandın!</p>
-        )}
-        <div className="h-2 rounded-full bg-bg overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-500 ${remainingForFreeShipping > 0 ? "bg-primary" : "bg-green-500"}`}
-            style={{ width: `${shippingProgress}%` }}
-          />
-        </div>
-      </div>
+      {/* Ödül ilerleme çubuğu: AI kredi + ücretsiz kargo */}
+      <RewardProgress current={discountedTotal} milestones={rewardMilestones} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Ürünler */}
