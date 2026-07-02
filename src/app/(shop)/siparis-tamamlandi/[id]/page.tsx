@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { getShippingSettings } from "@/lib/shipping";
 import CartClearer from "./CartClearer";
 import ShippingEstimate from "@/app/(shop)/urunler/[slug]/ShippingEstimate";
@@ -20,16 +20,23 @@ const STATUS_STEPS = [
 export default async function SiparisTamamlandiPage({ params }: Props) {
   const { id } = await params;
   const supabase = await createClient();
+  const admin = createAdminClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect(`/giris?redirect=/siparis-tamamlandi/${id}`);
 
-  const [{ data: order }, shippingInfo] = await Promise.all([
+  const [{ data: order }, shippingInfo, { data: creditGrant }] = await Promise.all([
     supabase
       .from("orders")
       .select("id, userId, status, total, subtotal, shippingFee, createdAt, paymentMethod, items:order_items(id, quantity, unitPrice, product:products(name, images, slug))")
       .eq("id", id)
       .single(),
     getShippingSettings(),
+    admin
+      .from("studio_credit_grants")
+      .select("amount")
+      .eq("orderId", id)
+      .eq("source", "order")
+      .maybeSingle(),
   ]);
 
   if (!order || order.userId !== user.id) notFound();
@@ -81,6 +88,21 @@ export default async function SiparisTamamlandiPage({ params }: Props) {
             </p>
           )}
         </div>
+
+        {/* ── AI kredi kazanımı (yalnız grant oluştuysa) ─ */}
+        {creditGrant?.amount ? (
+          <Link
+            href="/studyo"
+            className="anim-up-3 flex items-center gap-4 bg-accent/15 border border-accent/40 rounded-2xl p-5 mb-5 hover:bg-accent/25 transition-colors"
+          >
+            <span className="text-3xl shrink-0">🎨</span>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-text">Bu siparişle {creditGrant.amount} AI Stüdyo kredisi kazandın!</p>
+              <p className="text-sm text-text-light mt-0.5">Fotoğraflarını yapay zekâ ile iyileştir → Stüdyoya git</p>
+            </div>
+            <span className="text-primary shrink-0">→</span>
+          </Link>
+        ) : null}
 
         {/* ── Sonraki adımlar ────────────────────────── */}
         <div className="anim-up-3 bg-white rounded-2xl border border-border p-6 mb-5">
