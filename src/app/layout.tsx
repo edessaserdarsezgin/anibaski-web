@@ -3,7 +3,7 @@ import { Lora, Nunito } from "next/font/google";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import CookieBanner from "@/components/layout/CookieBanner";
 import AuthSessionListener from "@/components/layout/AuthSessionListener";
-import { getSeoSettings } from "@/lib/seo";
+import { getSeoSettings, getSeoPage, PAGE_REGISTRY } from "@/lib/seo";
 import "./globals.css";
 
 const lora = Lora({
@@ -20,22 +20,26 @@ const nunito = Nunito({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const seo = await getSeoSettings();
+  const [seo, home] = await Promise.all([getSeoSettings(), getSeoPage("/")]);
+  const homeReg = PAGE_REGISTRY.find((p) => p.path === "/");
+  const homeTitle = (home?.title || homeReg?.defaultTitle || seo.siteName).trim();
+  const homeDesc = (home?.description || homeReg?.defaultDescription || seo.defaultDescription).trim();
+  const ogImage = home?.ogImage || seo.defaultOgImage;
   return {
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
     title: {
-      default: seo.defaultTitle,
+      default: homeTitle,
       template: `%s | ${seo.siteName}`,
     },
-    description: seo.description,
+    description: homeDesc,
     alternates: {
-      canonical: "https://anibaski.com",
+      canonical: "/",
     },
     openGraph: {
       siteName: seo.siteName,
       locale: "tr_TR",
       type: "website",
-      ...(seo.ogImage ? { images: [{ url: seo.ogImage }] } : {}),
+      ...(ogImage ? { images: [{ url: ogImage }] } : {}),
     },
     ...((seo.googleVerification || seo.bingVerification)
       ? {
