@@ -4,6 +4,7 @@ import { useState } from "react";
 import CustomSelect from "@/components/ui/CustomSelect";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { slugify } from "@/lib/slug";
 
 type Category = { id: string; name: string; slug: string };
 type Product = { id: string; name: string; slug: string };
@@ -46,14 +47,6 @@ const DEFAULT = {
   placement: "hero",
   show_on_home: false,
 };
-
-function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/ı/g, "i").replace(/ş/g, "s").replace(/ç/g, "c")
-    .replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ö/g, "o")
-    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-}
 
 export default function CampaignForm({ initial, categories, products, coupons }: Props) {
   const router = useRouter();

@@ -2,18 +2,9 @@
 
 import { useEffect, useState } from "react";
 import CustomSelect from "@/components/ui/CustomSelect";
+import { slugify } from "@/lib/slug";
 
 type Category = { id: string; name: string; slug: string; description: string | null; parentId: string | null; imageUrl?: string | null; show_on_home?: boolean; home_position?: number; sort_order?: number; is_active?: boolean; metaTitle?: string | null; metaDescription?: string | null };
-
-const TR_MAP: Record<string, string> = {
-  ç: "c", ğ: "g", ı: "i", İ: "i", ö: "o", ş: "s", ü: "u",
-  Ç: "c", Ğ: "g", Ö: "o", Ş: "s", Ü: "u",
-};
-
-function slugify(text: string) {
-  return text.split("").map((c) => TR_MAP[c] ?? c).join("")
-    .toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-}
 
 /** Kategori görseli yükleme alanı — yeni ve düzenle formlarında ortak (DRY). */
 function ImageField({ value, uploading, onUpload, onClear }: {

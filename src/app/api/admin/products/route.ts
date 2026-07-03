@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { parseDiscountInput } from "@/lib/pricing";
 import { requireAdmin } from "@/lib/auth";
 import { revalidateTag } from "next/cache";
+import { slugify } from "@/lib/slug";
 
 export async function GET() {
   const admin = await requireAdmin();
@@ -23,9 +24,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const { name, description, basePrice, categorySlug, imageUrls, variants, requiresPhotoUpload, photoCount, specs, metaTitle, metaDescription } = body;
-  const TR: Record<string, string> = { ç:"c",ğ:"g",ı:"i",İ:"i",ö:"o",ş:"s",ü:"u",Ç:"c",Ğ:"g",Ö:"o",Ş:"s",Ü:"u" };
-  const slug = (body.slug as string).split("").map(c => TR[c] ?? c).join("")
-    .toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const slug = slugify(body.slug as string);
 
   const { data: category } = await admin.supabase
     .from("categories").select("id").eq("slug", categorySlug).single();
@@ -37,7 +36,10 @@ export async function POST(req: NextRequest) {
     .insert({ name, slug, description, basePrice, categoryId: category.id, images: imageUrls?.length ? imageUrls : [], requiresPhotoUpload: !!requiresPhotoUpload, photoCount: photoCount ?? 1, specs: specs ?? null, metaTitle: metaTitle || null, metaDescription: metaDescription || null, ...parseDiscountInput(body), is_featured: !!body.is_featured, featured_position: Number.isFinite(Number(body.featured_position)) ? Number(body.featured_position) : 0 })
     .select().single();
 
-  if (productError) return NextResponse.json({ error: productError.message }, { status: 500 });
+  if (productError) {
+    if (productError.code === "23505") return NextResponse.json({ error: "Bu slug zaten kullanımda, farklı bir slug girin." }, { status: 409 });
+    return NextResponse.json({ error: productError.message }, { status: 500 });
+  }
 
   if (variants?.length) {
     const { error: variantError } = await admin.supabase.from("product_variants").insert(

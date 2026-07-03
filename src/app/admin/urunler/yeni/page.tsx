@@ -4,21 +4,13 @@ import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { localInputToIso } from "@/lib/pricing";
 import CustomSelect from "@/components/ui/CustomSelect";
+import { slugify } from "@/lib/slug";
 
 type Category = { id: string; name: string; slug: string; parentId: string | null };
 type VariantOption = { label: string; priceAddon: number };
 type VariantGroup = { type: string; options: VariantOption[] };
 type Tag = { id: string; name: string; color: string; text_color?: string };
 type SelectedTag = { tagId: string; position: string };
-
-const TR_MAP: Record<string, string> = {
-  ç: "c", ğ: "g", ı: "i", İ: "i", ö: "o", ş: "s", ü: "u",
-  Ç: "c", Ğ: "g", Ö: "o", Ş: "s", Ü: "u",
-};
-function slugify(text: string) {
-  return text.split("").map(c => TR_MAP[c] ?? c).join("")
-    .toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-}
 
 function move<T>(arr: T[], from: number, to: number): T[] {
   const next = [...arr];

@@ -6,21 +6,13 @@ import { isoToLocalInput, localInputToIso } from "@/lib/pricing";
 import Image from "next/image";
 import ProductPromotions from "./ProductPromotions";
 import CustomSelect from "@/components/ui/CustomSelect";
+import { slugify } from "@/lib/slug";
 
 type Category = { id: string; name: string; slug: string; parentId?: string | null };
 type SavedVariant = { id: string; type: string; label: string; value: string; priceAddon: number };
 type PendingOption = { label: string; priceAddon: number };
 type Tag = { id: string; name: string; color: string; text_color?: string };
 type SelectedTag = { tagId: string; position: string };
-
-const TR_MAP: Record<string, string> = {
-  ç: "c", ğ: "g", ı: "i", İ: "i", ö: "o", ş: "s", ü: "u",
-  Ç: "c", Ğ: "g", Ö: "o", Ş: "s", Ü: "u",
-};
-function slugify(text: string) {
-  return text.split("").map(c => TR_MAP[c] ?? c).join("")
-    .toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-}
 
 function move<T>(arr: T[], from: number, to: number): T[] {
   const next = [...arr];
