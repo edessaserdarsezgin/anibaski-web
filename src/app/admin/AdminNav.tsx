@@ -23,6 +23,7 @@ const NAV_ITEMS = [
   { href: "/admin/belgeler", label: "Belge Ayarları" },
   { href: "/admin/seo", label: "SEO" },
   { href: "/admin/istatistik", label: "İstatistik" },
+  { href: "/admin/raporlar", label: "Raporlar" },
 ];
 
 export default function AdminNav({ email }: { email: string }) {
@@ -58,7 +59,7 @@ export default function AdminNav({ email }: { email: string }) {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-56 bg-white border-r border-border flex-col shrink-0">
+      <aside className="hidden md:flex w-56 bg-white border-r border-border flex-col shrink-0 print:hidden">
         <div className="px-6 h-16 flex items-center border-b border-border">
           <Link href="/" className="font-serif text-xl text-text">
             Anı<span className="text-primary">Baskı</span>
@@ -71,7 +72,7 @@ export default function AdminNav({ email }: { email: string }) {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-white border-b border-border flex items-center px-4 gap-3">
+      <header className="md:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-white border-b border-border flex items-center px-4 gap-3 print:hidden">
         <button
           onClick={() => setOpen(true)}
           className="p-2 rounded-lg hover:bg-bg transition-colors"
