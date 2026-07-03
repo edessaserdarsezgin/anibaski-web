@@ -3,6 +3,7 @@ import { Lora, Nunito } from "next/font/google";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import CookieBanner from "@/components/layout/CookieBanner";
 import AuthSessionListener from "@/components/layout/AuthSessionListener";
+import { getSeoSettings } from "@/lib/seo";
 import "./globals.css";
 
 const lora = Lora({
@@ -18,23 +19,34 @@ const nunito = Nunito({
   weight: ["300", "400", "600"],
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-  title: {
-    default: "AnıBaskı | Anılarınızı Dokunulur Kılın",
-    template: "%s | AnıBaskı",
-  },
-  description:
-    "Dijital anılarınızı fotoğraf baskısı, fotokitap, tablo ve kişisel hediyelere dönüştürün. Türkiye'nin en hızlı fotoğraf baskı platformu.",
-  alternates: {
-    canonical: "https://anibaski.com",
-  },
-  openGraph: {
-    siteName: "AnıBaskı",
-    locale: "tr_TR",
-    type: "website",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const seo = await getSeoSettings();
+  return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+    title: {
+      default: seo.defaultTitle,
+      template: `%s | ${seo.siteName}`,
+    },
+    description: seo.description,
+    alternates: {
+      canonical: "https://anibaski.com",
+    },
+    openGraph: {
+      siteName: seo.siteName,
+      locale: "tr_TR",
+      type: "website",
+      ...(seo.ogImage ? { images: [{ url: seo.ogImage }] } : {}),
+    },
+    ...((seo.googleVerification || seo.bingVerification)
+      ? {
+          verification: {
+            ...(seo.googleVerification ? { google: seo.googleVerification } : {}),
+            ...(seo.bingVerification ? { other: { "msvalidate.01": seo.bingVerification } } : {}),
+          },
+        }
+      : {}),
+  };
+}
 
 export default function RootLayout({
   children,
