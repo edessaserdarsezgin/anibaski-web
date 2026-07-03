@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+type Crumb = { name: string; href: string };
+
 type CategoryHeroProps = {
   category: {
     name: string;
@@ -12,13 +14,20 @@ type CategoryHeroProps = {
   };
   parentCategory: { name: string; slug: string } | null;
   productCount: number;
+  /** Breadcrumb orta kısmı; verilmezse varsayılan: Ürünler + üst kategori. */
+  crumbs?: Crumb[];
 };
 
-export default function CategoryHero({ category, parentCategory, productCount }: CategoryHeroProps) {
+export default function CategoryHero({ category, parentCategory, productCount, crumbs }: CategoryHeroProps) {
   const hasImage = !!category.hero_image;
   const theme = category.theme_color?.trim() || null;
   const showCta = !!(category.cta_label?.trim() && category.cta_href?.trim());
   const onDark = hasImage; // görsel varsa metin açık renk
+
+  const middle: Crumb[] = crumbs ?? [
+    { name: "Ürünler", href: "/urunler" },
+    ...(parentCategory ? [{ name: parentCategory.name, href: `/kategoriler/${parentCategory.slug}` }] : []),
+  ];
 
   const t = {
     crumb: onDark ? "text-white/70" : "text-text-light",
@@ -66,14 +75,12 @@ export default function CategoryHero({ category, parentCategory, productCount }:
       <div className={`relative max-w-7xl mx-auto px-8 py-14 ${hasImage ? "min-h-[300px] flex flex-col justify-end" : ""}`}>
         <p className={`text-sm ${t.crumb} flex items-center gap-1.5 mb-6 flex-wrap`}>
           <Link href="/" className={t.link}>Ana Sayfa</Link>
-          <span className={t.sep}>/</span>
-          <Link href="/urunler" className={t.link}>Ürünler</Link>
-          {parentCategory && (
-            <>
+          {middle.map((c) => (
+            <span key={c.href} className="flex items-center gap-1.5">
               <span className={t.sep}>/</span>
-              <Link href={`/kategoriler/${parentCategory.slug}`} className={t.link}>{parentCategory.name}</Link>
-            </>
-          )}
+              <Link href={c.href} className={t.link}>{c.name}</Link>
+            </span>
+          ))}
           <span className={t.sep}>/</span>
           <span className={t.current}>{category.name}</span>
         </p>
