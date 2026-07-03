@@ -17,7 +17,7 @@ export default async function AdminSiparislerPage({ searchParams }: Props) {
   const supabase = createAdminClient();
   const { data: allOrders } = await supabase
     .from("orders")
-    .select(`id, type, status, total, createdAt, "trackingCode", "adminNote", "paymentMethod", "paymentStatus", items:order_items(id, quantity, variantSelections, product:products(name)), address:addresses!orders_addressId_fkey(fullName, city), buyer:profiles!orders_userId_fkey(fullName, email)`)
+    .select(`id, type, status, total, createdAt, "trackingCode", "adminNote", "photosPurgedAt", "paymentMethod", "paymentStatus", items:order_items(id, quantity, variantSelections, product:products(name)), address:addresses!orders_addressId_fkey(fullName, city), buyer:profiles!orders_userId_fkey(fullName, email)`)
     .order("createdAt", { ascending: false });
 
   // Tamamlanmamış kredi kartı siparişleri admin listesinde de gizlensin
@@ -66,6 +66,7 @@ export default async function AdminSiparislerPage({ searchParams }: Props) {
     createdAt: o.createdAt,
     trackingCode: (o as { trackingCode: string | null }).trackingCode,
     adminNote: (o as { adminNote: string | null }).adminNote,
+    photosPurgedAt: (o as { photosPurgedAt: string | null }).photosPurgedAt,
     items: (o.items ?? []).map(it => ({
       id: it.id,
       quantity: it.quantity,

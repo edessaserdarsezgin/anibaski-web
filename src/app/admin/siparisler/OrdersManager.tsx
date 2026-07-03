@@ -8,6 +8,7 @@ import CustomSelect from "@/components/ui/CustomSelect";
 import OrderStatusSelect from "./OrderStatusSelect";
 import OrderTrackingInput from "./OrderTrackingInput";
 import OrderNoteInput from "./OrderNoteInput";
+import DeletePhotosButton from "./DeletePhotosButton";
 
 export type AdminOrder = {
   id: string;
@@ -17,6 +18,7 @@ export type AdminOrder = {
   createdAt: string;
   trackingCode: string | null;
   adminNote: string | null;
+  photosPurgedAt: string | null;
   items: { id: string; quantity: number; variantSelections: Record<string, { label: string }> | null; product: { name: string } | null }[];
   address: { fullName: string; city: string } | null;
   buyer: { fullName: string | null; email: string } | null;
@@ -158,9 +160,10 @@ export default function OrdersManager({ orders }: { orders: AdminOrder[] }) {
                 <OrderNoteInput orderId={order.id} currentNote={order.adminNote} />
               </div>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 flex-wrap">
                 <Link href={`/siparisler/${order.id}?from=admin`} className="text-xs text-primary font-semibold">Detayı Görüntüle →</Link>
                 <a href={`/admin/siparisler/${order.id}/makbuz`} target="_blank" rel="noopener noreferrer" className="text-xs text-text-light font-semibold hover:text-text">🧾 Makbuz</a>
+                <DeletePhotosButton orderId={order.id} purged={!!order.photosPurgedAt} />
               </div>
             </div>
           );
@@ -223,6 +226,7 @@ export default function OrdersManager({ orders }: { orders: AdminOrder[] }) {
                       <td className="px-4 py-4 whitespace-nowrap">
                         <Link href={`/siparisler/${order.id}?from=admin`} className="text-xs text-primary hover:underline font-semibold">Detay</Link>
                         <a href={`/admin/siparisler/${order.id}/makbuz`} target="_blank" rel="noopener noreferrer" className="block mt-1 text-xs text-text-light hover:text-text font-semibold">🧾 Makbuz</a>
+                        <div className="mt-1"><DeletePhotosButton orderId={order.id} purged={!!order.photosPurgedAt} /></div>
                       </td>
                     </tr>
                     <tr className="border-b border-border last:border-0 bg-bg/40">
