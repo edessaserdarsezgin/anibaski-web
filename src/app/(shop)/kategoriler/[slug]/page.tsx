@@ -3,6 +3,7 @@ import { resolveSlugRedirect } from "@/lib/slugHistory";
 import Link from "next/link";
 import ProductCard from "@/components/product/ProductCard";
 import ProductFilterBar from "@/components/product/ProductFilterBar";
+import CategoryHero from "@/components/category/CategoryHero";
 import {
   getCategoryBySlug,
   getSubCategories,
@@ -93,36 +94,19 @@ export default async function KategoriPage({ params, searchParams }: Props) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      {/* ── Hero ────────────────────────────────────── */}
-      <section className="relative bg-bg border-b border-border overflow-hidden">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-primary/8 blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full bg-accent/15 blur-3xl" />
-        </div>
-        <div className="relative max-w-7xl mx-auto px-8 py-14">
-          <p className="text-sm text-text-light flex items-center gap-1.5 mb-6 flex-wrap">
-            <Link href="/" className="hover:text-primary transition-colors">Ana Sayfa</Link>
-            <span className="text-border">/</span>
-            <Link href="/urunler" className="hover:text-primary transition-colors">Ürünler</Link>
-            {parentCategory && (
-              <>
-                <span className="text-border">/</span>
-                <Link href={`/kategoriler/${parentCategory.slug}`} className="hover:text-primary transition-colors">
-                  {parentCategory.name}
-                </Link>
-              </>
-            )}
-            <span className="text-border">/</span>
-            <span className="text-text">{category.name}</span>
-          </p>
-          <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase mb-3">Koleksiyon</p>
-          <h1 className="font-serif text-5xl md:text-6xl text-text leading-tight">{category.name}</h1>
-          {category.description && (
-            <p className="mt-3 text-text-light text-lg max-w-xl">{category.description}</p>
-          )}
-          <p className="mt-3 text-text-light text-sm">{products?.length ?? 0} ürün · Türkiye geneli kargo</p>
-        </div>
-      </section>
+      <CategoryHero
+        category={{
+          name: category.name,
+          slug: category.slug,
+          description: category.description ?? null,
+          hero_image: category.hero_image ?? null,
+          theme_color: category.theme_color ?? null,
+          cta_label: category.cta_label ?? null,
+          cta_href: category.cta_href ?? null,
+        }}
+        parentCategory={parentCategory ? { name: parentCategory.name, slug: parentCategory.slug } : null}
+        productCount={products?.length ?? 0}
+      />
 
       {(products?.length ?? 0) > 0 && (
         <ProductFilterBar tags={allTags ?? []} currentTag={tag} currentSort={sort} />
