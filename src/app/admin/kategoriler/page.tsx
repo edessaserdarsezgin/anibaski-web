@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import CustomSelect from "@/components/ui/CustomSelect";
 import { slugify } from "@/lib/slug";
 
-type Category = { id: string; name: string; slug: string; description: string | null; parentId: string | null; imageUrl?: string | null; show_on_home?: boolean; home_position?: number; sort_order?: number; is_active?: boolean; metaTitle?: string | null; metaDescription?: string | null };
+type Category = { id: string; name: string; slug: string; description: string | null; parentId: string | null; imageUrl?: string | null; show_on_home?: boolean; home_position?: number; sort_order?: number; is_active?: boolean; metaTitle?: string | null; metaDescription?: string | null; hero_image?: string | null; theme_color?: string | null; cta_label?: string | null; cta_href?: string | null };
 
 /** Kategori görseli yükleme alanı — yeni ve düzenle formlarında ortak (DRY). */
 function ImageField({ value, uploading, onUpload, onClear }: {
@@ -31,12 +31,12 @@ function ImageField({ value, uploading, onUpload, onClear }: {
 export default function AdminKategorilerPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ name: "", slug: "", description: "", parentId: "", imageUrl: "", metaTitle: "", metaDescription: "" });
+  const [form, setForm] = useState({ name: "", slug: "", description: "", parentId: "", imageUrl: "", metaTitle: "", metaDescription: "", hero_image: "", theme_color: "", cta_label: "", cta_href: "" });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", slug: "", description: "", parentId: "", imageUrl: "", show_on_home: false, home_position: 0, metaTitle: "", metaDescription: "" });
+  const [editForm, setEditForm] = useState({ name: "", slug: "", description: "", parentId: "", imageUrl: "", show_on_home: false, home_position: 0, metaTitle: "", metaDescription: "", hero_image: "", theme_color: "", cta_label: "", cta_href: "" });
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
 
@@ -68,13 +68,13 @@ export default function AdminKategorilerPage() {
     const res = await fetch("/api/admin/categories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: form.name, slug: form.slug, description: form.description, parentId: form.parentId || null, imageUrl: form.imageUrl || null, metaTitle: form.metaTitle || null, metaDescription: form.metaDescription || null }),
+      body: JSON.stringify({ name: form.name, slug: form.slug, description: form.description, parentId: form.parentId || null, imageUrl: form.imageUrl || null, metaTitle: form.metaTitle || null, metaDescription: form.metaDescription || null, hero_image: form.hero_image || null, theme_color: form.theme_color || null, cta_label: form.cta_label || null, cta_href: form.cta_href || null }),
     });
     if (!res.ok) {
       const data = await res.json();
       setError(data.error ?? "Hata oluştu.");
     } else {
-      setForm({ name: "", slug: "", description: "", parentId: "", imageUrl: "", metaTitle: "", metaDescription: "" });
+      setForm({ name: "", slug: "", description: "", parentId: "", imageUrl: "", metaTitle: "", metaDescription: "", hero_image: "", theme_color: "", cta_label: "", cta_href: "" });
       await load();
     }
     setSaving(false);
@@ -82,14 +82,14 @@ export default function AdminKategorilerPage() {
 
   function startEdit(cat: Category) {
     setEditingId(cat.id);
-    setEditForm({ name: cat.name, slug: cat.slug, description: cat.description ?? "", parentId: cat.parentId ?? "", imageUrl: cat.imageUrl ?? "", show_on_home: cat.show_on_home ?? false, home_position: cat.home_position ?? 0, metaTitle: cat.metaTitle ?? "", metaDescription: cat.metaDescription ?? "" });
+    setEditForm({ name: cat.name, slug: cat.slug, description: cat.description ?? "", parentId: cat.parentId ?? "", imageUrl: cat.imageUrl ?? "", show_on_home: cat.show_on_home ?? false, home_position: cat.home_position ?? 0, metaTitle: cat.metaTitle ?? "", metaDescription: cat.metaDescription ?? "", hero_image: cat.hero_image ?? "", theme_color: cat.theme_color ?? "", cta_label: cat.cta_label ?? "", cta_href: cat.cta_href ?? "" });
   }
 
   async function handleUpdate(id: string) {
     await fetch("/api/admin/categories", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, name: editForm.name, slug: editForm.slug, description: editForm.description, parentId: editForm.parentId || null, imageUrl: editForm.imageUrl || null, show_on_home: editForm.show_on_home, home_position: editForm.home_position, metaTitle: editForm.metaTitle || null, metaDescription: editForm.metaDescription || null }),
+      body: JSON.stringify({ id, name: editForm.name, slug: editForm.slug, description: editForm.description, parentId: editForm.parentId || null, imageUrl: editForm.imageUrl || null, show_on_home: editForm.show_on_home, home_position: editForm.home_position, metaTitle: editForm.metaTitle || null, metaDescription: editForm.metaDescription || null, hero_image: editForm.hero_image || null, theme_color: editForm.theme_color || null, cta_label: editForm.cta_label || null, cta_href: editForm.cta_href || null }),
     });
     setEditingId(null);
     await load();
@@ -202,6 +202,26 @@ export default function AdminKategorilerPage() {
               onUpload={async (f) => { setUploading(true); const url = await uploadImage(f); if (url) setForm(fm => ({ ...fm, imageUrl: url })); setUploading(false); }}
               onClear={() => setForm(fm => ({ ...fm, imageUrl: "" }))}
             />
+            <div>
+              <p className="text-xs text-text-light mb-1">Banner (geniş — kategori hero)</p>
+              <ImageField
+                value={form.hero_image}
+                uploading={uploading}
+                onUpload={async (f) => { setUploading(true); const url = await uploadImage(f); if (url) setForm(fm => ({ ...fm, hero_image: url })); setUploading(false); }}
+                onClear={() => setForm(fm => ({ ...fm, hero_image: "" }))}
+              />
+            </div>
+            <label className="flex items-center gap-3 text-sm text-text">
+              Tema rengi
+              <input type="color" value={form.theme_color || "#e07a5f"}
+                onChange={e => setForm(f => ({ ...f, theme_color: e.target.value }))}
+                className="w-9 h-9 rounded-lg border border-border cursor-pointer p-0.5 bg-white" />
+              {form.theme_color && (
+                <button type="button" onClick={() => setForm(f => ({ ...f, theme_color: "" }))} className="text-xs text-red-500 hover:underline">Temizle</button>
+              )}
+            </label>
+            <input value={form.cta_label} onChange={e => setForm(f => ({ ...f, cta_label: e.target.value }))} className={inputCls} placeholder="CTA buton metni (opsiyonel)" />
+            <input value={form.cta_href} onChange={e => setForm(f => ({ ...f, cta_href: e.target.value }))} className={inputCls} placeholder="CTA link (örn. /urunler?tag=kanvas)" />
             <CustomSelect
               value={form.parentId}
               onChange={v => setForm(f => ({ ...f, parentId: v }))}
@@ -267,6 +287,26 @@ export default function AdminKategorilerPage() {
                           onUpload={async (f) => { setUploading(true); const url = await uploadImage(f); if (url) setEditForm(fm => ({ ...fm, imageUrl: url })); setUploading(false); }}
                           onClear={() => setEditForm(fm => ({ ...fm, imageUrl: "" }))}
                         />
+                        <div>
+                          <p className="text-xs text-text-light mb-1">Banner (geniş — kategori hero)</p>
+                          <ImageField
+                            value={editForm.hero_image}
+                            uploading={uploading}
+                            onUpload={async (f) => { setUploading(true); const url = await uploadImage(f); if (url) setEditForm(fm => ({ ...fm, hero_image: url })); setUploading(false); }}
+                            onClear={() => setEditForm(fm => ({ ...fm, hero_image: "" }))}
+                          />
+                        </div>
+                        <label className="flex items-center gap-3 text-sm text-text">
+                          Tema rengi
+                          <input type="color" value={editForm.theme_color || "#e07a5f"}
+                            onChange={e => setEditForm(f => ({ ...f, theme_color: e.target.value }))}
+                            className="w-9 h-9 rounded-lg border border-border cursor-pointer p-0.5 bg-white" />
+                          {editForm.theme_color && (
+                            <button type="button" onClick={() => setEditForm(f => ({ ...f, theme_color: "" }))} className="text-xs text-red-500 hover:underline">Temizle</button>
+                          )}
+                        </label>
+                        <input value={editForm.cta_label} onChange={e => setEditForm(f => ({ ...f, cta_label: e.target.value }))} className={inputCls + " w-full"} placeholder="CTA buton metni (opsiyonel)" />
+                        <input value={editForm.cta_href} onChange={e => setEditForm(f => ({ ...f, cta_href: e.target.value }))} className={inputCls + " w-full"} placeholder="CTA link (örn. /urunler?tag=kanvas)" />
                         <CustomSelect
                           value={editForm.parentId}
                           onChange={v => setEditForm(f => ({ ...f, parentId: v }))}
