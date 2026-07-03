@@ -7,8 +7,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const db = createAdminClient();
 
   const [{ data: products }, { data: categories }, { data: collections }] = await Promise.all([
-    db.from("products").select("slug, updatedAt").eq("isActive", true),
-    db.from("categories").select("slug, updatedAt").eq("is_active", true),
+    db.from("products").select("slug, createdAt").eq("isActive", true),
+    db.from("categories").select("slug, createdAt").eq("is_active", true),
     db.from("collections").select("slug, updated_at").eq("is_active", true),
   ]);
 
@@ -26,14 +26,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const productRoutes: MetadataRoute.Sitemap = (products ?? []).map((p) => ({
     url: `${BASE}/urunler/${p.slug}`,
-    lastModified: p.updatedAt ? new Date(p.updatedAt) : new Date(),
+    lastModified: p.createdAt ? new Date(p.createdAt) : new Date(),
     changeFrequency: "weekly",
     priority: 0.8,
   }));
 
   const categoryRoutes: MetadataRoute.Sitemap = (categories ?? []).map((c) => ({
     url: `${BASE}/kategoriler/${c.slug}`,
-    lastModified: c.updatedAt ? new Date(c.updatedAt) : new Date(),
+    lastModified: c.createdAt ? new Date(c.createdAt) : new Date(),
     changeFrequency: "weekly",
     priority: 0.7,
   }));
