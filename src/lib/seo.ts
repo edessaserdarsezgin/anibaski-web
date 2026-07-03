@@ -30,6 +30,7 @@ export const SEO_DEFAULTS: SeoSettings = {
 export const PAGE_REGISTRY: PageRegistryEntry[] = [
   { path: "/", label: "Ana Sayfa", defaultTitle: "AnıBaskı | Anılarınızı Dokunulur Kılın", defaultDescription: "Dijital anılarınızı fotoğraf baskısı, fotokitap, tablo ve kişisel hediyelere dönüştürün. Türkiye'nin en hızlı fotoğraf baskı platformu." },
   { path: "/urunler", label: "Ürünler", defaultTitle: "Tüm Ürünler", defaultDescription: "Fotoğraf baskısı, fotokitap, tablo, polaroid ve daha fazlası. Tüm ürünleri keşfedin, anılarınızı kalıcı hediyelere dönüştürün." },
+  { path: "/koleksiyonlar", label: "Koleksiyonlar", defaultTitle: "Koleksiyonlar", defaultDescription: "Özenle derlenmiş ürün koleksiyonları: temalara göre seçilmiş fotoğraf baskısı ve hediye fikirleri." },
   { path: "/studyo", label: "AI Stüdyo", defaultTitle: "AI Stüdyo", defaultDescription: "Fotoğraflarınızı yapay zeka ile iyileştirin, netleştirin ve baskıya hazırlayın." },
   { path: "/urun-rehberi", label: "Baskı Rehberi", defaultTitle: "Baskı Rehberi", defaultDescription: "En iyi baskı sonucu için fotoğraf çekim ve hazırlama ipuçları, ürün seçim rehberi." },
   { path: "/kampanyalar", label: "Kampanyalar", defaultTitle: "Kampanyalar", defaultDescription: "AnıBaskı'nın güncel kampanyaları, indirim fırsatları ve özel teklifleri." },

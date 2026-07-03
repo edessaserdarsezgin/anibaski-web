@@ -20,6 +20,7 @@ export default function Footer() {
               <li><Link href="/kategoriler/fotograf-baskilari" className="hover:text-primary transition-colors">Fotoğraf Baskı</Link></li>
               <li><Link href="/kategoriler/duvar-dekorasyonu" className="hover:text-primary transition-colors">Duvar Dekorasyonu</Link></li>
               <li><Link href="/kategoriler/kisiye-ozel-hediyeler" className="hover:text-primary transition-colors">Hediyelikler</Link></li>
+              <li><Link href="/koleksiyonlar" className="hover:text-primary transition-colors">Koleksiyonlar</Link></li>
             </ul>
           </div>
           <div>
