@@ -16,15 +16,17 @@ import {
   getCampaignCards,
   getReprintSuggestions
 } from "@/lib/catalog";
+import { getHomeCollections } from "@/lib/collections";
 
 export default async function HomePage() {
   const { freeShippingThreshold } = await getShippingSettings();
 
-  const [homeCats, featRaw, bannerRaw, campaignCards] = await Promise.all([
+  const [homeCats, featRaw, bannerRaw, campaignCards, collectionRowsRaw] = await Promise.all([
     getHomeCategories(),
     getFeaturedProducts(12),
     getHeroBanners(),
     getCampaignCards(),
+    getHomeCollections(),
   ]);
 
   const supabase = await createClient();
@@ -44,6 +46,11 @@ export default async function HomePage() {
   }
 
   const featured = (featRaw ?? []) as unknown as Parameters<typeof FeaturedStrip>[0]["products"];
+
+  const collectionRows = (collectionRowsRaw ?? []).map((r) => ({
+    id: r.id, name: r.name, slug: r.slug,
+    products: r.products as unknown as CatRowProduct[],
+  }));
 
   const nowIso = new Date().toISOString();
   const heroBanners = (bannerRaw ?? []).filter(
@@ -142,6 +149,24 @@ export default async function HomePage() {
             )}
           </div>
         </section>
+
+        {/* 3b. Koleksiyonlar — admin'in kürettiği ürün şeritleri */}
+        {collectionRows.length > 0 && (
+          <section className="py-24 px-4 sm:px-8 bg-white border-t border-border">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex items-end justify-between mb-12">
+                <div>
+                  <p className="text-primary text-xs font-semibold tracking-[0.25em] uppercase mb-2">Seçkiler</p>
+                  <h2 className="font-serif text-3xl md:text-5xl text-text">Koleksiyonlar</h2>
+                </div>
+                <Link href="/koleksiyonlar" className="hidden md:block text-sm font-semibold text-text-light hover:text-primary transition-colors">
+                  Tümünü gör →
+                </Link>
+              </div>
+              <HomeCategoryRows rows={collectionRows} hrefBase="/koleksiyonlar" />
+            </div>
+          </section>
+        )}
 
         {/* 4. Öne çıkan ürünler */}
         <FeaturedStrip products={featured} />

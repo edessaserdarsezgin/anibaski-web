@@ -9,14 +9,14 @@ type RowProduct = {
 };
 type Row = { id: string; name: string; slug: string; products: RowProduct[] };
 
-export default function HomeCategoryRows({ rows }: { rows: Row[] }) {
+export default function HomeCategoryRows({ rows, hrefBase = "/kategoriler" }: { rows: Row[]; hrefBase?: string }) {
   return (
     <div className="flex flex-col gap-14">
       {rows.map((row) => (
         <div key={row.id}>
           <div className="flex items-end justify-between mb-5">
             <h3 className="font-serif text-2xl text-text">{row.name}</h3>
-            <Link href={`/kategoriler/${row.slug}`} className="text-sm font-semibold text-text-light hover:text-primary transition-colors">
+            <Link href={`${hrefBase}/${row.slug}`} className="text-sm font-semibold text-text-light hover:text-primary transition-colors">
               Tümünü gör →
             </Link>
           </div>
