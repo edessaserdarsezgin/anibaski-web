@@ -26,14 +26,8 @@ const NAV_ITEMS = [
   { href: "/admin/raporlar", label: "Raporlar" },
 ];
 
-export default function AdminNav({ email }: { email: string }) {
-  const [open, setOpen] = useState(false);
-  const pathname = usePathname();
-
-  // Sayfa değişince drawer kapat
-  useEffect(() => { setOpen(false); }, [pathname]);
-
-  const NavLinks = () => (
+function NavLinks({ pathname }: { pathname: string }) {
+  return (
     <nav className="flex-1 px-3 py-4 flex flex-col gap-1 overflow-y-auto">
       {NAV_ITEMS.map((item) => {
         const active = item.href === "/admin"
@@ -55,6 +49,14 @@ export default function AdminNav({ email }: { email: string }) {
       })}
     </nav>
   );
+}
+
+export default function AdminNav({ email }: { email: string }) {
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Sayfa değişince drawer kapat
+  useEffect(() => { setOpen(false); }, [pathname]);
 
   return (
     <>
@@ -65,7 +67,7 @@ export default function AdminNav({ email }: { email: string }) {
             Anı<span className="text-primary">Baskı</span>
           </Link>
         </div>
-        <NavLinks />
+        <NavLinks pathname={pathname} />
         <div className="px-6 py-4 border-t border-border">
           <p className="text-xs text-text-light truncate">{email}</p>
         </div>
@@ -116,7 +118,7 @@ export default function AdminNav({ email }: { email: string }) {
             </svg>
           </button>
         </div>
-        <NavLinks />
+        <NavLinks pathname={pathname} />
         <div className="px-6 py-4 border-t border-border shrink-0">
           <p className="text-xs text-text-light truncate">{email}</p>
         </div>
