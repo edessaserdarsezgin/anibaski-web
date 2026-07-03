@@ -31,14 +31,16 @@ export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const category = await getCategoryBySlug(slug);
   if (!category) return {};
-  const description = category.description
-    ? String(category.description).slice(0, 155)
-    : `${category.name} ürünlerini keşfedin. AnıBaskı ile anılarınızı kalıcı hediyelere dönüştürün.`;
+  const title = String(category.metaTitle ?? "").trim() || category.name;
+  const description = String(category.metaDescription ?? "").trim()
+    || (category.description
+      ? String(category.description).slice(0, 155)
+      : `${category.name} ürünlerini keşfedin. AnıBaskı ile anılarınızı kalıcı hediyelere dönüştürün.`);
   return {
-    title: `${category.name} | AnıBaskı`,
+    title,
     description,
     alternates: { canonical: `/kategoriler/${slug}` },
-    openGraph: { title: category.name, description },
+    openGraph: { title, description },
   };
 }
 

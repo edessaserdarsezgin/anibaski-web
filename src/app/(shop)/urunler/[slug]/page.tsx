@@ -25,15 +25,17 @@ export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
   if (!product) return {};
-  const description = product.description
-    ? String(product.description).slice(0, 155)
-    : `${product.name} — AnıBaskı'da fotoğraf baskısı ve kişiye özel hediye seçenekleri.`;
+  const title = String(product.metaTitle ?? "").trim() || product.name;
+  const description = String(product.metaDescription ?? "").trim()
+    || (product.description
+      ? String(product.description).slice(0, 155)
+      : `${product.name} — AnıBaskı'da fotoğraf baskısı ve kişiye özel hediye seçenekleri.`);
   return {
-    title: `${product.name} | AnıBaskı`,
+    title,
     description,
     alternates: { canonical: `/urunler/${slug}` },
     openGraph: {
-      title: product.name,
+      title,
       description,
       images: product.images?.[0] ? [{ url: product.images[0] }] : [],
     },
