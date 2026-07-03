@@ -25,7 +25,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { id } = await params;
   const body = await req.json();
-  const { name, slug, basePrice, categoryId, description, images, specs, isActive, requiresPhotoUpload, photoCount, mockupTemplateUrl } = body;
+  const { name, slug, basePrice, categoryId, description, images, specs, isActive, requiresPhotoUpload, photoCount, mockupTemplateUrl, metaTitle, metaDescription } = body;
 
   const updateData: Record<string, unknown> = { name, slug, basePrice, categoryId, description: description || null, images, specs: specs || null, ...parseDiscountInput(body), is_featured: !!body.is_featured, featured_position: Number.isFinite(Number(body.featured_position)) ? Number(body.featured_position) : 0 };
   if (typeof isActive === "boolean") updateData.isActive = isActive;
@@ -34,6 +34,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     updateData.photoCount = photoCount ?? 1;
   }
   if (mockupTemplateUrl !== undefined) updateData.mockupTemplateUrl = mockupTemplateUrl || null;
+  if (metaTitle !== undefined) updateData.metaTitle = metaTitle || null;
+  if (metaDescription !== undefined) updateData.metaDescription = metaDescription || null;
 
   const { error } = await admin.supabase
     .from("products")

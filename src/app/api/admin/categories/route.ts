@@ -8,7 +8,7 @@ export async function GET() {
 
   const { data, error } = await admin.supabase
     .from("categories")
-    .select("id, name, slug, description, parentId, imageUrl, show_on_home, home_position, sort_order, is_active")
+    .select("id, name, slug, description, parentId, imageUrl, show_on_home, home_position, sort_order, is_active, metaTitle, metaDescription")
     .order("sort_order")
     .order("name");
 
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { name, slug, description, parentId, imageUrl } = await req.json();
+  const { name, slug, description, parentId, imageUrl, metaTitle, metaDescription } = await req.json();
 
   // Yeni kategori, kendi seviyesinin (aynı üst kategori) en sonuna eklenir.
   const lastQuery = admin.supabase
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await admin.supabase
     .from("categories")
-    .insert({ name, slug, description: description || null, parentId: parentId || null, imageUrl: imageUrl || null, sort_order: nextOrder })
+    .insert({ name, slug, description: description || null, parentId: parentId || null, imageUrl: imageUrl || null, metaTitle: metaTitle || null, metaDescription: metaDescription || null, sort_order: nextOrder })
     .select()
     .single();
 
@@ -63,6 +63,8 @@ export async function PATCH(req: NextRequest) {
   if ("show_on_home" in body) patch.show_on_home = !!body.show_on_home;
   if ("home_position" in body) patch.home_position = Number.isFinite(Number(body.home_position)) ? Number(body.home_position) : 0;
   if ("is_active" in body) patch.is_active = !!body.is_active;
+  if ("metaTitle" in body) patch.metaTitle = body.metaTitle || null;
+  if ("metaDescription" in body) patch.metaDescription = body.metaDescription || null;
 
   const { error } = await admin.supabase.from("categories").update(patch).eq("id", id);
 
