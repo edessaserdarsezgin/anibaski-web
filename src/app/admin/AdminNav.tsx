@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   { href: "/admin/ai-araclar", label: "AI Araçlar" },
   { href: "/admin/firma-bilgileri", label: "Firma Bilgileri" },
   { href: "/admin/belgeler", label: "Belge Ayarları" },
+  { href: "/admin/seo", label: "SEO" },
   { href: "/admin/istatistik", label: "İstatistik" },
 ];
 
