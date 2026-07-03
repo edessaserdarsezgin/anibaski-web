@@ -1,9 +1,9 @@
 import { createAdminClient } from "@/lib/supabase/server";
 
-type Entity = "product" | "category";
+type Entity = "product" | "category" | "collection";
 type DB = ReturnType<typeof createAdminClient>;
 
-const TABLE: Record<Entity, string> = { product: "products", category: "categories" };
+const TABLE: Record<Entity, string> = { product: "products", category: "categories", collection: "collections" };
 
 /**
  * Slug değiştiğinde eski slug'ı kaydeder (eski URL → yeni URL yönlendirmesi için).
