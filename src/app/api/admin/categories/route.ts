@@ -9,7 +9,7 @@ export async function GET() {
 
   const { data, error } = await admin.supabase
     .from("categories")
-    .select("id, name, slug, description, parentId, imageUrl, show_on_home, home_position, sort_order, is_active, metaTitle, metaDescription")
+    .select("id, name, slug, description, parentId, imageUrl, show_on_home, home_position, sort_order, is_active, metaTitle, metaDescription, hero_image, theme_color, cta_label, cta_href")
     .order("sort_order")
     .order("name");
 

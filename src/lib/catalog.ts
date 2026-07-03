@@ -281,7 +281,7 @@ export const getCategoryBySlug = unstable_cache(
     const db = createAdminClient();
     const { data } = await db
       .from("categories")
-      .select("id, name, slug, description, parentId, metaTitle, metaDescription")
+      .select("id, name, slug, description, parentId, metaTitle, metaDescription, hero_image, theme_color, cta_label, cta_href")
       .eq("slug", slug)
       .eq("is_active", true)
       .maybeSingle();
