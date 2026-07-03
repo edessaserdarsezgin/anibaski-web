@@ -3,11 +3,11 @@ import Image from "next/image";
 import { unstable_noStore as noStore } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 
-export const metadata = {
-  title: "Kampanyalar",
-  description: "AnıBaskı'nın güncel kampanyaları, indirim fırsatları ve özel teklifleri.",
-  alternates: { canonical: "/kampanyalar" },
-};
+import { pageMetadata } from "@/lib/seo";
+
+export function generateMetadata() {
+  return pageMetadata("/kampanyalar");
+}
 
 type Campaign = {
   id: string;

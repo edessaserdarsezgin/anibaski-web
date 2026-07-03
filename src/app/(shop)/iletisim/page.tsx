@@ -1,6 +1,10 @@
 import { getCompanyInfo } from "@/lib/company";
 
-export const metadata = { title: "İletişim | AnıBaskı" };
+import { pageMetadata } from "@/lib/seo";
+
+export function generateMetadata() {
+  return pageMetadata("/iletisim");
+}
 
 function waLink(num: string): string {
   const d = num.replace(/\D/g, "");

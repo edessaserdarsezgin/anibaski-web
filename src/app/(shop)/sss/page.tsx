@@ -1,6 +1,10 @@
 import FaqCategory, { type FaqItem } from "@/components/faq/FaqCategory";
 
-export const metadata = { title: "Sıkça Sorulan Sorular | AnıBaskı" };
+import { pageMetadata } from "@/lib/seo";
+
+export function generateMetadata() {
+  return pageMetadata("/sss");
+}
 
 const CATEGORIES: { id: string; title: string; items: FaqItem[] }[] = [
   {

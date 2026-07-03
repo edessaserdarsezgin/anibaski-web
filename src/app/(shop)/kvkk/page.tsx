@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation";
 
-export const metadata = { title: "KVKK Aydınlatma Metni", alternates: { canonical: "/kvkk" } };
+import { pageMetadata } from "@/lib/seo";
+
+export function generateMetadata() {
+  return pageMetadata("/kvkk");
+}
 
 export default function KvkkPage() {
   redirect("/politikalar/gizlilik");

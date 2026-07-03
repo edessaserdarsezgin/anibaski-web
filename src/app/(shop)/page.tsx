@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { getShippingSettings } from "@/lib/shipping";
 import HomeCategoryRows from "@/components/home/HomeCategoryRows";
@@ -17,19 +16,6 @@ import {
   getCampaignCards,
   getReprintSuggestions
 } from "@/lib/catalog";
-
-export const metadata: Metadata = {
-  title: "AnıBaskı | Anılarınızı Dokunulur Kılın",
-  description:
-    "Fotoğraf baskısı, fotokitap, tablo ve polaroid ile dijital anılarınızı kalıcı hediyelere dönüştürün. 2-5 iş günü teslimat, Türkiye geneli kargo.",
-  alternates: { canonical: "/" },
-  openGraph: {
-    title: "AnıBaskı | Anılarınızı Dokunulur Kılın",
-    description:
-      "Fotoğraf baskısı, fotokitap, tablo ve polaroid ile dijital anılarınızı kalıcı hediyelere dönüştürün.",
-    url: "/",
-  },
-};
 
 export default async function HomePage() {
   const { freeShippingThreshold } = await getShippingSettings();

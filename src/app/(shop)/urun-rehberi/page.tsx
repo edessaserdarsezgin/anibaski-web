@@ -5,7 +5,11 @@ import GuideProductCard, { type ResolvedGuideProduct } from "@/components/produc
 import BeforeAfterSlider from "@/components/studio/BeforeAfterSlider";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Baskı Rehberi | AnıBaskı", alternates: { canonical: "/urun-rehberi" } };
+import { pageMetadata } from "@/lib/seo";
+
+export function generateMetadata() {
+  return pageMetadata("/urun-rehberi");
+}
 
 const NAV = [
   { href: "#urun", label: "Ürün Rehberi" },

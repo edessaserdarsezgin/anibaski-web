@@ -1,4 +1,8 @@
-export const metadata = { title: "Mesafeli Satış Sözleşmesi | AnıBaskı", alternates: { canonical: "/politikalar/mesafeli-satis-sozlesmesi" } };
+import { pageMetadata } from "@/lib/seo";
+
+export function generateMetadata() {
+  return pageMetadata("/politikalar/mesafeli-satis-sozlesmesi");
+}
 
 export default function MesafeliSatisSozlesmesiPage() {
   return (

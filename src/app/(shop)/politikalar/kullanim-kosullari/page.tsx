@@ -1,4 +1,8 @@
-export const metadata = { title: "Kullanım Koşulları | AnıBaskı", alternates: { canonical: "/politikalar/kullanim-kosullari" } };
+import { pageMetadata } from "@/lib/seo";
+
+export function generateMetadata() {
+  return pageMetadata("/politikalar/kullanim-kosullari");
+}
 
 export default function KullanimKosullariPage() {
   return (

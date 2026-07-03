@@ -1,4 +1,8 @@
-export const metadata = { title: "Gizlilik Politikası & KVKK | AnıBaskı", alternates: { canonical: "/politikalar/gizlilik" } };
+import { pageMetadata } from "@/lib/seo";
+
+export function generateMetadata() {
+  return pageMetadata("/politikalar/gizlilik");
+}
 
 export default function GizlilikPage() {
   return (
