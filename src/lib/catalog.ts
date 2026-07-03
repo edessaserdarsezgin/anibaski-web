@@ -15,7 +15,7 @@ type DiscountableRow = {
  * birleştirir; daha büyüğünü efektif `discount_percent` olarak yazar (PriceTag değişmeden gösterir).
  * Item-promotion yoksa satırlar aynen döner (ürün-own indirim korunur).
  */
-async function withItemPromotions<T extends DiscountableRow>(rows: T[]): Promise<T[]> {
+export async function withItemPromotions<T extends DiscountableRow>(rows: T[]): Promise<T[]> {
   if (!rows.length) return rows;
   const [promos, coupons] = await Promise.all([getActiveItemPromotions(), getActiveCouponPromotions()]);
   const scopedCoupons = coupons.filter((c) => c.scope !== "all" && isDateValid(c) && c.code);
