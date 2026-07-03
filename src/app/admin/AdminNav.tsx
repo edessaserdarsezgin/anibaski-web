@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/admin/uyeler", label: "Üyeler" },
   { href: "/admin/urunler", label: "Ürünler" },
   { href: "/admin/kategoriler", label: "Kategoriler" },
+  { href: "/admin/koleksiyonlar", label: "Koleksiyonlar" },
   { href: "/admin/etiketler", label: "Etiketler" },
   { href: "/admin/yorumlar", label: "Yorumlar" },
   { href: "/admin/soru-cevap", label: "Soru & Cevap" },
