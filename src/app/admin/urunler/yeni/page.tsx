@@ -152,6 +152,8 @@ export default function YeniUrunPage() {
       name: productName,
       slug: productSlug,
       description: form.get("description"),
+      metaTitle: form.get("metaTitle"),
+      metaDescription: form.get("metaDescription"),
       basePrice: Number(form.get("basePrice")),
       categorySlug,
       imageUrls,
@@ -328,6 +330,22 @@ export default function YeniUrunPage() {
             placeholder={"Kağıt: 250gr Kuşe\nBaskı Tekniği: UV Ofset\nÜretim Süresi: 2-3 iş günü\nBoyutlar: 10×15 cm"}
             className={`${inputCls} resize-none`}
           />
+        </div>
+
+        {/* SEO (opsiyonel) */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text">
+            SEO Başlık
+            <span className="ml-1.5 text-xs font-normal text-text-light">(opsiyonel — boşsa ürün adı kullanılır)</span>
+          </label>
+          <input name="metaTitle" className={inputCls} placeholder="Google'da çıkacak başlık" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text">
+            SEO Açıklama
+            <span className="ml-1.5 text-xs font-normal text-text-light">(opsiyonel — boşsa ürün açıklaması kullanılır)</span>
+          </label>
+          <textarea name="metaDescription" rows={2} className={`${inputCls} resize-none`} placeholder="Arama sonucunda görünecek açıklama" />
         </div>
 
         {/* Fotoğraf Yükleme */}

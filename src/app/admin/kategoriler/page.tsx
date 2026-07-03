@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import CustomSelect from "@/components/ui/CustomSelect";
 
-type Category = { id: string; name: string; slug: string; description: string | null; parentId: string | null; imageUrl?: string | null; show_on_home?: boolean; home_position?: number; sort_order?: number; is_active?: boolean };
+type Category = { id: string; name: string; slug: string; description: string | null; parentId: string | null; imageUrl?: string | null; show_on_home?: boolean; home_position?: number; sort_order?: number; is_active?: boolean; metaTitle?: string | null; metaDescription?: string | null };
 
 const TR_MAP: Record<string, string> = {
   ç: "c", ğ: "g", ı: "i", İ: "i", ö: "o", ş: "s", ü: "u",
@@ -40,12 +40,12 @@ function ImageField({ value, uploading, onUpload, onClear }: {
 export default function AdminKategorilerPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ name: "", slug: "", description: "", parentId: "", imageUrl: "" });
+  const [form, setForm] = useState({ name: "", slug: "", description: "", parentId: "", imageUrl: "", metaTitle: "", metaDescription: "" });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", slug: "", description: "", parentId: "", imageUrl: "", show_on_home: false, home_position: 0 });
+  const [editForm, setEditForm] = useState({ name: "", slug: "", description: "", parentId: "", imageUrl: "", show_on_home: false, home_position: 0, metaTitle: "", metaDescription: "" });
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
 
@@ -77,13 +77,13 @@ export default function AdminKategorilerPage() {
     const res = await fetch("/api/admin/categories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: form.name, slug: form.slug, description: form.description, parentId: form.parentId || null, imageUrl: form.imageUrl || null }),
+      body: JSON.stringify({ name: form.name, slug: form.slug, description: form.description, parentId: form.parentId || null, imageUrl: form.imageUrl || null, metaTitle: form.metaTitle || null, metaDescription: form.metaDescription || null }),
     });
     if (!res.ok) {
       const data = await res.json();
       setError(data.error ?? "Hata oluştu.");
     } else {
-      setForm({ name: "", slug: "", description: "", parentId: "", imageUrl: "" });
+      setForm({ name: "", slug: "", description: "", parentId: "", imageUrl: "", metaTitle: "", metaDescription: "" });
       await load();
     }
     setSaving(false);
@@ -91,14 +91,14 @@ export default function AdminKategorilerPage() {
 
   function startEdit(cat: Category) {
     setEditingId(cat.id);
-    setEditForm({ name: cat.name, slug: cat.slug, description: cat.description ?? "", parentId: cat.parentId ?? "", imageUrl: cat.imageUrl ?? "", show_on_home: cat.show_on_home ?? false, home_position: cat.home_position ?? 0 });
+    setEditForm({ name: cat.name, slug: cat.slug, description: cat.description ?? "", parentId: cat.parentId ?? "", imageUrl: cat.imageUrl ?? "", show_on_home: cat.show_on_home ?? false, home_position: cat.home_position ?? 0, metaTitle: cat.metaTitle ?? "", metaDescription: cat.metaDescription ?? "" });
   }
 
   async function handleUpdate(id: string) {
     await fetch("/api/admin/categories", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, name: editForm.name, slug: editForm.slug, description: editForm.description, parentId: editForm.parentId || null, imageUrl: editForm.imageUrl || null, show_on_home: editForm.show_on_home, home_position: editForm.home_position }),
+      body: JSON.stringify({ id, name: editForm.name, slug: editForm.slug, description: editForm.description, parentId: editForm.parentId || null, imageUrl: editForm.imageUrl || null, show_on_home: editForm.show_on_home, home_position: editForm.home_position, metaTitle: editForm.metaTitle || null, metaDescription: editForm.metaDescription || null }),
     });
     setEditingId(null);
     await load();
@@ -195,6 +195,16 @@ export default function AdminKategorilerPage() {
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               className={inputCls} placeholder="Açıklama (opsiyonel)"
             />
+            <input
+              value={form.metaTitle}
+              onChange={e => setForm(f => ({ ...f, metaTitle: e.target.value }))}
+              className={inputCls} placeholder="SEO başlık (opsiyonel — boşsa kategori adı)"
+            />
+            <input
+              value={form.metaDescription}
+              onChange={e => setForm(f => ({ ...f, metaDescription: e.target.value }))}
+              className={inputCls} placeholder="SEO açıklama (opsiyonel)"
+            />
             <ImageField
               value={form.imageUrl}
               uploading={uploading}
@@ -258,6 +268,8 @@ export default function AdminKategorilerPage() {
                         <input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} className={inputCls + " w-full"} />
                         <input value={editForm.slug} onChange={e => setEditForm(f => ({ ...f, slug: e.target.value }))} className={inputCls + " w-full"} />
                         <input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} className={inputCls + " w-full"} placeholder="Açıklama" />
+                        <input value={editForm.metaTitle} onChange={e => setEditForm(f => ({ ...f, metaTitle: e.target.value }))} className={inputCls + " w-full"} placeholder="SEO başlık (opsiyonel)" />
+                        <input value={editForm.metaDescription} onChange={e => setEditForm(f => ({ ...f, metaDescription: e.target.value }))} className={inputCls + " w-full"} placeholder="SEO açıklama (opsiyonel)" />
                         <ImageField
                           value={editForm.imageUrl}
                           uploading={uploading}

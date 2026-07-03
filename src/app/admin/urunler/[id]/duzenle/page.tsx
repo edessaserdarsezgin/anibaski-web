@@ -40,6 +40,7 @@ export default function UrunDuzenle() {
   const [form, setForm] = useState({
     name: "", slug: "", basePrice: 0, categoryId: "", description: "",
     details: "",
+    metaTitle: "", metaDescription: "",
     discountPercent: "", discountStartsAt: "", discountEndsAt: "",
     isFeatured: false,
   });
@@ -90,6 +91,7 @@ export default function UrunDuzenle() {
           name: product.name, slug: product.slug, basePrice: Number(product.basePrice),
           categoryId: product.categoryId, description: product.description ?? "",
           details: s.details ?? "",
+          metaTitle: product.metaTitle ?? "", metaDescription: product.metaDescription ?? "",
           discountPercent: product.discount_percent != null ? String(product.discount_percent) : "",
           discountStartsAt: isoToLocalInput(product.discount_starts_at ?? null),
           discountEndsAt: isoToLocalInput(product.discount_ends_at ?? null),
@@ -195,7 +197,7 @@ export default function UrunDuzenle() {
     const res = await fetch(`/api/admin/products/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: form.name, slug: form.slug, basePrice: form.basePrice, categoryId: form.categoryId, description: form.description, images, specs: form.details.trim() ? { details: form.details.trim() } : null, requiresPhotoUpload, photoCount: requiresPhotoUpload ? photoCount : 1, mockupTemplateUrl: mockupTemplateUrl || null, discount_percent: form.discountPercent || null, discount_starts_at: localInputToIso(form.discountStartsAt), discount_ends_at: localInputToIso(form.discountEndsAt), is_featured: form.isFeatured }),
+      body: JSON.stringify({ name: form.name, slug: form.slug, basePrice: form.basePrice, categoryId: form.categoryId, description: form.description, metaTitle: form.metaTitle, metaDescription: form.metaDescription, images, specs: form.details.trim() ? { details: form.details.trim() } : null, requiresPhotoUpload, photoCount: requiresPhotoUpload ? photoCount : 1, mockupTemplateUrl: mockupTemplateUrl || null, discount_percent: form.discountPercent || null, discount_starts_at: localInputToIso(form.discountStartsAt), discount_ends_at: localInputToIso(form.discountEndsAt), is_featured: form.isFeatured }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -360,6 +362,22 @@ export default function UrunDuzenle() {
             placeholder={"Kağıt: 250gr Kuşe\nBaskı Tekniği: UV Ofset\nÜretim Süresi: 2-3 iş günü\nBoyutlar: 10×15 cm"}
             className={`${inputCls} resize-none`}
           />
+        </div>
+
+        {/* SEO (opsiyonel) */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text">
+            SEO Başlık
+            <span className="ml-1.5 text-xs font-normal text-text-light">(opsiyonel — boşsa ürün adı kullanılır)</span>
+          </label>
+          <input value={form.metaTitle} onChange={e => setForm(f => ({ ...f, metaTitle: e.target.value }))} className={inputCls} placeholder="Google'da çıkacak başlık" />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-text">
+            SEO Açıklama
+            <span className="ml-1.5 text-xs font-normal text-text-light">(opsiyonel — boşsa ürün açıklaması kullanılır)</span>
+          </label>
+          <textarea value={form.metaDescription} onChange={e => setForm(f => ({ ...f, metaDescription: e.target.value }))} rows={2} className={`${inputCls} resize-none`} placeholder="Arama sonucunda görünecek açıklama" />
         </div>
 
         {/* Fotoğraf Yükleme */}
