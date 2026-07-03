@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   const admin = await requireAdmin();
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { name, slug, description, parentId, imageUrl, metaTitle, metaDescription } = await req.json();
+  const { name, slug, description, parentId, imageUrl, metaTitle, metaDescription, hero_image, theme_color, cta_label, cta_href } = await req.json();
 
   // Yeni kategori, kendi seviyesinin (aynı üst kategori) en sonuna eklenir.
   const lastQuery = admin.supabase
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await admin.supabase
     .from("categories")
-    .insert({ name, slug, description: description || null, parentId: parentId || null, imageUrl: imageUrl || null, metaTitle: metaTitle || null, metaDescription: metaDescription || null, sort_order: nextOrder })
+    .insert({ name, slug, description: description || null, parentId: parentId || null, imageUrl: imageUrl || null, metaTitle: metaTitle || null, metaDescription: metaDescription || null, hero_image: hero_image || null, theme_color: theme_color || null, cta_label: cta_label || null, cta_href: cta_href || null, sort_order: nextOrder })
     .select()
     .single();
 
@@ -69,6 +69,10 @@ export async function PATCH(req: NextRequest) {
   if ("is_active" in body) patch.is_active = !!body.is_active;
   if ("metaTitle" in body) patch.metaTitle = body.metaTitle || null;
   if ("metaDescription" in body) patch.metaDescription = body.metaDescription || null;
+  if ("hero_image" in body) patch.hero_image = body.hero_image || null;
+  if ("theme_color" in body) patch.theme_color = body.theme_color || null;
+  if ("cta_label" in body) patch.cta_label = body.cta_label || null;
+  if ("cta_href" in body) patch.cta_href = body.cta_href || null;
 
   const oldSlug = "slug" in body
     ? (await admin.supabase.from("categories").select("slug").eq("id", id).single()).data?.slug
