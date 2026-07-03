@@ -1,4 +1,5 @@
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
+import { resolveSlugRedirect } from "@/lib/slugHistory";
 import Link from "next/link";
 import ProductCard from "@/components/product/ProductCard";
 import ProductFilterBar from "@/components/product/ProductFilterBar";
@@ -49,7 +50,11 @@ export default async function KategoriPage({ params, searchParams }: Props) {
   const { column, ascending } = getSortOrder(sort);
 
   const category = await getCategoryBySlug(slug);
-  if (!category) notFound();
+  if (!category) {
+    const dest = await resolveSlugRedirect("category", slug);
+    if (dest) permanentRedirect(`/kategoriler/${dest}`);
+    notFound();
+  }
 
   // Alt kategoriler, parent kategori, etiketler ve filtre eşleşmeleri paralel
   const [subCategories, parentCategory, allTags, tagProductIds] = await Promise.all([

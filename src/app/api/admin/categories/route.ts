@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { revalidateTag } from "next/cache";
+import { recordSlugChange } from "@/lib/slugHistory";
 
 export async function GET() {
   const admin = await requireAdmin();
@@ -37,7 +38,10 @@ export async function POST(req: NextRequest) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    if (error.code === "23505") return NextResponse.json({ error: "Bu slug zaten kullanımda, farklı bir slug girin." }, { status: 409 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   revalidateTag("categories", "max");
   revalidateTag("products", "max");
@@ -66,9 +70,20 @@ export async function PATCH(req: NextRequest) {
   if ("metaTitle" in body) patch.metaTitle = body.metaTitle || null;
   if ("metaDescription" in body) patch.metaDescription = body.metaDescription || null;
 
+  const oldSlug = "slug" in body
+    ? (await admin.supabase.from("categories").select("slug").eq("id", id).single()).data?.slug
+    : null;
+
   const { error } = await admin.supabase.from("categories").update(patch).eq("id", id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    if (error.code === "23505") return NextResponse.json({ error: "Bu slug zaten kullanımda, farklı bir slug girin." }, { status: 409 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  if (oldSlug && body.slug && oldSlug !== body.slug) {
+    await recordSlugChange(admin.supabase, "category", id, oldSlug, body.slug);
+  }
 
   // Aktif/pasif değişimi üst kategoriden alt kategorilere yayılır (üst dalı yönetir).
   if ("is_active" in patch) {

@@ -1,4 +1,5 @@
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
+import { resolveSlugRedirect } from "@/lib/slugHistory";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
@@ -52,7 +53,11 @@ export default async function UrunDetayPage({ params }: Props) {
     supabase.auth.getUser(),
   ]);
 
-  if (!product) notFound();
+  if (!product) {
+    const dest = await resolveSlugRedirect("product", slug);
+    if (dest) permanentRedirect(`/urunler/${dest}`);
+    notFound();
+  }
 
   const adminDb = createAdminClient();
 
