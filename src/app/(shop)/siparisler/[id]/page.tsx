@@ -75,9 +75,10 @@ export default async function SiparisDetayPage({ params, searchParams }: Props) 
   const displayStatus = isCancelRequested ? "PENDING" : order.status;
   const currentStep = isCancelled ? -1 : STATUS_STEPS.indexOf(displayStatus);
   const items: OrderItem[] = order.items ?? [];
-  // uploads bucket private → saklı path'leri okuma anında imzalı URL'e çevir
+  // uploads bucket private → saklı path'leri okuma anında imzalı URL'e çevir.
+  // Fotoğraflar R2'den silindiyse (photosPurgedAt) path'ler ölü → önizleme hiç gösterme.
   await Promise.all(items.map(async (it) => {
-    it.uploadedImages = await signUploadedImages(it.uploadedImages);
+    it.uploadedImages = order.photosPurgedAt ? [] : await signUploadedImages(it.uploadedImages);
   }));
 
   return (

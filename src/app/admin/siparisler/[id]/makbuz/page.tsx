@@ -23,7 +23,7 @@ export default async function MakbuzPage({ params }: Props) {
   const [{ data: order }, config] = await Promise.all([
     supabase
       .from("orders")
-      .select(`id, status, subtotal, "shippingFee", discount_amount, discount_code, total, createdAt, "trackingCode", "adminNote", type,
+      .select(`id, status, subtotal, "shippingFee", discount_amount, discount_code, total, createdAt, "trackingCode", "adminNote", type, "photosPurgedAt",
         items:order_items(id, quantity, "unitPrice", variantSelections, uploadedImages, product:products(name)),
         address:addresses!orders_addressId_fkey(fullName, phone, address, city, district, zip),
         buyer:profiles!orders_userId_fkey(fullName, phone, email)`)
@@ -37,7 +37,8 @@ export default async function MakbuzPage({ params }: Props) {
   const items = await Promise.all(
     (order.items ?? []).map(async (it) => ({
       ...it,
-      signed: config.showPhotos ? await signUploadedImages(it.uploadedImages as string[] | null) : [],
+      // Fotoğraflar R2'den silindiyse (photosPurgedAt) path'ler ölü → makbuzda gösterme.
+      signed: config.showPhotos && !order.photosPurgedAt ? await signUploadedImages(it.uploadedImages as string[] | null) : [],
     }))
   );
 
