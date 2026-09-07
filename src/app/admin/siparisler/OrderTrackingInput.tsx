@@ -16,7 +16,7 @@ export default function OrderTrackingInput({
   currentCarrier: string | null;
 }) {
   const [code, setCode] = useState(currentCode ?? "");
-  const [carrier, setCarrier] = useState(currentCarrier ?? "aras");
+  const [carrier, setCarrier] = useState(currentCarrier ?? (currentCode ? "other" : "aras"));
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(!!currentCode);
   const { toast } = useToast();

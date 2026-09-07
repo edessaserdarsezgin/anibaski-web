@@ -82,7 +82,7 @@ export default async function SiparisDetayPage({ params, searchParams }: Props) 
     it.uploadedImages = order.photosPurgedAt ? [] : await signUploadedImages(it.uploadedImages);
   }));
   const carrier = order.carrier ?? "";
-  const carrierLabel = isKnownCarrier(carrier) ? carrierName(carrier) : "Kargo firması";
+  const carrierLabel = isKnownCarrier(carrier) && carrier !== "other" ? carrierName(carrier) : "Kargo firması";
 
   return (
     <div className="max-w-4xl mx-auto px-8 py-12">

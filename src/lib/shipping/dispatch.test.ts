@@ -4,7 +4,7 @@ import type { EmailPayload } from "./dispatch";
 import type { CarrierProvider } from "./carrier/provider";
 
 /** orders güncellemesini ve profil/adres okumalarını taklit eden asgari sahte istemci. */
-function fakeSupabase(order: Record<string, unknown> = {}) {
+function fakeSupabase(order: Record<string, unknown> = {}, updateError: unknown = null) {
   const updates: Record<string, unknown>[] = [];
   const client = {
     updates,
@@ -12,7 +12,7 @@ function fakeSupabase(order: Record<string, unknown> = {}) {
       return {
         update(patch: Record<string, unknown>) {
           updates.push({ table, ...patch });
-          return { eq: async () => ({ error: null }) };
+          return { eq: async () => ({ error: updateError }) };
         },
         select() {
           return {
@@ -110,6 +110,23 @@ describe("recordShipment", () => {
     await expect(recordShipment(deps(), "ord_1", {
       carrier: "dhl" as never, trackingCode: "1", shipmentId: null, labelUrl: null,
     })).rejects.toThrow(/taşıyıcı/i);
+  });
+
+  it("DB hatasında Supabase mesajını taşır ([object Object] değil)", async () => {
+    const supabase = fakeSupabase({}, { message: "duplicate key" });
+    await expect(recordShipment(deps(supabase), "ord_1", {
+      carrier: "aras", trackingCode: "1234567890", shipmentId: null, labelUrl: null,
+    })).rejects.toThrow(/duplicate key/);
+  });
+
+  it("manuel kayıtta shipment_id/label_url patch'e hiç konmaz", async () => {
+    const supabase = fakeSupabase();
+    await recordShipment(deps(supabase), "ord_1", {
+      carrier: "aras", trackingCode: "1234567890", shipmentId: null, labelUrl: null,
+    });
+    const patch = supabase.updates.find(u => u.table === "orders")!;
+    expect(patch).not.toHaveProperty("shipment_id");
+    expect(patch).not.toHaveProperty("label_url");
   });
 });
 

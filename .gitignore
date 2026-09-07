@@ -87,7 +87,6 @@ _hf_test/out_flux_kontext.png
 
 # Kimlik bilgisi içeren yapılandırma dosyaları
 rclone.conf
-*.conf
 
 # Vim undo dosyaları
 *.un~

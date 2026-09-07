@@ -44,7 +44,7 @@ export async function sendShippingNotification(params: Params) {
       </p>
 
       <div style="background:#fdfbf7;border:2px solid #e07a5f;border-radius:12px;padding:20px;text-align:center;margin-bottom:24px">
-        <p style="margin:0 0 8px;font-size:13px;color:#8187a2;font-weight:600;letter-spacing:0.05em">${carrierName.toUpperCase()} TAKİP KODU</p>
+        <p style="margin:0 0 8px;font-size:13px;color:#8187a2;font-weight:600;letter-spacing:0.05em">${carrierName === "Diğer" ? "KARGO TAKİP KODU" : `${carrierName.toLocaleUpperCase("tr-TR")} TAKİP KODU`}</p>
         <p style="margin:0;font-size:24px;font-weight:700;color:#e07a5f;letter-spacing:0.1em">${trackingCode}</p>
         ${trackingUrl ? `
         <a href="${trackingUrl}" style="display:inline-block;margin-top:14px;padding:10px 22px;background:#3d405b;color:#fff;border-radius:20px;font-size:13px;font-weight:700;text-decoration:none">
@@ -54,7 +54,7 @@ export async function sendShippingNotification(params: Params) {
 
       ${trackingUrl ? "" : `
       <p style="margin:0 0 24px;font-size:13px;color:#8187a2;line-height:1.6">
-        Takip kodunuzu ${carrierName} web sitesinden sorgulayabilirsiniz.
+        ${carrierName === "Diğer" ? "Takip kodunuzu kargo firmasının web sitesinden sorgulayabilirsiniz." : `Takip kodunuzu ${carrierName} web sitesinden sorgulayabilirsiniz.`}
       </p>`}
 
       <div style="text-align:center">

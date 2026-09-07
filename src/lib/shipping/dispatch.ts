@@ -65,20 +65,27 @@ export async function recordShipment(
 
   const url = trackingUrl(shipment.carrier, code);
 
+  // shipment_id/label_url yalnız dolu olduklarında yazılır: manuel giriş ikisini de
+  // her zaman null yollar — koşulsuz yazsaydık, bir taşıyıcı adaptörü bağlandığında
+  // admin takip kodunu elle düzeltince sağlayıcının shipment_id'si silinir ve
+  // dispatchOrder'ın idempotency kapısı (order.shipment_id kontrolü) devre dışı kalırdı.
+  const patch: Record<string, unknown> = {
+    carrier: shipment.carrier,
+    trackingCode: code,
+    tracking_url: url,
+    status: "SHIPPED",
+  };
+  if (shipment.shipmentId !== null) patch.shipment_id = shipment.shipmentId;
+  if (shipment.labelUrl !== null) patch.label_url = shipment.labelUrl;
+
   const { error } = await deps.supabase
     .from("orders")
-    .update({
-      carrier: shipment.carrier,
-      trackingCode: code,
-      tracking_url: url,
-      shipment_id: shipment.shipmentId,
-      label_url: shipment.labelUrl,
-      status: "SHIPPED",
-    })
+    .update(patch)
     .eq("id", orderId);
 
   if (error) {
-    throw new CarrierError("CARRIER", `Sipariş güncellenemedi: ${String(error)}`);
+    const detail = (error as { message?: string })?.message ?? JSON.stringify(error);
+    throw new CarrierError("CARRIER", `Sipariş güncellenemedi: ${detail}`);
   }
 
   await notifyCustomer(deps, orderId, shipment, code, url);
@@ -97,10 +104,12 @@ async function notifyCustomer(
     .from("orders").select('"userId", "addressId"').eq("id", orderId).single();
   if (!order?.userId) return;
 
-  const { data: profile } = await deps.supabase
-    .from("profiles").select('email, "fullName", phone').eq("id", String(order.userId)).single();
-  const { data: address } = await deps.supabase
-    .from("addresses").select("phone").eq("id", String(order.addressId ?? "")).single();
+  const [{ data: profile }, { data: address }] = await Promise.all([
+    deps.supabase.from("profiles").select('email, "fullName", phone').eq("id", String(order.userId)).single(),
+    order.addressId
+      ? deps.supabase.from("addresses").select("phone").eq("id", String(order.addressId)).single()
+      : Promise.resolve({ data: null }),
+  ]);
 
   const orderNo = orderId.slice(0, 8).toUpperCase();
   const phone = (profile?.phone as string) || (address?.phone as string);
