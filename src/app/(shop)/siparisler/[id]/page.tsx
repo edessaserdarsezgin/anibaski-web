@@ -6,6 +6,7 @@ import { signUploadedImages } from "@/lib/uploads";
 import { getCompanyInfo, sellerForContracts } from "@/lib/company";
 import { getShippingSettings } from "@/lib/shipping";
 import ShippingEstimate from "@/app/(shop)/urunler/[slug]/ShippingEstimate";
+import { carrierName, isKnownCarrier } from "@/lib/shipping/carrier/registry";
 import LegalAccordion from "@/components/legal/LegalAccordion";
 import CancelRequestButton from "./CancelRequestButton";
 import ReprintButton from "./ReprintButton";
@@ -218,6 +219,34 @@ export default async function SiparisDetayPage({ params, searchParams }: Props) 
             extraHolidays={shippingInfo.extraHolidays}
             mode="order"
           />
+        </div>
+      )}
+
+      {/* Kargo takibi — takip kodu girildiyse göster */}
+      {order.trackingCode && (
+        <div className="mb-6 bg-white rounded-2xl border border-border p-6">
+          <h2 className="font-serif text-lg text-text mb-4">Kargo Takibi</h2>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs text-text-light mb-1">
+                {(() => {
+                  const carrier = order.carrier ?? "";
+                  return isKnownCarrier(carrier) ? carrierName(carrier) : "Kargo firması";
+                })()}
+              </p>
+              <p className="font-semibold text-text tracking-wider">{order.trackingCode}</p>
+            </div>
+            {order.tracking_url && (
+              <a
+                href={order.tracking_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-5 py-2.5 bg-primary text-white rounded-full text-sm font-semibold hover:bg-primary-hover transition-colors"
+              >
+                Kargomu Takip Et →
+              </a>
+            )}
+          </div>
         </div>
       )}
 
