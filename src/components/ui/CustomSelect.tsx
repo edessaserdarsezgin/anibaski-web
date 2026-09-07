@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useId, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { typeaheadStep, type TypeaheadState } from "@/lib/typeahead";
 
 export type SelectOption = { value: string; label: string; disabled?: boolean };
 
@@ -106,6 +107,17 @@ export default function CustomSelect({
     setOpen(false);
   }
 
+  // Harfe atlama tamponu — kuralları ve testleri `@/lib/typeahead` içinde.
+  const typed = useRef<TypeaheadState>({ text: "", at: 0 });
+
+  function typeahead(key: string) {
+    const { state, index } = typeaheadStep({
+      options, activeIdx, key, now: Date.now(), prev: typed.current,
+    });
+    typed.current = state;
+    if (index !== null) setActiveIdx(index);
+  }
+
   // disabled olmayan bir sonraki/önceki indeks
   function nextEnabled(from: number, dir: 1 | -1) {
     let i = from;
@@ -138,6 +150,10 @@ export default function CustomSelect({
     } else if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       if (activeIdx >= 0) choose(options[activeIdx].value);
+    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      // Yazdırılabilir tek karakter → harfe atlama
+      e.preventDefault();
+      typeahead(e.key);
     }
   }
 

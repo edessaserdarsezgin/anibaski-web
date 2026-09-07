@@ -11,6 +11,8 @@
 // Kaynak: https://github.com/volkansenturk/turkiye-iller-ilceler (ilce.json)
 // Doğrulama: 81 il · 973 ilçe · İstanbul 39 · Ankara 25 · Adana 15 → districts.test.ts
 
+import { trKey as key } from "@/lib/text";
+
 /** Plaka kodu → o ilin ilçeleri (Türkçe alfabetik, resmî yazım). */
 export const DISTRICTS: Record<string, string[]> = {
   "01": ["Aladağ", "Ceyhan", "Çukurova", "Feke", "İmamoğlu", "Karaisalı", "Karataş", "Kozan", "Pozantı", "Saimbeyli", "Sarıçam", "Seyhan", "Tufanbeyli", "Yumurtalık", "Yüreğir"],
@@ -103,18 +105,6 @@ function normalizeCityCode(code: string | null | undefined): string | null {
   return padded in DISTRICTS ? padded : null;
 }
 
-/**
- * Türkçe duyarlı karşılaştırma anahtarı — `cities.ts`'teki normalize ile aynı felsefe.
- * İ/I/ı farkını, aksanları, boşluk ve tireyi eler: "kadikoy" ≡ "Kadıköy".
- */
-function key(s: string): string {
-  return s
-    .replace(/İ/g, "i").replace(/I/g, "i").replace(/ı/g, "i")
-    .toLocaleLowerCase("tr")
-    .replace(/ş/g, "s").replace(/ğ/g, "g").replace(/ü/g, "u")
-    .replace(/ö/g, "o").replace(/ç/g, "c").replace(/â/g, "a")
-    .replace(/[\s._-]/g, "");
-}
 
 /** İl kodundaki ilçeler; kod geçersizse boş dizi. */
 export function districtsOf(cityCode: string | null | undefined): string[] {
