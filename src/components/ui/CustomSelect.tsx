@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useId, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { typeaheadStep, type TypeaheadState } from "@/lib/typeahead";
 
 export type SelectOption = { value: string; label: string; disabled?: boolean };
 
@@ -63,7 +64,12 @@ export default function CustomSelect({
       if (btnRef.current?.contains(t) || panelRef.current?.contains(t)) return;
       setOpen(false);
     }
-    function onScrollOrResize() {
+    // Panel `position: fixed` olduğu için SAYFA kaydırılınca butondan kopar → kapat.
+    // Ama panelin KENDİ içindeki scroll'u kapatma: dinleyici capture fazında window'da
+    // olduğundan panelin scroll'u da buraya düşüyor ve uzun listede (81 il, 39 ilçe)
+    // tekerlek menüyü kapatıyordu.
+    function onScrollOrResize(e: Event) {
+      if (e.type === "scroll" && panelRef.current?.contains(e.target as Node)) return;
       setOpen(false);
     }
     function onKey(e: KeyboardEvent) {
@@ -86,11 +92,30 @@ export default function CustomSelect({
     if (open) setActiveIdx(options.findIndex((o) => o.value === value));
   }, [open, value, options]);
 
+  // Aktif öğeyi görünür alana kaydır — uzun listede (81 il) ok tuşuyla ilerleyince
+  // vurgu panelin dışına kayıyor ve kullanıcı nerede olduğunu göremiyordu.
+  useEffect(() => {
+    if (!open || activeIdx < 0) return;
+    const el = panelRef.current?.children[activeIdx] as HTMLElement | undefined;
+    el?.scrollIntoView({ block: "nearest" });
+  }, [open, activeIdx]);
+
   function choose(v: string) {
     const opt = options.find((o) => o.value === v);
     if (opt?.disabled) return;
     onChange(v);
     setOpen(false);
+  }
+
+  // Harfe atlama tamponu — kuralları ve testleri `@/lib/typeahead` içinde.
+  const typed = useRef<TypeaheadState>({ text: "", at: 0 });
+
+  function typeahead(key: string) {
+    const { state, index } = typeaheadStep({
+      options, activeIdx, key, now: Date.now(), prev: typed.current,
+    });
+    typed.current = state;
+    if (index !== null) setActiveIdx(index);
   }
 
   // disabled olmayan bir sonraki/önceki indeks
@@ -125,6 +150,10 @@ export default function CustomSelect({
     } else if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       if (activeIdx >= 0) choose(options[activeIdx].value);
+    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      // Yazdırılabilir tek karakter → harfe atlama
+      e.preventDefault();
+      typeahead(e.key);
     }
   }
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { cityCodeFromName } from "@/lib/shipping/cities";
+import { resolveAddressLocation } from "@/lib/shipping/addressLocation";
 
 export async function GET() {
   const supabase = await createClient();
@@ -23,12 +23,13 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const { title, fullName, phone, address, city, district, zip, cityCode } = body;
-  // İl kodu istemciden gelmezse (eski istemci) il adından türetilir — taşıyıcı API'leri kod bekliyor.
-  const city_code = cityCode || cityCodeFromName(city);
+  // İl/ilçe sunucuda doğrulanır — istemci seçim kutusu kullansa da ona güvenilmez.
+  const loc = resolveAddressLocation({ city, cityCode, district });
+  if (!loc.ok) return NextResponse.json({ error: loc.error }, { status: 400 });
 
   const { data, error } = await supabase
     .from("addresses")
-    .insert({ userId: user.id, title, fullName, phone, address, city, district, zip: zip || null, city_code })
+    .insert({ userId: user.id, title, fullName, phone, address, city, district: loc.district, zip: zip || null, city_code: loc.city_code })
     .select()
     .single();
 

@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import CitySelect from "@/components/ui/CitySelect";
+import DistrictSelect from "@/components/ui/DistrictSelect";
+import { cityCodeFromName } from "@/lib/shipping/cities";
+import { normalizeDistrict } from "@/lib/shipping/districts";
 
 type Address = {
   id: string; title: string; fullName: string; phone: string;
@@ -30,7 +33,9 @@ export default function AddressBook({ initial }: { initial: Address[] }) {
 
   function openEdit(addr: Address) {
     setEditId(addr.id);
-    setForm({ title: addr.title, fullName: addr.fullName, phone: addr.phone, address: addr.address, city: addr.city, district: addr.district, zip: addr.zip ?? "", cityCode: addr.city_code ?? "" });
+    // Eski kayıtlarda city_code boş olabilir; il adından türetilir ki ilçe seçici çalışsın.
+    const cityCode = addr.city_code ?? cityCodeFromName(addr.city) ?? "";
+    setForm({ title: addr.title, fullName: addr.fullName, phone: addr.phone, address: addr.address, city: addr.city, district: addr.district, zip: addr.zip ?? "", cityCode });
     setError("");
     setShowForm(true);
   }
@@ -39,6 +44,7 @@ export default function AddressBook({ initial }: { initial: Address[] }) {
     e.preventDefault();
     // İl artık seçim; native `required` çalışmadığından elle kontrol edilir.
     if (!form.city) { setError("Lütfen il seçin."); return; }
+    if (!form.district) { setError("Lütfen ilçe seçin."); return; }
     setSaving(true);
     setError("");
 
@@ -114,9 +120,14 @@ export default function AddressBook({ initial }: { initial: Address[] }) {
             <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
               required className={inputCls} placeholder="Telefon" type="tel" />
             <CitySelect city={form.city} cityCode={form.cityCode}
-              onChange={next => setForm(f => ({ ...f, ...next }))} />
-            <input value={form.district} onChange={e => setForm(f => ({ ...f, district: e.target.value }))}
-              required className={inputCls} placeholder="İlçe" />
+              onChange={next => setForm(f => ({
+                ...f, ...next,
+                // İl değişti: eski ilçe yeni ilde yoksa temizlenir — Ankara'nın Keçiören'i
+                // İstanbul adresinde kalmamalı.
+                district: normalizeDistrict(next.cityCode, f.district) ?? "",
+              }))} />
+            <DistrictSelect cityCode={form.cityCode} district={form.district}
+              onChange={district => setForm(f => ({ ...f, district }))} />
           </div>
           <textarea value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
             required rows={2} className={inputCls + " resize-none"} placeholder="Mahalle, cadde, sokak, bina no, daire no" />

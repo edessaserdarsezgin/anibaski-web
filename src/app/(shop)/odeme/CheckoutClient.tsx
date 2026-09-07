@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/hooks/useCart";
 import CitySelect from "@/components/ui/CitySelect";
+import DistrictSelect from "@/components/ui/DistrictSelect";
+import { normalizeDistrict } from "@/lib/shipping/districts";
 import LegalModal from "@/components/legal/LegalModal";
 import CaymaHakkiDoc from "@/components/legal/CaymaHakkiDoc";
 import OnBilgilendirmeDoc from "@/components/legal/OnBilgilendirmeDoc";
@@ -102,9 +104,13 @@ function AddressPicker({
             <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
               className={inputCls} placeholder="Telefon" type="tel" />
             <CitySelect city={form.city} cityCode={form.cityCode}
-              onChange={next => setForm(f => ({ ...f, ...next }))} />
-            <input value={form.district} onChange={e => setForm(f => ({ ...f, district: e.target.value }))}
-              className={inputCls} placeholder="İlçe" />
+              onChange={next => setForm(f => ({
+                ...f, ...next,
+                // İl değişince eski ilçe yeni ilde yoksa temizlenir.
+                district: normalizeDistrict(next.cityCode, f.district) ?? "",
+              }))} />
+            <DistrictSelect cityCode={form.cityCode} district={form.district}
+              onChange={district => setForm(f => ({ ...f, district }))} />
           </div>
           <textarea value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
             rows={2} className={inputCls + " resize-none"} placeholder="Mahalle, cadde, sokak, bina no, daire no" />

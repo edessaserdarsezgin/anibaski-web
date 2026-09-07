@@ -6,6 +6,8 @@
 //   · Agregatörler                → state_id / city_id
 // Bu yüzden `addresses.city_code` sağlayıcı seçiminden bağımsız bir gereksinim.
 
+import { trKey as normalize } from "@/lib/text";
+
 export type City = { code: string; name: string };
 
 /** Plaka kodu → il adı. Kod iki haneli string ("01"), taşıyıcı API'leri baştaki sıfırı bekler. */
@@ -53,19 +55,6 @@ export const CITIES: City[] = [
   { code: "81", name: "Düzce" },
 ];
 
-/**
- * Türkçe duyarlı normalize: küçük harfe indirir, aksanları sadeleştirir, boşluk/noktayı atar.
- * `toLowerCase()` tek başına yetmez — "İSTANBUL".toLowerCase() JS'te "i̇stanbul" (birleşik nokta)
- * üretir ve doğrudan karşılaştırma başarısız olur.
- */
-function normalize(s: string): string {
-  return s
-    .replace(/İ/g, "i").replace(/I/g, "i").replace(/ı/g, "i")
-    .toLowerCase()
-    .replace(/ş/g, "s").replace(/ğ/g, "g").replace(/ü/g, "u")
-    .replace(/ö/g, "o").replace(/ç/g, "c").replace(/â/g, "a")
-    .replace(/[\s.\-_]/g, "");
-}
 
 /**
  * Halk arasında kullanılan eski/kısa adlar. Mevcut serbest metin adresleri
