@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { localInputToIso } from "@/lib/pricing";
 import CustomSelect from "@/components/ui/CustomSelect";
+import DimensionsField, { EMPTY_DIMENSIONS, type DimensionsValue } from "@/components/admin/DimensionsField";
 import { slugify } from "@/lib/slug";
 
 type Category = { id: string; name: string; slug: string; parentId: string | null };
@@ -36,6 +37,7 @@ export default function YeniUrunPage() {
   const [details, setDetails] = useState("");
   const [requiresPhotoUpload, setRequiresPhotoUpload] = useState(false);
   const [photoCount, setPhotoCount] = useState(1);
+  const [dimensions, setDimensions] = useState<DimensionsValue>(EMPTY_DIMENSIONS);
   const [groups, setGroups] = useState<VariantGroup[]>([]);
   const [newGroupType, setNewGroupType] = useState("");
   const [pending, setPending] = useState<Record<string, { label: string; priceAddon: number }>>({});
@@ -157,6 +159,7 @@ export default function YeniUrunPage() {
       discount_starts_at: localInputToIso(form.get("discount_starts_at") as string),
       discount_ends_at: localInputToIso(form.get("discount_ends_at") as string),
       is_featured: form.get("is_featured") === "on",
+      ...dimensions,
     };
 
     const res = await fetch("/api/admin/products", {
@@ -361,6 +364,9 @@ export default function YeniUrunPage() {
             </div>
           )}
         </div>
+
+        {/* Kargo Ölçüleri */}
+        <DimensionsField value={dimensions} onChange={setDimensions} />
 
         {/* Varyantlar */}
         <div className="flex flex-col gap-4 pt-2 border-t border-border">

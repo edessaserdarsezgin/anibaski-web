@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import CitySelect from "@/components/ui/CitySelect";
 
 type Address = {
   id: string; title: string; fullName: string; phone: string;
   address: string; city: string; district: string; zip: string | null;
+  city_code?: string | null;
 };
 
-const emptyForm = { title: "", fullName: "", phone: "", address: "", city: "", district: "", zip: "" };
+const emptyForm = { title: "", fullName: "", phone: "", address: "", city: "", district: "", zip: "", cityCode: "" };
 
 export default function AddressBook({ initial }: { initial: Address[] }) {
   const [addresses, setAddresses] = useState<Address[]>(initial);
@@ -28,13 +30,15 @@ export default function AddressBook({ initial }: { initial: Address[] }) {
 
   function openEdit(addr: Address) {
     setEditId(addr.id);
-    setForm({ title: addr.title, fullName: addr.fullName, phone: addr.phone, address: addr.address, city: addr.city, district: addr.district, zip: addr.zip ?? "" });
+    setForm({ title: addr.title, fullName: addr.fullName, phone: addr.phone, address: addr.address, city: addr.city, district: addr.district, zip: addr.zip ?? "", cityCode: addr.city_code ?? "" });
     setError("");
     setShowForm(true);
   }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
+    // İl artık seçim; native `required` çalışmadığından elle kontrol edilir.
+    if (!form.city) { setError("Lütfen il seçin."); return; }
     setSaving(true);
     setError("");
 
@@ -109,8 +113,8 @@ export default function AddressBook({ initial }: { initial: Address[] }) {
               required className={inputCls} placeholder="Ad Soyad" />
             <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
               required className={inputCls} placeholder="Telefon" type="tel" />
-            <input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
-              required className={inputCls} placeholder="İl" />
+            <CitySelect city={form.city} cityCode={form.cityCode}
+              onChange={next => setForm(f => ({ ...f, ...next }))} />
             <input value={form.district} onChange={e => setForm(f => ({ ...f, district: e.target.value }))}
               required className={inputCls} placeholder="İlçe" />
           </div>

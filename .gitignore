@@ -84,3 +84,9 @@ _hf_test/out_aurasr_2000.png
 _hf_test/out_aurasr.png
 _hf_test/out_flux_kontext.png
 011_10x15_Klasik_Fotoğraf_Baskısı_20_Adet.jpg
+
+# Kimlik bilgisi içeren yapılandırma dosyaları
+rclone.conf
+
+# Vim undo dosyaları
+*.un~

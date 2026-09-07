@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseDiscountInput } from "@/lib/pricing";
+import { parseDimensionsInput } from "@/lib/shipping/desi";
 import { requireAdmin } from "@/lib/auth";
 import { revalidateTag } from "next/cache";
 import { slugify } from "@/lib/slug";
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
 
   const { data: product, error: productError } = await admin.supabase
     .from("products")
-    .insert({ name, slug, description, basePrice, categoryId: category.id, images: imageUrls?.length ? imageUrls : [], requiresPhotoUpload: !!requiresPhotoUpload, photoCount: photoCount ?? 1, specs: specs ?? null, metaTitle: metaTitle || null, metaDescription: metaDescription || null, ...parseDiscountInput(body), is_featured: !!body.is_featured, featured_position: Number.isFinite(Number(body.featured_position)) ? Number(body.featured_position) : 0 })
+    .insert({ name, slug, description, basePrice, categoryId: category.id, images: imageUrls?.length ? imageUrls : [], requiresPhotoUpload: !!requiresPhotoUpload, photoCount: photoCount ?? 1, specs: specs ?? null, metaTitle: metaTitle || null, metaDescription: metaDescription || null, ...parseDiscountInput(body), ...parseDimensionsInput(body), is_featured: !!body.is_featured, featured_position: Number.isFinite(Number(body.featured_position)) ? Number(body.featured_position) : 0 })
     .select().single();
 
   if (productError) {

@@ -6,6 +6,7 @@ import { isoToLocalInput, localInputToIso } from "@/lib/pricing";
 import Image from "next/image";
 import ProductPromotions from "./ProductPromotions";
 import CustomSelect from "@/components/ui/CustomSelect";
+import DimensionsField, { EMPTY_DIMENSIONS, type DimensionsValue } from "@/components/admin/DimensionsField";
 import { slugify } from "@/lib/slug";
 
 type Category = { id: string; name: string; slug: string; parentId?: string | null };
@@ -38,6 +39,7 @@ export default function UrunDuzenle() {
   });
   const [requiresPhotoUpload, setRequiresPhotoUpload] = useState(false);
   const [photoCount, setPhotoCount] = useState(1);
+  const [dimensions, setDimensions] = useState<DimensionsValue>(EMPTY_DIMENSIONS);
   const [images, setImages] = useState<string[]>([]);
   const [imageUploading, setImageUploading] = useState(false);
   const [mockupTemplateUrl, setMockupTemplateUrl] = useState<string>("");
@@ -92,6 +94,12 @@ export default function UrunDuzenle() {
         setImages(product.images ?? []);
         setRequiresPhotoUpload(!!product.requiresPhotoUpload);
         setPhotoCount(product.photoCount ?? 1);
+        setDimensions({
+          length_cm: product.length_cm != null ? Number(product.length_cm) : null,
+          width_cm: product.width_cm != null ? Number(product.width_cm) : null,
+          height_cm: product.height_cm != null ? Number(product.height_cm) : null,
+          weight_kg: product.weight_kg != null ? Number(product.weight_kg) : null,
+        });
         setMockupTemplateUrl(product.mockupTemplateUrl ?? "");
       }
       setVariants(savedVariants);
@@ -189,7 +197,7 @@ export default function UrunDuzenle() {
     const res = await fetch(`/api/admin/products/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: form.name, slug: form.slug, basePrice: form.basePrice, categoryId: form.categoryId, description: form.description, metaTitle: form.metaTitle, metaDescription: form.metaDescription, images, specs: form.details.trim() ? { details: form.details.trim() } : null, requiresPhotoUpload, photoCount: requiresPhotoUpload ? photoCount : 1, mockupTemplateUrl: mockupTemplateUrl || null, discount_percent: form.discountPercent || null, discount_starts_at: localInputToIso(form.discountStartsAt), discount_ends_at: localInputToIso(form.discountEndsAt), is_featured: form.isFeatured }),
+      body: JSON.stringify({ name: form.name, slug: form.slug, basePrice: form.basePrice, categoryId: form.categoryId, description: form.description, metaTitle: form.metaTitle, metaDescription: form.metaDescription, images, specs: form.details.trim() ? { details: form.details.trim() } : null, requiresPhotoUpload, photoCount: requiresPhotoUpload ? photoCount : 1, mockupTemplateUrl: mockupTemplateUrl || null, discount_percent: form.discountPercent || null, discount_starts_at: localInputToIso(form.discountStartsAt), discount_ends_at: localInputToIso(form.discountEndsAt), is_featured: form.isFeatured, ...dimensions }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -393,6 +401,9 @@ export default function UrunDuzenle() {
             </div>
           )}
         </div>
+
+        {/* Kargo Ölçüleri */}
+        <DimensionsField value={dimensions} onChange={setDimensions} />
 
         {/* Mockup Şablonu */}
         <div className="flex flex-col gap-3 pt-2 border-t border-border">
