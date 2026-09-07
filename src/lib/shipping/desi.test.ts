@@ -5,7 +5,8 @@ import {
 } from "./desi";
 
 const kanvas = { length: 50, width: 70, height: 5, weight: 1.2 };   // 5.83 desi
-const foto12 = { length: 20, width: 15, height: 2, weight: 0.3 };   // 0.2 desi
+// hacimsel 0.2 ama ağırlık 0.3 → FATURALANAN 0.3 (billableDesi ikisinin BÜYÜĞÜNÜ alır)
+const foto12 = { length: 20, width: 15, height: 2, weight: 0.3 };
 
 describe("volumetricDesi", () => {
   it("hacmi 3000'e böler", () => {
@@ -57,7 +58,7 @@ describe("parseDimensionsInput", () => {
 describe("orderDesi", () => {
   it("kalem desilerini adetle çarpıp ambalaj payı ekler", () => {
     const r = orderDesi([{ dimensions: foto12, quantity: 2 }]);
-    expect(r.desi).toBe(0.2 * 2 + PACKAGING_DESI_MARGIN);
+    expect(r.desi).toBe(0.3 * 2 + PACKAGING_DESI_MARGIN);
     expect(r.missingCount).toBe(0);
   });
 
@@ -67,7 +68,7 @@ describe("orderDesi", () => {
       { dimensions: null, quantity: 3 },
     ]);
     expect(r.missingCount).toBe(1);
-    expect(r.desi).toBe(0.2 + PACKAGING_DESI_MARGIN);
+    expect(r.desi).toBe(0.3 + PACKAGING_DESI_MARGIN);
   });
 
   it("hiç ölçülü kalem yoksa ambalaj payı eklemez", () => {
