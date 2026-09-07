@@ -63,7 +63,12 @@ export default function CustomSelect({
       if (btnRef.current?.contains(t) || panelRef.current?.contains(t)) return;
       setOpen(false);
     }
-    function onScrollOrResize() {
+    // Panel `position: fixed` olduğu için SAYFA kaydırılınca butondan kopar → kapat.
+    // Ama panelin KENDİ içindeki scroll'u kapatma: dinleyici capture fazında window'da
+    // olduğundan panelin scroll'u da buraya düşüyor ve uzun listede (81 il, 39 ilçe)
+    // tekerlek menüyü kapatıyordu.
+    function onScrollOrResize(e: Event) {
+      if (e.type === "scroll" && panelRef.current?.contains(e.target as Node)) return;
       setOpen(false);
     }
     function onKey(e: KeyboardEvent) {
@@ -85,6 +90,14 @@ export default function CustomSelect({
   useEffect(() => {
     if (open) setActiveIdx(options.findIndex((o) => o.value === value));
   }, [open, value, options]);
+
+  // Aktif öğeyi görünür alana kaydır — uzun listede (81 il) ok tuşuyla ilerleyince
+  // vurgu panelin dışına kayıyor ve kullanıcı nerede olduğunu göremiyordu.
+  useEffect(() => {
+    if (!open || activeIdx < 0) return;
+    const el = panelRef.current?.children[activeIdx] as HTMLElement | undefined;
+    el?.scrollIntoView({ block: "nearest" });
+  }, [open, activeIdx]);
 
   function choose(v: string) {
     const opt = options.find((o) => o.value === v);
