@@ -10,6 +10,8 @@
 import type { Shipment } from "./carrier/types";
 import { isKnownCarrier, trackingUrl, carrierName } from "./carrier/registry";
 import { CarrierError } from "./carrier/provider";
+import type { CarrierProvider } from "./carrier/provider";
+import { buildShipmentRequest } from "./carrier/request";
 
 export type EmailPayload = {
   orderId: string;
@@ -29,10 +31,14 @@ export type WhatsAppPayload = {
 
 // Supabase istemcisinin yalnız kullandığımız yüzeyi. Tam tipi bağlamak testte
 // devasa bir sahte nesne yazmayı gerektirirdi.
+type QueryResult = Promise<{ data: Record<string, unknown>[] | null }> & {
+  single(): Promise<{ data: Record<string, unknown> | null }>;
+};
+
 type SupabaseLike = {
   from(table: string): {
     update(patch: Record<string, unknown>): { eq(col: string, val: string): Promise<{ error: unknown }> };
-    select(cols: string): { eq(col: string, val: string): { single(): Promise<{ data: Record<string, unknown> | null }> } };
+    select(cols: string): { eq(col: string, val: string): QueryResult };
   };
 };
 
@@ -121,4 +127,86 @@ async function notifyCustomer(
       console.error("[dispatch] e-posta gönderilemedi:", e);
     }
   }
+}
+
+/**
+ * Taşıyıcı API'si üzerinden gönderi oluşturur ve recordShipment ile kaydeder.
+ *
+ * Bugün üretimde çağıranı yoktur (getCarrierProvider() null döner). Sahte
+ * sağlayıcıyla testte uçtan uca çalışır; bir adaptör yazıldığında burada
+ * DEĞİŞİKLİK GEREKMEZ — bu fonksiyonun değişmemesi tasarımın sınavıdır.
+ */
+export async function dispatchOrder(
+  deps: DispatchDeps,
+  orderId: string,
+  provider: CarrierProvider | null,
+): Promise<{ trackingUrl: string | null }> {
+  if (!provider) {
+    throw new CarrierError(
+      "UNSUPPORTED",
+      "Otomatik gönderi oluşturulamaz: manuel modda takip kodu elle girilir",
+    );
+  }
+
+  const { data: order } = await deps.supabase
+    .from("orders")
+    .select('id, total, "paymentMethod", "addressId", shipment_id')
+    .eq("id", orderId)
+    .single();
+
+  if (!order) throw new CarrierError("VALIDATION", "Sipariş bulunamadı");
+  if (order.shipment_id) {
+    throw new CarrierError("VALIDATION", "Bu sipariş için zaten bir gönderi oluşturulmuş");
+  }
+
+  const { data: address } = await deps.supabase
+    .from("addresses")
+    .select('"fullName", phone, address, city, district, city_code')
+    .eq("id", String(order.addressId))
+    .single();
+
+  if (!address) throw new CarrierError("VALIDATION", "Teslimat adresi bulunamadı");
+
+  const { data: rows } = await deps.supabase
+    .from("order_items")
+    .select("quantity, product:products(name, length_cm, width_cm, height_cm, weight_kg)")
+    .eq("orderId", orderId);
+
+  const items = (rows ?? []).map((r) => {
+    const p = (r.product ?? {}) as Record<string, number | string | null>;
+    return {
+      productName: String(p.name ?? "Bilinmeyen ürün"),
+      quantity: Number(r.quantity),
+      dimensions: {
+        length_cm: (p.length_cm as number) ?? null,
+        width_cm: (p.width_cm as number) ?? null,
+        height_cm: (p.height_cm as number) ?? null,
+        weight_kg: (p.weight_kg as number) ?? null,
+      },
+    };
+  });
+
+  const built = buildShipmentRequest({
+    order: {
+      id: String(order.id),
+      total: Number(order.total),
+      paymentMethod: String(order.paymentMethod),
+    },
+    address: {
+      fullName: String(address.fullName ?? ""),
+      phone: String(address.phone ?? ""),
+      address: String(address.address ?? ""),
+      city: String(address.city ?? ""),
+      district: String(address.district ?? ""),
+      city_code: (address.city_code as string) ?? null,
+    },
+    items,
+  });
+
+  if (!built.ok) {
+    throw new CarrierError("VALIDATION", built.missing.join(" · "));
+  }
+
+  const shipment = await provider.createShipment(built.request);
+  return recordShipment(deps, orderId, shipment);
 }

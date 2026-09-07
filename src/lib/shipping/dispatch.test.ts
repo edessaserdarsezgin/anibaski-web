@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
-import { recordShipment } from "./dispatch";
+import { recordShipment, dispatchOrder } from "./dispatch";
 import type { EmailPayload } from "./dispatch";
+import type { CarrierProvider } from "./carrier/provider";
 
 /** orders güncellemesini ve profil/adres okumalarını taklit eden asgari sahte istemci. */
 function fakeSupabase(order: Record<string, unknown> = {}) {
@@ -109,5 +110,104 @@ describe("recordShipment", () => {
     await expect(recordShipment(deps(), "ord_1", {
       carrier: "dhl" as never, trackingCode: "1", shipmentId: null, labelUrl: null,
     })).rejects.toThrow(/taşıyıcı/i);
+  });
+});
+
+/** Sipariş + adres + kalemleri okumayı taklit eden sahte istemci.
+ *  `eq()` hem `await` edilebilir (order_items dizisi) hem `single()` taşır (tek satır). */
+function fakeSupabaseForDispatch(over: {
+  order?: Record<string, unknown>;
+  address?: Record<string, unknown>;
+  items?: Record<string, unknown>[];
+} = {}) {
+  const order = {
+    id: "ord_1", total: 429.9, paymentMethod: "credit_card",
+    addressId: "a1", userId: "u1", shipment_id: null, ...over.order,
+  };
+  const address = {
+    fullName: "Ayşe Yılmaz", phone: "05551112233", address: "Atatürk Cd. No:5",
+    city: "İstanbul", district: "Kadıköy", city_code: "34", ...over.address,
+  };
+  const items = over.items ?? [{
+    quantity: 2,
+    product: { name: "10×15 Baskı (12'li)", length_cm: 20, width_cm: 15, height_cm: 2, weight_kg: 0.3 },
+  }];
+  const profile = { email: "m@example.com", fullName: "Ayşe", phone: "05551112233" };
+  const updates: Record<string, unknown>[] = [];
+
+  const rowFor = (table: string) =>
+    table === "orders" ? order : table === "addresses" ? address : profile;
+
+  return {
+    updates,
+    from(table: string) {
+      return {
+        update(patch: Record<string, unknown>) {
+          updates.push({ table, ...patch });
+          return { eq: async () => ({ error: null }) };
+        },
+        select() {
+          return {
+            eq: () =>
+              Object.assign(
+                Promise.resolve({ data: table === "order_items" ? items : [rowFor(table)] }),
+                { single: async () => ({ data: rowFor(table) }) },
+              ),
+          };
+        },
+      };
+    },
+  };
+}
+
+function fakeProvider(over: Partial<CarrierProvider> = {}): CarrierProvider {
+  return {
+    id: "aras",
+    createShipment: vi.fn(async () => ({
+      carrier: "aras" as const, shipmentId: "ARAS-1",
+      trackingCode: "TRK-1", labelUrl: "https://x/l.pdf",
+    })),
+    getStatus: vi.fn(async () => "IN_TRANSIT" as const),
+    ...over,
+  };
+}
+
+describe("dispatchOrder", () => {
+  it("sağlayıcı yoksa UNSUPPORTED hatası verir", async () => {
+    await expect(dispatchOrder(deps(), "ord_1", null)).rejects.toThrow(/manuel/i);
+  });
+
+  it("sağlayıcıya gönderi oluşturtur ve sonucu kaydeder", async () => {
+    const supabase = fakeSupabaseForDispatch();
+    const d = { ...deps(), supabase: supabase as never };
+    const provider = fakeProvider();
+
+    await dispatchOrder(d, "ord_1", provider);
+
+    expect(provider.createShipment).toHaveBeenCalledOnce();
+    expect(supabase.updates[0]).toMatchObject({
+      carrier: "aras", trackingCode: "TRK-1",
+      shipment_id: "ARAS-1", status: "SHIPPED",
+    });
+  });
+
+  it("eksik ölçü varsa sağlayıcıya HİÇ gitmez", async () => {
+    const supabase = fakeSupabaseForDispatch({
+      items: [{ quantity: 1, product: { name: "50×70 Kanvas", length_cm: null, width_cm: null, height_cm: null, weight_kg: null } }],
+    });
+    const provider = fakeProvider();
+    await expect(
+      dispatchOrder({ ...deps(), supabase: supabase as never }, "ord_1", provider),
+    ).rejects.toThrow(/50×70 Kanvas/);
+    expect(provider.createShipment).not.toHaveBeenCalled();
+  });
+
+  it("gönderisi zaten oluşmuş siparişi ikinci kez göndermez (idempotency)", async () => {
+    const supabase = fakeSupabaseForDispatch({ order: { shipment_id: "ARAS-1" } });
+    const provider = fakeProvider();
+    await expect(
+      dispatchOrder({ ...deps(), supabase: supabase as never }, "ord_1", provider),
+    ).rejects.toThrow(/zaten/i);
+    expect(provider.createShipment).not.toHaveBeenCalled();
   });
 });
