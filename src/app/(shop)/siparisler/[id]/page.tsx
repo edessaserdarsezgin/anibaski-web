@@ -81,6 +81,8 @@ export default async function SiparisDetayPage({ params, searchParams }: Props) 
   await Promise.all(items.map(async (it) => {
     it.uploadedImages = order.photosPurgedAt ? [] : await signUploadedImages(it.uploadedImages);
   }));
+  const carrier = order.carrier ?? "";
+  const carrierLabel = isKnownCarrier(carrier) ? carrierName(carrier) : "Kargo firması";
 
   return (
     <div className="max-w-4xl mx-auto px-8 py-12">
@@ -228,12 +230,7 @@ export default async function SiparisDetayPage({ params, searchParams }: Props) 
           <h2 className="font-serif text-lg text-text mb-4">Kargo Takibi</h2>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs text-text-light mb-1">
-                {(() => {
-                  const carrier = order.carrier ?? "";
-                  return isKnownCarrier(carrier) ? carrierName(carrier) : "Kargo firması";
-                })()}
-              </p>
+              <p className="text-xs text-text-light mb-1">{carrierLabel}</p>
               <p className="font-semibold text-text tracking-wider">{order.trackingCode}</p>
             </div>
             {order.tracking_url && (
