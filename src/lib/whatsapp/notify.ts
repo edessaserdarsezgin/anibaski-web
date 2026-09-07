@@ -88,12 +88,14 @@ export function notifyShippingUpdate(params: {
   phone: string;
   orderNo: string;
   trackingCode: string;
+  trackingUrl?: string | null;
 }) {
   post({
     event: "shipping_update",
     phone: formatPhone(params.phone),
     orderNo: params.orderNo,
     trackingCode: params.trackingCode,
+    trackingUrl: params.trackingUrl ?? null,
   });
 }
 

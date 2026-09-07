@@ -17,6 +17,7 @@ export type AdminOrder = {
   total: number;
   createdAt: string;
   trackingCode: string | null;
+  carrier: string | null;
   adminNote: string | null;
   photosPurgedAt: string | null;
   items: { id: string; quantity: number; variantSelections: Record<string, { label: string }> | null; product: { name: string } | null }[];
@@ -153,7 +154,7 @@ export default function OrdersManager({ orders }: { orders: AdminOrder[] }) {
 
               <div className="border-t border-border pt-2 flex flex-col gap-2">
                 <OrderStatusSelect orderId={order.id} currentStatus={order.status} currentCode={order.trackingCode} />
-                <OrderTrackingInput orderId={order.id} currentCode={order.trackingCode} />
+                <OrderTrackingInput orderId={order.id} currentCode={order.trackingCode} currentCarrier={order.carrier} />
               </div>
 
               <div className="border-t border-border pt-2">
@@ -220,7 +221,7 @@ export default function OrdersManager({ orders }: { orders: AdminOrder[] }) {
                         <OrderStatusSelect orderId={order.id} currentStatus={order.status} currentCode={order.trackingCode} />
                       </td>
                       <td className="px-4 py-4">
-                        <OrderTrackingInput orderId={order.id} currentCode={order.trackingCode} />
+                        <OrderTrackingInput orderId={order.id} currentCode={order.trackingCode} currentCarrier={order.carrier} />
                       </td>
                       <td className="px-6 py-4 text-right font-semibold text-primary">{Number(order.total).toLocaleString("tr-TR")} ₺</td>
                       <td className="px-4 py-4 whitespace-nowrap">

@@ -3,15 +3,20 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/ToastProvider";
+import CustomSelect from "@/components/ui/CustomSelect";
+import { CARRIER_OPTIONS } from "@/lib/shipping/carrier/registry";
 
 export default function OrderTrackingInput({
   orderId,
   currentCode,
+  currentCarrier,
 }: {
   orderId: string;
   currentCode: string | null;
+  currentCarrier: string | null;
 }) {
   const [code, setCode] = useState(currentCode ?? "");
+  const [carrier, setCarrier] = useState(currentCarrier ?? "aras");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(!!currentCode);
   const { toast } = useToast();
@@ -23,7 +28,7 @@ export default function OrderTrackingInput({
     const res = await fetch(`/api/admin/orders/${orderId}/tracking`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ trackingCode: code }),
+      body: JSON.stringify({ trackingCode: code, carrier }),
     });
     setSaving(false);
     if (res.ok) {
@@ -36,7 +41,14 @@ export default function OrderTrackingInput({
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap">
+      <CustomSelect
+        value={carrier}
+        onChange={(v) => { setCarrier(v); setSaved(false); }}
+        options={CARRIER_OPTIONS}
+        ariaLabel="Kargo firması"
+        className="w-32"
+      />
       <input
         type="text"
         value={code}
