@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/hooks/useCart";
+import CitySelect from "@/components/ui/CitySelect";
 import LegalModal from "@/components/legal/LegalModal";
 import CaymaHakkiDoc from "@/components/legal/CaymaHakkiDoc";
 import OnBilgilendirmeDoc from "@/components/legal/OnBilgilendirmeDoc";
@@ -17,7 +18,7 @@ type Address = {
   address: string; city: string; district: string; zip: string | null;
 };
 
-const emptyForm = { title: "", fullName: "", phone: "", address: "", city: "", district: "", zip: "" };
+const emptyForm = { title: "", fullName: "", phone: "", address: "", city: "", district: "", zip: "", cityCode: "" };
 
 type PaymentMethod = "credit_card" | "cod";
 
@@ -100,8 +101,8 @@ function AddressPicker({
               className={inputCls} placeholder="Ad Soyad" />
             <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
               className={inputCls} placeholder="Telefon" type="tel" />
-            <input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
-              className={inputCls} placeholder="İl" />
+            <CitySelect city={form.city} cityCode={form.cityCode}
+              onChange={next => setForm(f => ({ ...f, ...next }))} />
             <input value={form.district} onChange={e => setForm(f => ({ ...f, district: e.target.value }))}
               className={inputCls} placeholder="İlçe" />
           </div>

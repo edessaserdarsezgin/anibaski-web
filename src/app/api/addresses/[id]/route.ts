@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { cityCodeFromName } from "@/lib/shipping/cities";
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
@@ -29,11 +30,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { id } = await params;
   const body = await req.json();
-  const { title, fullName, phone, address, city, district, zip } = body;
+  const { title, fullName, phone, address, city, district, zip, cityCode } = body;
+  const city_code = cityCode || cityCodeFromName(city);
 
   const { data, error } = await supabase
     .from("addresses")
-    .update({ title, fullName, phone, address, city, district, zip: zip || null })
+    .update({ title, fullName, phone, address, city, district, zip: zip || null, city_code })
     .eq("id", id)
     .eq("userId", user.id)
     .select()
