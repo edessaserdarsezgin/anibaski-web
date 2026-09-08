@@ -4,7 +4,7 @@ import Image from "next/image";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { signUploadedImages } from "@/lib/uploads";
 import { getCompanyInfo, sellerForContracts } from "@/lib/company";
-import { getShippingSettings } from "@/lib/shipping";
+import { getDeliveryDisplaySettings } from "@/lib/shipping";
 import ShippingEstimate from "@/app/(shop)/urunler/[slug]/ShippingEstimate";
 import { carrierName, isKnownCarrier } from "@/lib/shipping/carrier/registry";
 import LegalAccordion from "@/components/legal/LegalAccordion";
@@ -66,7 +66,7 @@ export default async function SiparisDetayPage({ params, searchParams }: Props) 
     .select("email, fullName, phone")
     .eq("id", order.userId)
     .single();
-  const [company, shippingInfo] = await Promise.all([getCompanyInfo(), getShippingSettings()]);
+  const [company, shippingInfo] = await Promise.all([getCompanyInfo(), getDeliveryDisplaySettings()]);
   // Kredi kartıyla oluşturulmuş ama ödeme tamamlanmamış siparişleri gizle
   if (!isAdmin && order.paymentMethod === "credit_card" && order.paymentStatus === "pending") notFound();
 

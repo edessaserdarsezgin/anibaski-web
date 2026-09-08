@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getShippingSettings } from "@/lib/shipping";
+import { getShippingSettingsOrNull } from "@/lib/shipping";
 import HomeCategoryRows from "@/components/home/HomeCategoryRows";
 import FeaturedStrip from "@/components/home/FeaturedStrip";
 import HeroBanner from "@/components/home/HeroBanner";
@@ -19,7 +19,8 @@ import {
 import { getHomeCollections } from "@/lib/collections";
 
 export default async function HomePage() {
-  const { freeShippingThreshold } = await getShippingSettings();
+  // Ayar okunamazsa ücretsiz kargo rozeti gizlenir — yanlış eşik göstermektense hiç gösterme
+  const shippingSettings = await getShippingSettingsOrNull();
 
   const [homeCats, featRaw, bannerRaw, campaignCards, collectionRowsRaw] = await Promise.all([
     getHomeCategories(),
@@ -209,7 +210,9 @@ export default async function HomePage() {
         <section className="py-10 px-8 bg-primary">
           <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
             {[
-              { icon: "🚚", title: "Ücretsiz Kargo", desc: `${freeShippingThreshold} ₺ ve üzeri siparişlerde` },
+              ...(shippingSettings
+                ? [{ icon: "🚚", title: "Ücretsiz Kargo", desc: `${shippingSettings.freeShippingThreshold} ₺ ve üzeri siparişlerde` }]
+                : []),
               { icon: "🔒", title: "Güvenli Ödeme", desc: "256-bit SSL şifreleme" },
               { icon: "🎁", title: "Özel Paketleme", desc: "Hediyeye hazır kutularda" },
               { icon: "↩️", title: "Memnuniyet Garantisi", desc: "Sorun varsa yeniden basıyoruz" },

@@ -48,19 +48,17 @@ export default function SepetPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items.length]);
 
-  const [shippingFeeVal, setShippingFeeVal] = useState(49);
-  const [freeShippingThreshold, setFreeShippingThreshold] = useState(500);
+  // Kargo ayarı yüklenene kadar null — yedek sayı YOK, yanlış tutar göstermektense hiç gösterme
+  const [shipping, setShipping] = useState<{ fee: number; threshold: number } | null>(null);
+  const [shippingFailed, setShippingFailed] = useState(false);
   const [orderThreshold, setOrderThreshold] = useState(0);
   const [orderCreditAmount, setOrderCreditAmount] = useState(0);
 
   useEffect(() => {
     fetch("/api/shipping-settings")
-      .then(r => r.json())
-      .then(d => {
-        setShippingFeeVal(d.shippingFee);
-        setFreeShippingThreshold(d.freeShippingThreshold);
-      })
-      .catch(() => {});
+      .then(r => { if (!r.ok) throw new Error("shipping-settings"); return r.json(); })
+      .then(d => setShipping({ fee: d.shippingFee, threshold: d.freeShippingThreshold }))
+      .catch(() => setShippingFailed(true));
   }, []);
 
   useEffect(() => {
@@ -120,8 +118,8 @@ export default function SepetPage() {
   const upcomingTier = nextThreshold(total, cartAutos, pricedItems);
   // Ücretsiz kargo eşiği indirim DÜŞÜLDÜKTEN sonraki tutara göre (sunucu /api/orders ile aynı)
   const discountedTotal = Math.max(0, total - discountAmount);
-  const shippingFee = discountedTotal >= freeShippingThreshold ? 0 : shippingFeeVal;
-  const grandTotal = total + shippingFee - discountAmount;
+  const shippingFee = shipping ? (discountedTotal >= shipping.threshold ? 0 : shipping.fee) : null;
+  const grandTotal = shippingFee === null ? null : total + shippingFee - discountAmount;
 
   // Ödül çubuğu kilometre taşları — kredi eşiği (varsa) + ücretsiz kargo. Ortak eksen: indirim sonrası ara toplam.
   const rewardMilestones: Milestone[] = [
@@ -136,19 +134,21 @@ export default function SepetPage() {
           done: "AI kredi",
         }]
       : []),
-    {
-      threshold: freeShippingThreshold,
-      colorClass: "bg-primary",
-      icon: "🚚",
-      pending: (r: string) => (
-        <>{r} ₺ daha al, <b className="text-primary">ücretsiz kargo</b></>
-      ),
-      done: "ücretsiz kargo",
-    },
+    ...(shipping
+      ? [{
+          threshold: shipping.threshold,
+          colorClass: "bg-primary",
+          icon: "🚚",
+          pending: (r: string) => (
+            <>{r} ₺ daha al, <b className="text-primary">ücretsiz kargo</b></>
+          ),
+          done: "ücretsiz kargo",
+        }]
+      : []),
   ];
 
   // Ücretsiz kargo kazancı: kargo bedavaysa normalde ödenecek kargo bedeli kadar tasarruf
-  const shippingSavings = shippingFee === 0 ? shippingFeeVal : 0;
+  const shippingSavings = shipping && shippingFee === 0 ? shipping.fee : 0;
 
   // Toplam kazanç = ürün indirimleri (orijinal birim = basePrice + varyant eklentileri) + kupon + kargo
   const productSavings = items.reduce((sum, item) => {
@@ -441,7 +441,9 @@ export default function SepetPage() {
               <div className="flex justify-between">
                 <span className="text-text-light">Kargo</span>
                 <span className="font-semibold flex items-center gap-2">
-                  {shippingFee === 0 ? (
+                  {shippingFee === null ? (
+                    <span className="text-text-light font-normal">{shippingFailed ? "Hesaplanamadı" : "Hesaplanıyor…"}</span>
+                  ) : shippingFee === 0 ? (
                     <>
                       {shippingSavings > 0 && (
                         <span className="line-through text-text-light font-normal">{shippingSavings.toLocaleString("tr-TR")} ₺</span>
@@ -453,9 +455,9 @@ export default function SepetPage() {
                   )}
                 </span>
               </div>
-              {shippingFee > 0 && (
+              {shipping && shippingFee !== null && shippingFee > 0 && (
                 <p className="text-xs text-text-light">
-                  {freeShippingThreshold.toLocaleString("tr-TR")} ₺ üzeri alışverişlerde kargo ücretsiz.
+                  {shipping.threshold.toLocaleString("tr-TR")} ₺ üzeri alışverişlerde kargo ücretsiz.
                 </p>
               )}
             </div>
@@ -463,7 +465,7 @@ export default function SepetPage() {
             <div className="border-t border-border mt-4 pt-4 flex justify-between items-center">
               <span className="font-semibold text-text">Toplam</span>
               <span className="text-xl font-semibold text-primary">
-                {grandTotal.toLocaleString("tr-TR")} ₺
+                {grandTotal === null ? "—" : `${grandTotal.toLocaleString("tr-TR")} ₺`}
               </span>
             </div>
 
@@ -474,12 +476,27 @@ export default function SepetPage() {
               </div>
             )}
 
-            <Link
-              href="/odeme"
-              className="mt-5 block text-center py-3.5 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full transition-colors"
-            >
-              Ödemeye Geç
-            </Link>
+            {shippingFailed && (
+              <p className="mt-5 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                Kargo ücreti şu an hesaplanamıyor. Yanlış tutar göstermemek için ödemeyi durdurduk —
+                lütfen sayfayı yenileyin.
+              </p>
+            )}
+            {shipping ? (
+              <Link
+                href="/odeme"
+                className="mt-5 block text-center py-3.5 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full transition-colors"
+              >
+                Ödemeye Geç
+              </Link>
+            ) : (
+              <button
+                disabled
+                className="mt-5 block w-full text-center py-3.5 bg-primary/40 text-white font-semibold rounded-full cursor-not-allowed"
+              >
+                {shippingFailed ? "Ödemeye Geç" : "Yükleniyor…"}
+              </button>
+            )}
 
             <Link
               href="/urunler"

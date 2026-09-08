@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
-import { getShippingSettings } from "@/lib/shipping";
+import { getDeliveryDisplaySettings } from "@/lib/shipping";
 import CartClearer from "./CartClearer";
 import ShippingEstimate from "@/app/(shop)/urunler/[slug]/ShippingEstimate";
 
@@ -30,7 +30,7 @@ export default async function SiparisTamamlandiPage({ params }: Props) {
       .select("id, userId, status, total, subtotal, shippingFee, createdAt, paymentMethod, items:order_items(id, quantity, unitPrice, product:products(name, images, slug))")
       .eq("id", id)
       .single(),
-    getShippingSettings(),
+    getDeliveryDisplaySettings(),
     admin
       .from("studio_credit_grants")
       .select("amount")
