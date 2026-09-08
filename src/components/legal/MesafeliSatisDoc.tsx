@@ -130,7 +130,8 @@ export default function MesafeliSatisDoc({
         Cayma hakkının kullanılabildiği hallerde, cayma bildiriminin SATICI&apos;ya ulaştığı
         tarihten itibaren 14 gün içinde tahsil edilen tüm ödemeler iade edilir; ALICI da bildirimi
         takip eden 10 gün içinde ürünü iade etmekle yükümlüdür. Cayma bildirimi {seller.email}
-        {" "}adresine yapılabilir.
+        {" "}adresine yapılabilir. Cayma hakkının kullanıldığı iadelerde kargo bedeli
+        SATICI&apos;ya aittir; ALICI&apos;dan iade kargo ücreti talep edilmez.
       </p>
 
       <h3 className="font-semibold border-b border-border pb-1">MADDE 6 — İADE PROSEDÜRÜ</h3>

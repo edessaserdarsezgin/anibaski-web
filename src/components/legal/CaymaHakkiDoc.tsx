@@ -45,10 +45,13 @@ export default function CaymaHakkiDoc({ buyer, date, seller }: LegalDocProps) {
         yapılabilmesi için tarafınıza gönderilen iade bölümü bulunan faturadaki ilgili
         bölümlerin eksiksiz doldurulup imzalanması ve ürünle birlikte geri gönderilmesi gerekir.
       </p>
+      {/* Mayıs 2025 Resmî Gazete değişikliği: cayma hakkı iadelerinde kargo bedeli
+          İSTİSNASIZ satıcıya aittir. Aksini söyleyen sözleşme maddesi emredici hükme
+          aykırı olduğu için yok hükmündedir — bu yüzden "aksi halde ALICI öder" ibaresi
+          kaldırıldı (2026-09-08). */}
       <p>
         İade için öngörülen taşıyıcı, ürünün tarafınıza teslim edildiği kargo firmasıdır.
-        Belirtilen firma aracılığıyla yapılan iadelerde kargo bedeli satıcı tarafından karşılanır;
-        aksi halde kargo ücretinden ALICI sorumludur.
+        Cayma hakkının kullanıldığı iadelerde kargo bedeli satıcı tarafından karşılanır.
       </p>
       <p>
         Alıcının cayma hakkını kullanması halinde satıcı, cayma bildiriminin kendisine ulaştığı

@@ -49,7 +49,7 @@ export function buildShipmentRequest(input: BuildInput): BuildResult {
 
   if (missing.length > 0) return { ok: false, missing };
 
-  const { desi } = orderDesi(
+  const { desi, parcelCount } = orderDesi(
     items.map(i => ({ dimensions: toDimensions(i.dimensions), quantity: i.quantity })),
   );
 
@@ -67,9 +67,9 @@ export function buildShipmentRequest(input: BuildInput): BuildResult {
         cityName: cityNameFromCode(address.city_code) ?? address.city.trim(),
         townName: address.district.trim(),
       },
-      // Tek koli varsayımı: kalemler tek pakete giriyor, ambalaj payı desiye eklendi.
-      // Çok kolili gönderi (bin packing) bilinçli olarak yapılmıyor — bkz. desi.ts.
-      parcel: { desi, pieceCount: 1 },
+      // Desi konsolide koliden gelir (kalem toplamı DEĞİL) ve sipariş en büyük kutuya
+      // sığmazsa koli adedi 1'den büyük çıkar — bkz. desi.ts orderDesi.
+      parcel: { desi, pieceCount: parcelCount },
       cod: order.paymentMethod === "cod" ? { amount: order.total } : null,
       description: `AnıBaskı sipariş #${order.id.slice(0, 8).toUpperCase()}`,
     },

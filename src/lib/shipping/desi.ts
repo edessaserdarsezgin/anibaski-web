@@ -12,12 +12,33 @@
 export const DESI_DIVISOR = 3000;
 
 /**
- * Çok kalemli siparişte kalem desilerinin toplamına eklenen sabit ambalaj payı.
- * Kalemler tek koliye girdiğinde koli desisi ≠ kalem desileri toplamı; bu pay
- * dış koli + dolgu malzemesini temsil eder. Kutu-optimizasyonu (bin packing)
- * bilinçli olarak yapılmıyor — ilk sürüm için aşırı mühendislik olur.
+ * Ürün hacimlerinin toplamına eklenen ambalaj payı (dolgu + koli cidarı + ürünler
+ * arası kayıp hacim). Sektör kaynakları %10-20 bandını kullanıyor; ortasını aldık.
  */
-export const PACKAGING_DESI_MARGIN = 0.5;
+export const PACKING_TOLERANCE = 0.15;
+
+/**
+ * Standart koli kademeleri. Sipariş, hacmini kurtaran EN KÜÇÜK kutuya konur ve desi
+ * o kutunun dış ölçüsünden gelir — bu, sektörün "standart kutu kademe eşleştirmesi"
+ * yöntemidir ve gerçek 3B kutu-yerleştirme (bin packing) algoritmasına gerek bırakmaz.
+ *
+ * ⚠️ Bu ölçüler sektör referans tablosudur (FulfillmentTR hazır koli standardı).
+ * AnıBaskı'nın gerçek ambalaj malzemeleri belli olunca BURASI güncellenmeli —
+ * özellikle düz baskı için kutu değil karton zarf/kargo poşeti kullanılacaksa
+ * (kaynaklar düz üründe kutuyu "boş hava taşımak" olarak niteliyor).
+ */
+export type BoxSize = "S" | "M" | "L" | "XL";
+
+export const STANDARD_BOXES: { size: BoxSize; length: number; width: number; height: number }[] = [
+  { size: "S",  length: 20, width: 15, height: 10 },  // 1 desi
+  { size: "M",  length: 30, width: 20, height: 15 },  // 3 desi
+  { size: "L",  length: 40, width: 30, height: 20 },  // 8 desi
+  { size: "XL", length: 60, width: 40, height: 40 },  // 32 desi
+];
+
+function boxVolume(b: { length: number; width: number; height: number }): number {
+  return b.length * b.width * b.height;
+}
 
 /** Paketlenmiş ürün ölçüleri. Uzunluk cm, ağırlık kg. */
 export type PackageDimensions = {
@@ -103,7 +124,7 @@ export type OrderDesiItem = {
 };
 
 export type OrderDesiResult = {
-  /** Toplam faturalanabilir desi (ambalaj payı dahil). Ölçüsü eksik kalem varsa yine de hesaplanır. */
+  /** Konsolide kolinin (veya kolilerin) faturalanabilir desisi. */
   desi: number;
   /**
    * Taşıyıcının gerçekte ÜCRETLENDİRECEĞİ desi: yukarı yuvarlanır, en az 1 desi.
@@ -112,21 +133,35 @@ export type OrderDesiResult = {
    * Hiç ölçülü kalem yoksa 0 — bilmediğimiz bir şey için 1 desi uydurmuyoruz.
    */
   tariffDesi: number;
+  /** Seçilen standart kutu; ölçülü kalem yoksa null. */
+  box: BoxSize | null;
+  /** Kaç koli çıktığı. En büyük kutu yetmezse sipariş bölünür (>1). */
+  parcelCount: number;
   /** Ölçüsü girilmemiş kalem sayısı — >0 ise sonuç EKSİKTİR, kargo akışı uyarmalı. */
   missingCount: number;
 };
 
 /**
- * Sipariş desisi = Σ(kalem faturalanabilir desisi × adet) + ambalaj payı.
+ * Sipariş desisi — kalem desileri TOPLANMAZ.
  *
- * Ölçüsü olmayan kalemler toplama katılmaz ama `missingCount` ile raporlanır —
+ * Sektör kuralı: çok kalemli siparişte desi, birleştirilmiş kolinin dış ölçüsünden
+ * hesaplanır. Kalem desilerini toplamak, her ürünün etrafındaki boş havayı da toplamak
+ * demektir ve sistematik olarak gerçeğin çok üstünde bir sonuç verir (kaynaklar
+ * konsolidasyonun maliyeti %40'a kadar düşürdüğünü söylüyor).
+ *
+ * Yöntem: ürün hacimlerini topla → ambalaj toleransı ekle → hacmi kurtaran en küçük
+ * standart kutuyu seç → desiyi o kutudan al. Ağırlık ise hacmin aksine fiziksel olarak
+ * toplanabilir olduğu için adetle çarpılıp toplanır; ikisinin BÜYÜĞÜ faturalanır.
+ *
+ * Ölçüsü olmayan kalemler hesaba katılmaz ama `missingCount` ile raporlanır —
  * sessizce 0 saymak, gerçek maliyetin altında bir gönderi oluşturulmasına yol açar.
  */
 export function orderDesi(
   items: OrderDesiItem[],
-  packagingMargin: number = PACKAGING_DESI_MARGIN,
+  tolerance: number = PACKING_TOLERANCE,
 ): OrderDesiResult {
-  let sum = 0;
+  let volume = 0;
+  let weight = 0;
   let missingCount = 0;
 
   for (const item of items) {
@@ -134,10 +169,28 @@ export function orderDesi(
       missingCount++;
       continue;
     }
-    sum += billableDesi(item.dimensions) * item.quantity;
+    const d = item.dimensions;
+    volume += d.length * d.width * d.height * item.quantity;
+    weight += d.weight * item.quantity;
   }
 
-  // Hiç ölçülü kalem yoksa ambalaj payı eklemek anlamsız (0 döner).
-  const desi = sum > 0 ? round2(sum + packagingMargin) : 0;
-  return { desi, tariffDesi: desi > 0 ? Math.max(1, Math.ceil(desi)) : 0, missingCount };
+  if (volume <= 0) return { desi: 0, tariffDesi: 0, box: null, parcelCount: 0, missingCount };
+
+  const needed = volume * (1 + tolerance);
+  const largest = STANDARD_BOXES[STANDARD_BOXES.length - 1];
+  const fitting = STANDARD_BOXES.find(b => boxVolume(b) >= needed);
+
+  // Tek koliye sığmıyorsa sipariş bölünür; ayrı kolilerin desileri (bu kez doğru olarak) toplanır.
+  const box = fitting ?? largest;
+  const parcelCount = fitting ? 1 : Math.ceil(needed / boxVolume(largest));
+  const volumetric = round2((boxVolume(box) / DESI_DIVISOR) * parcelCount);
+
+  const desi = round2(Math.max(volumetric, weight));
+  return {
+    desi,
+    tariffDesi: Math.max(1, Math.ceil(desi)),
+    box: box.size,
+    parcelCount,
+    missingCount,
+  };
 }

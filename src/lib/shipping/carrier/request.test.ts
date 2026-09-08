@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { buildShipmentRequest } from "./request";
-import { PACKAGING_DESI_MARGIN } from "../desi";
 
 // hacimsel 0.2, ağırlık 0.3 → faturalanan 0.3
 const dims = { length_cm: 20, width_cm: 15, height_cm: 2, weight_kg: 0.3 };
@@ -39,10 +38,11 @@ describe("buildShipmentRequest — başarılı kurulum", () => {
     expect(r.request.orderRef).toBe("ord_1");
   });
 
-  it("desiyi adetle çarpar ve ambalaj payını ekler", () => {
+  it("desiyi konsolide koliden alır — kalem desilerini TOPLAMAZ", () => {
     const r = buildShipmentRequest(input());
     if (!r.ok) throw new Error("başarılı olmalıydı");
-    expect(r.request.parcel.desi).toBe(0.3 * 2 + PACKAGING_DESI_MARGIN);
+    // 2 × (20×15×2) = 1200 cm³ + %15 → S kutu (1 desi); ağırlık 0.6 kg daha küçük
+    expect(r.request.parcel.desi).toBe(1);
     expect(r.request.parcel.pieceCount).toBe(1);
   });
 

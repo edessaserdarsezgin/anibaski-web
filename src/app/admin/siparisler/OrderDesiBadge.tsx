@@ -20,7 +20,8 @@ export default function OrderDesiBadge({ desi }: { desi: OrderDesiResult }) {
   const overBand = desi.tariffDesi > 1;
   return (
     <p className={`text-[11px] mt-1 ${overBand ? "text-amber-700 font-semibold" : "text-text-light"}`}>
-      Desi {desi.desi.toLocaleString("tr-TR")} → tarife {desi.tariffDesi}
+      {desi.box} kutu · desi {desi.desi.toLocaleString("tr-TR")} → tarife {desi.tariffDesi}
+      {desi.parcelCount > 1 && ` · ${desi.parcelCount} koli`}
       {overBand && " · sabit bandın üstünde"}
       {desi.missingCount > 0 && ` · ${desi.missingCount} üründe ölçü yok (eksik hesap)`}
     </p>
