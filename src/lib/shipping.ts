@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import * as Sentry from "@sentry/nextjs";
 import { createAdminClient } from "@/lib/supabase/server";
+import { CACHE_TTL } from "@/lib/cacheTtl";
 import { expandRange, parseHolidaySet } from "@/lib/holidays";
 
 export type ShippingSettings = {
@@ -106,7 +107,7 @@ export const getShippingSettings = unstable_cache(
   // olur; ama revalidateTag ORTAM YERELDİR, veritabanı ORTAKTIR — ayar başka bir ortamdan (önizleme/
   // yerel) kaydedilirse canlının önbelleği geçersizleştirilmez ve süresiz bayat kalır (2026-09-07'de
   // 2 gün eksik tahsilat). TTL ile en kötü ihtimalle 5 dakikada kendi kendine düzelir.
-  { tags: ["shipping"], revalidate: 300 }
+  { tags: ["shipping"], revalidate: CACHE_TTL.pricing }
 );
 
 export type DeliveryDisplaySettings = Pick<

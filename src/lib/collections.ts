@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import { withItemPromotions } from "@/lib/catalog";
+import { CACHE_TTL } from "@/lib/cacheTtl";
 
 // ProductCard'ın beklediği alanlar — catalog.ts'teki listelerle aynı.
 const PRODUCT_CARD_SELECT =
@@ -33,7 +34,7 @@ export const getActiveCollections = unstable_cache(
     }));
   },
   ["collections-active"],
-  { tags: ["collections"] }
+  { tags: ["collections"], revalidate: CACHE_TTL.content }
 );
 
 // 2. Slug ile koleksiyon — /koleksiyonlar/[slug] (pasifse null → sayfa 404)
@@ -49,7 +50,7 @@ export const getCollectionBySlug = unstable_cache(
     return (data as CollectionDetail | null) ?? null;
   },
   ["collection-by-slug"],
-  { tags: ["collections"] }
+  { tags: ["collections"], revalidate: CACHE_TTL.content }
 );
 
 // 3. Koleksiyon ürünleri — position sıralı, yalnız aktif ürünler, indirim hesaplı
@@ -73,7 +74,7 @@ export const getCollectionProducts = unstable_cache(
     return ids.map((id) => byId.get(id)).filter(Boolean) as typeof priced;
   },
   ["collection-products"],
-  { tags: ["collections", "products", "promotions"] }
+  { tags: ["collections", "products", "promotions"], revalidate: CACHE_TTL.pricing }
 );
 
 // 4. Ana sayfa koleksiyon şeritleri — show_on_home, koleksiyon başına ilk 8 ürün
@@ -116,5 +117,5 @@ export const getHomeCollections = unstable_cache(
       .filter((r) => r.products.length > 0);
   },
   ["collections-home"],
-  { tags: ["collections", "products", "promotions"] }
+  { tags: ["collections", "products", "promotions"], revalidate: CACHE_TTL.pricing }
 );

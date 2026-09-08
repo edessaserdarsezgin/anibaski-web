@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
+import { CACHE_TTL } from "@/lib/cacheTtl";
 
 export const READY_MADE_SLUG = "hazir-urunler";
 
@@ -19,5 +20,5 @@ export const getReadyMadeCategoryIds = unstable_cache(
     }
   },
   ["ready-made-category-ids"],
-  { tags: ["categories"] }
+  { tags: ["categories"], revalidate: CACHE_TTL.content }
 );

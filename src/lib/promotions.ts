@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import type { Promotion } from "@/lib/promotionsCalc";
 import { isDateValid, cartPromoAmount } from "@/lib/promotionsCalc";
+import { CACHE_TTL } from "@/lib/cacheTtl";
 
 type Row = Record<string, unknown>;
 
@@ -125,19 +126,19 @@ async function loadPromotions(filter: { applyLevel: "item" | "cart"; trigger?: "
 /** Katman A — aktif otomatik item indirimleri (kart + sipariş fiyatı). Cache tag: "promotions". */
 export const getActiveItemPromotions = unstable_cache(
   () => loadPromotions({ applyLevel: "item", trigger: "auto" }),
-  ["promotions-item"], { tags: ["promotions"] }
+  ["promotions-item"], { tags: ["promotions"], revalidate: CACHE_TTL.pricing }
 );
 
 /** Katman B — aktif otomatik cart (sepet eşikli) indirimleri. Cache tag: "promotions". */
 export const getActiveCartAutoPromotions = unstable_cache(
   () => loadPromotions({ applyLevel: "cart", trigger: "auto" }),
-  ["promotions-cart-auto"], { tags: ["promotions"] }
+  ["promotions-cart-auto"], { tags: ["promotions"], revalidate: CACHE_TTL.pricing }
 );
 
 /** Aktif kuponlar (kart rozeti için: ürün/kategori-kapsamlı olanlar filtrelenir). Cache tag: "promotions". */
 export const getActiveCouponPromotions = unstable_cache(
   () => loadPromotions({ applyLevel: "cart", trigger: "code" }),
-  ["promotions-coupons"], { tags: ["promotions"] }
+  ["promotions-coupons"], { tags: ["promotions"], revalidate: CACHE_TTL.pricing }
 );
 
 /** İndirim çakışma modu: false = en iyisi (max), true = topla (stack). Cache tag: "promotions". */
@@ -149,7 +150,7 @@ export const getDiscountStacking = unstable_cache(
       return !!data?.stacking;
     } catch { return false; }
   },
-  ["discount-stacking"], { tags: ["promotions"] }
+  ["discount-stacking"], { tags: ["promotions"], revalidate: CACHE_TTL.pricing }
 );
 
 /**

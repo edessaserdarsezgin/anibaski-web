@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { getActiveItemPromotions, getActiveCouponPromotions } from "@/lib/promotions";
 import { bestItemDiscount, itemInScope, isDateValid } from "@/lib/promotionsCalc";
 import { activeDiscountPercent } from "@/lib/pricing";
+import { CACHE_TTL } from "@/lib/cacheTtl";
 
 type DiscountableRow = {
   id: string; basePrice: number; categoryId?: string | null;
@@ -52,7 +53,7 @@ export const getHomeCategories = unstable_cache(
     return data ?? [];
   },
   ["home-categories"],
-  { tags: ["categories"] }
+  { tags: ["categories"], revalidate: CACHE_TTL.content }
 );
 
 // 1b. Nav Categories — tüm ana (üst seviye) kategoriler; site geneli ikon şeridi için
@@ -70,7 +71,7 @@ export const getNavCategories = unstable_cache(
       .map((c) => ({ id: c.id as string, name: c.name as string, slug: c.slug as string, imageUrl: (c as { imageUrl?: string | null }).imageUrl ?? null }));
   },
   ["nav-categories"],
-  { tags: ["categories"] }
+  { tags: ["categories"], revalidate: CACHE_TTL.content }
 );
 
 // 2. Products by Category IDs (for home rows)
@@ -87,7 +88,7 @@ export const getCategoryProductsForHome = unstable_cache(
     return withItemPromotions(data ?? []);
   },
   ["home-category-products"],
-  { tags: ["products", "promotions"] }
+  { tags: ["products", "promotions"], revalidate: CACHE_TTL.pricing }
 );
 
 // 3. Featured Products
@@ -105,7 +106,7 @@ export const getFeaturedProducts = unstable_cache(
     return withItemPromotions(data ?? []);
   },
   ["featured-products"],
-  { tags: ["products", "promotions"] }
+  { tags: ["products", "promotions"], revalidate: CACHE_TTL.pricing }
 );
 
 // 3b. Flash Deals — süreli (discount_ends_at gelecekte) indirimli ürünler + en yakın bitiş
@@ -128,7 +129,7 @@ export const getFlashDeals = unstable_cache(
     return { products, endsAt };
   },
   ["flash-deals"],
-  { tags: ["products", "promotions"] }
+  { tags: ["products", "promotions"], revalidate: CACHE_TTL.pricing }
 );
 
 // 3c. Campaign Cards — admin'in elle seçtiği görselli kampanya kartları (placement='card')
@@ -171,7 +172,7 @@ export const getCampaignCards = unstable_cache(
       }));
   },
   ["campaign-cards"],
-  { tags: ["campaigns"] }
+  { tags: ["campaigns"], revalidate: CACHE_TTL.content }
 );
 
 // 3d. Reprint Suggestions — kullanıcının daha önce sipariş ettiği aktif ürünler (yeni paid print)
@@ -206,7 +207,7 @@ export const getHeroBanners = unstable_cache(
     return data ?? [];
   },
   ["hero-banners"],
-  { tags: ["campaigns"] }
+  { tags: ["campaigns"], revalidate: CACHE_TTL.content }
 );
 
 // 5. Tags for filtering — yalnız AKTİF ürünlere atanmış + aktif etiketler (boş/pasif etiket gösterme)
@@ -229,7 +230,7 @@ export const getTags = unstable_cache(
     return (tagRows ?? []).sort((a, b) => a.name.localeCompare(b.name, "tr"));
   },
   ["catalog-tags"],
-  { tags: ["tags", "products"] }
+  { tags: ["tags", "products"], revalidate: CACHE_TTL.content }
 );
 
 // 6. Product Tag Matches (fetch product IDs that match a specific tag)
@@ -243,7 +244,7 @@ export const getProductIdsByTag = unstable_cache(
     return (data as { productId: string }[] | null)?.map((r) => r.productId) ?? [];
   },
   ["product-ids-by-tag"],
-  { tags: ["tags", "products"] }
+  { tags: ["tags", "products"], revalidate: CACHE_TTL.content }
 );
 
 // 7. Products List for Catalog (filtered by optional tag product IDs, excluding ready made categories, sorted)
@@ -272,7 +273,7 @@ export const getProductsForCatalog = unstable_cache(
     return withItemPromotions(data ?? []);
   },
   ["catalog-products"],
-  { tags: ["products", "promotions"] }
+  { tags: ["products", "promotions"], revalidate: CACHE_TTL.pricing }
 );
 
 // 8. Category by slug
@@ -288,7 +289,7 @@ export const getCategoryBySlug = unstable_cache(
     return data;
   },
   ["category-by-slug"],
-  { tags: ["categories"] }
+  { tags: ["categories"], revalidate: CACHE_TTL.content }
 );
 
 // 9. Subcategories by parent category ID
@@ -305,7 +306,7 @@ export const getSubCategories = unstable_cache(
     return data ?? [];
   },
   ["subcategories-by-parent"],
-  { tags: ["categories"] }
+  { tags: ["categories"], revalidate: CACHE_TTL.content }
 );
 
 // 10. Category by ID (e.g. parent category lookup)
@@ -320,7 +321,7 @@ export const getCategoryById = unstable_cache(
     return data;
   },
   ["category-by-id"],
-  { tags: ["categories"] }
+  { tags: ["categories"], revalidate: CACHE_TTL.content }
 );
 
 // 11. Product categories join rows (for custom category list lookup)
@@ -335,7 +336,7 @@ export const getProductCategoriesJoin = unstable_cache(
     return Array.from(new Set((pcRows ?? []).map((r) => r.productId)));
   },
   ["product-categories-join"],
-  { tags: ["categories"] }
+  { tags: ["categories"], revalidate: CACHE_TTL.content }
 );
 
 // 12. Products in Category (with ordering)
@@ -372,7 +373,7 @@ export const getProductsInCategory = unstable_cache(
     return withItemPromotions(data ?? []);
   },
   ["products-in-category"],
-  { tags: ["products", "promotions"] }
+  { tags: ["products", "promotions"], revalidate: CACHE_TTL.pricing }
 );
 
 // 13. Product by slug (for product details page)
@@ -389,7 +390,7 @@ export const getProductBySlug = unstable_cache(
     return (await withItemPromotions([data as unknown as DiscountableRow]))[0] as typeof data;
   },
   ["product-by-slug"],
-  { tags: ["products", "promotions"] }
+  { tags: ["products", "promotions"], revalidate: CACHE_TTL.pricing }
 );
 
 // 14. Product variants
@@ -404,7 +405,7 @@ export const getProductVariants = unstable_cache(
     return data ?? [];
   },
   ["product-variants"],
-  { tags: ["products"] }
+  { tags: ["products"], revalidate: CACHE_TTL.pricing }
 );
 
 // 15. Related products (same category)
@@ -422,7 +423,7 @@ export const getRelatedProductsSameCategory = unstable_cache(
     return withItemPromotions(data ?? []);
   },
   ["related-products-same-category"],
-  { tags: ["products", "promotions"] }
+  { tags: ["products", "promotions"], revalidate: CACHE_TTL.pricing }
 );
 
 // 16. Related products fallback (featured/newest)
@@ -441,5 +442,5 @@ export const getRelatedProductsFallback = unstable_cache(
     return withItemPromotions(data ?? []);
   },
   ["related-products-fallback"],
-  { tags: ["products", "promotions"] }
+  { tags: ["products", "promotions"], revalidate: CACHE_TTL.pricing }
 );
