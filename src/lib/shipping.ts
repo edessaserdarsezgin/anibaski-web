@@ -102,7 +102,11 @@ export const getShippingSettings = unstable_cache(
     }
   },
   ["shipping-settings"],
-  { tags: ["shipping"] }
+  // revalidate = emniyet kemeri. Asıl güncelleme admin kaydında revalidateTag("shipping") ile anında
+  // olur; ama revalidateTag ORTAM YERELDİR, veritabanı ORTAKTIR — ayar başka bir ortamdan (önizleme/
+  // yerel) kaydedilirse canlının önbelleği geçersizleştirilmez ve süresiz bayat kalır (2026-09-07'de
+  // 2 gün eksik tahsilat). TTL ile en kötü ihtimalle 5 dakikada kendi kendine düzelir.
+  { tags: ["shipping"], revalidate: 300 }
 );
 
 export type DeliveryDisplaySettings = Pick<
