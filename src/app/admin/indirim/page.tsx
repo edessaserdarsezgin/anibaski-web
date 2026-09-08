@@ -297,7 +297,7 @@ export default function IndirimPage() {
                       <span className="px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap" style={{ backgroundColor: form.tagColor, color: form.tagTextColor }}>{form.tagLabel || "Önizleme"}</span>
                     </div>
                   )}
-                  <p className="text-xs text-text-light">Kapsamdaki ürünlere bu etiket atanır; indirim silinince üründen kalkar (etiket <span className="font-semibold">/admin/etiketler</span>'de kalır).</p>
+                  <p className="text-xs text-text-light">Kapsamdaki ürünlere bu etiket atanır; indirim silinince üründen kalkar (etiket <span className="font-semibold">/admin/etiketler</span>&apos;de kalır).</p>
                 </>
               )}
             </div>

@@ -11,6 +11,9 @@ const eslintConfig = defineConfig([
       // okuyup setState yapan (SSR'da lazy-init edilemeyen) bilinçli kalıpları yanlış
       // pozitif olarak işaretliyor. Build'i durdurmasın diye uyarıya indirildi.
       "react-hooks/set-state-in-effect": "warn",
+      // Yalnızca imza/tip için var olan parametreler (test sahtelerinde yaygın) `_` ile
+      // başlatıldığında kullanılmamış sayılmasın — yerleşik konvansiyon.
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
     },
   },
   // Override default ignores of eslint-config-next.

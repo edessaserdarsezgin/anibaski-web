@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getShippingSettings } from "@/lib/shipping";
 
 import { pageMetadata } from "@/lib/seo";
@@ -73,7 +74,7 @@ export default async function TeslimatPage() {
         <Section icon="track" title="Sipariş Takibi">
           <p>
             Siparişiniz kargoya verildiğinde tarafınıza bildirim gönderilir. Durumu dilediğiniz an{" "}
-            <a href="/siparisler">Siparişlerim</a> sayfasından takip edebilirsiniz.
+            <Link href="/siparisler">Siparişlerim</Link> sayfasından takip edebilirsiniz.
           </p>
         </Section>
 

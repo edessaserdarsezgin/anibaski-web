@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getCompanyInfo } from "@/lib/company";
 
 import { pageMetadata } from "@/lib/seo";
@@ -88,9 +89,9 @@ export default async function IletisimPage() {
         <h2 className="font-serif text-xl text-text mb-2">Sipariş Desteği</h2>
         <p className="text-sm text-text-light">
           Mevcut bir siparişinizle ilgili yardım için{" "}
-          <a href="/siparisler" className="text-primary font-semibold hover:underline">
+          <Link href="/siparisler" className="text-primary font-semibold hover:underline">
             Siparişlerim
-          </a>{" "}
+          </Link>{" "}
           sayfasından durumunuzu takip edebilir; üretim, kargo veya iade konularında bize yazabilirsiniz.
         </p>
       </div>

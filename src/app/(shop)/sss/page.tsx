@@ -1,3 +1,4 @@
+import Link from "next/link";
 import FaqCategory, { type FaqItem } from "@/components/faq/FaqCategory";
 
 import { pageMetadata } from "@/lib/seo";
@@ -14,7 +15,7 @@ const CATEGORIES: { id: string; title: string; items: FaqItem[] }[] = [
       { q: "Nasıl sipariş veririm?", a: <>Ürünü seçin, kişiye özelse fotoğraf(lar)ınızı yükleyin, sepete ekleyip ödemeyi tamamlayın. Yüklediğiniz fotoğraf doğrudan baskıya gider.</> },
       { q: "Hangi ödeme yöntemleri var?", a: <>Kredi/banka kartı ile güvenli ödeme (PayTR altyapısı) ve uygun ürünlerde kapıda ödeme. Kapıda ödemede küçük bir hizmet bedeli eklenir.</> },
       { q: "İndirim kuponunu nasıl kullanırım?", a: <>Sepet/ödeme adımında kupon kodunuzu girip uygulayın; indirim toplama yansır. Kuponun minimum tutar veya son kullanma koşulları olabilir.</> },
-      { q: "Siparişimi nasıl takip ederim?", a: <>Üyeyseniz <a href="/siparisler">Siparişlerim</a>'den durumu (Hazırlanıyor / Kargoda / Teslim) ve kargo takip kodunu görürsünüz; ayrıca e-posta ve WhatsApp ile bilgilendirilirsiniz.</> },
+      { q: "Siparişimi nasıl takip ederim?", a: <>Üyeyseniz <Link href="/siparisler">Siparişlerim</Link>&apos;den durumu (Hazırlanıyor / Kargoda / Teslim) ve kargo takip kodunu görürsünüz; ayrıca e-posta ve WhatsApp ile bilgilendirilirsiniz.</> },
       { q: "Sipariş onayını nasıl alırım?", a: <>Ödeme onaylanınca e-posta (ve telefonu olan üyelere WhatsApp) ile sipariş özeti gönderilir.</> },
     ],
   },
@@ -22,10 +23,10 @@ const CATEGORIES: { id: string; title: string; items: FaqItem[] }[] = [
     id: "kargo-teslimat",
     title: "Kargo & Teslimat",
     items: [
-      { q: "Teslimat ne kadar sürer?", a: <>Hafta içi 14:00'a kadar verilen siparişler aynı gün üretime alınır. Üretim ve kargo süreleri ürün detayında ve <a href="/teslimat">Teslimat</a> sayfasında güncel gösterilir.</> },
-      { q: "Kargo ücreti ne kadar, ücretsiz kargo var mı?", a: <>Güncel kargo ücreti ve ücretsiz kargo eşiği <a href="/teslimat">Teslimat</a> sayfasında ve sepette gösterilir; eşik ve üzeri siparişlerde kargo ücretsizdir.</> },
-      { q: "Kargomu nasıl takip ederim?", a: <>Siparişiniz kargoya verildiğinde takip kodu <a href="/siparisler">Siparişlerim</a>'de görünür ve bildirim gönderilir.</> },
-      { q: "Türkiye geneli gönderim var mı?", a: <>Evet, Türkiye'nin her yerine gönderim yapıyoruz.</> },
+      { q: "Teslimat ne kadar sürer?", a: <>Hafta içi 14:00&apos;a kadar verilen siparişler aynı gün üretime alınır. Üretim ve kargo süreleri ürün detayında ve <Link href="/teslimat">Teslimat</Link> sayfasında güncel gösterilir.</> },
+      { q: "Kargo ücreti ne kadar, ücretsiz kargo var mı?", a: <>Güncel kargo ücreti ve ücretsiz kargo eşiği <Link href="/teslimat">Teslimat</Link> sayfasında ve sepette gösterilir; eşik ve üzeri siparişlerde kargo ücretsizdir.</> },
+      { q: "Kargomu nasıl takip ederim?", a: <>Siparişiniz kargoya verildiğinde takip kodu <Link href="/siparisler">Siparişlerim</Link>&apos;de görünür ve bildirim gönderilir.</> },
+      { q: "Türkiye geneli gönderim var mı?", a: <>Evet, Türkiye&apos;nin her yerine gönderim yapıyoruz.</> },
     ],
   },
   {
@@ -53,19 +54,19 @@ const CATEGORIES: { id: string; title: string; items: FaqItem[] }[] = [
     id: "iptal-iade",
     title: "İptal & İade",
     items: [
-      { q: "Siparişimi iptal edebilir miyim?", a: <>Üretim başlamadan iptal talebi oluşturabilirsiniz. Detaylar: <a href="/politikalar/iptal-iade">İptal ve İade</a>.</> },
+      { q: "Siparişimi iptal edebilir miyim?", a: <>Üretim başlamadan iptal talebi oluşturabilirsiniz. Detaylar: <Link href="/politikalar/iptal-iade">İptal ve İade</Link>.</> },
       { q: "İade veya cayma hakkım var mı?", a: <>Standart ürünlerde yasal cayma hakkı geçerlidir. Kişiye özel (fotoğraflı / üretime girmiş) ürünlerde cayma hakkı istisnası uygulanır.</> },
-      { q: "Hatalı veya hasarlı ürün gelirse ne olur?", a: <>Üretim veya kargo kaynaklı hatalarda yeniden üretim ya da iade yapılır; <a href="/iletisim">İletişim</a>'den bize ulaşın.</> },
+      { q: "Hatalı veya hasarlı ürün gelirse ne olur?", a: <>Üretim veya kargo kaynaklı hatalarda yeniden üretim ya da iade yapılır; <Link href="/iletisim">İletişim</Link>&apos;den bize ulaşın.</> },
     ],
   },
   {
     id: "hesap-uyelik",
     title: "Hesap & Üyelik",
     items: [
-      { q: "Üye olmak zorunda mıyım?", a: <>Sipariş vermek ve AI Stüdyo'yu kullanmak için üyelik gerekir. E-posta/şifre veya Google ile kayıt olabilirsiniz.</> },
+      { q: "Üye olmak zorunda mıyım?", a: <>Sipariş vermek ve AI Stüdyo&apos;yu kullanmak için üyelik gerekir. E-posta/şifre veya Google ile kayıt olabilirsiniz.</> },
       { q: "Aynı telefon veya e-posta ile iki hesap açılır mı?", a: <>Hayır; her e-posta ve her cep telefonu yalnızca bir hesaba bağlanabilir.</> },
-      { q: "Şifremi unuttum, ne yapmalıyım?", a: <>Giriş ekranındaki "Şifremi unuttum" ile e-postanıza sıfırlama bağlantısı gönderebilirsiniz.</> },
-      { q: "Adreslerimi nasıl yönetirim?", a: <><a href="/profil">Profilim</a>'den adres ekleyip düzenleyebilirsiniz.</> },
+      { q: "Şifremi unuttum, ne yapmalıyım?", a: <>Giriş ekranındaki &quot;Şifremi unuttum&quot; ile e-postanıza sıfırlama bağlantısı gönderebilirsiniz.</> },
+      { q: "Adreslerimi nasıl yönetirim?", a: <><Link href="/profil">Profilim</Link>&apos;den adres ekleyip düzenleyebilirsiniz.</> },
     ],
   },
 ];

@@ -69,7 +69,7 @@ export default function TestimonialsStrip() {
               </div>
 
               {/* Review text */}
-              <p className="text-sm text-text leading-relaxed flex-1">"{r.text}"</p>
+              <p className="text-sm text-text leading-relaxed flex-1">&quot;{r.text}&quot;</p>
 
               {/* Divider */}
               <div className="border-t border-border pt-4 flex items-center gap-3">

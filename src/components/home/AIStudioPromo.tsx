@@ -43,10 +43,14 @@ function BeforeAfter({ example }: { example: typeof EXAMPLES[0] }) {
         onTouchMove={(e) => { if (dragging) handleMove(e.touches[0].clientX, e.currentTarget.getBoundingClientRect()); }}
         onTouchEnd={() => setDragging(false)}
       >
+        {/* next/image DEĞİL: öncesi/sonrası clipPath ile kırpılan sürükleme kaydırıcısı;
+            Image sarmalayıcısı kırpma geometrisini bozuyor. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={example.after} alt="AI sonrası" className="absolute inset-0 w-full h-full object-cover" draggable={false} />
         <div className="absolute bottom-2 right-2 text-[9px] font-bold text-white/90 tracking-widest uppercase bg-black/40 px-1.5 py-0.5 rounded pointer-events-none">SONRA</div>
 
         <div className="absolute inset-0 pointer-events-none" style={{ clipPath: `inset(0 ${100 - sliderX}% 0 0)` }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={example.before} alt="Orijinal" className="w-full h-full object-cover" draggable={false} />
           <div className="absolute bottom-2 left-2 text-[9px] font-bold text-white/90 tracking-widest uppercase bg-black/40 px-1.5 py-0.5 rounded">ÖNCE</div>
         </div>

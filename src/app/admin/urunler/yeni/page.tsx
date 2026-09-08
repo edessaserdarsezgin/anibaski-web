@@ -215,6 +215,8 @@ export default function YeniUrunPage() {
                 onDragOver={e => e.preventDefault()}
                 onDrop={() => reorderImages(i)}
                 className="relative aspect-square rounded-lg overflow-hidden border border-border group cursor-move active:opacity-50">
+                {/* next/image DEĞİL: yükleme öncesi blob: önizleme + sürükle-bırak sıralama */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={src} alt={`Görsel ${i + 1}`} className="w-full h-full object-cover pointer-events-none" />
                 <button type="button"
                   onClick={() => { setImagePreviews(p => p.filter((_, idx) => idx !== i)); setImageUrls(p => p.filter((_, idx) => idx !== i)); }}

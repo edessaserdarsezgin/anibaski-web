@@ -383,6 +383,8 @@ export default function FotografYuklePage() {
               const q = getQuality(p.width, p.height);
               return (
                 <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border border-border group">
+                  {/* next/image DEĞİL: p.preview istemcide üretilen blob: URL — Image desteklemiyor */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={p.preview} alt={p.name} className="w-full h-full object-cover" />
 
                   {/* Optimizing spinner */}
