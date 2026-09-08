@@ -14,6 +14,16 @@ type CarrierInfo = {
   trackingUrlTemplate: string | null;
 };
 
+// Şablon doğrulama durumu (2026-09-08, sahte kodla sunucudan denendi):
+//   aras    ✅ parametre tanınıyor, "sonuç bulunamamıştır" dönüyor
+//   mng     ⚠️ 301 → kargotakip.dhlecommerce.com.tr (MNG artık DHL eCommerce); yönlendirme
+//              üzerinden çalışıyor, zincir kopabilir
+//   yurtici ❌ "?code=" sorguyu ÖNDOLDURMUYOR — müşteri kodu elle yazmak zorunda kalır
+//   ptt     ❓ /Track/Verify?q= 302 ile ptt.gov.tr'ye atıyor (ölü yol mu bot engeli mi belirsiz)
+//   surat   ❓ 403 (bot koruması) — sunucudan test edilemedi
+// Aras dışındakiler kasten düzeltilmedi: taşıyıcı anlaşması yapılmayabilir, boşa iş yükü olur.
+// Yalnızca o taşıyıcıyla çalışmaya karar verilirse tarayıcıda doğrulanıp düzeltilmeli.
+
 /** Sıra admin açılır listesinde görünen sıradır; "other" her zaman sonda. */
 export const CARRIERS: CarrierInfo[] = [
   { id: "aras",    name: "Aras Kargo",    trackingUrlTemplate: "https://kargotakip.araskargo.com.tr/mainpage.aspx?code={code}" },

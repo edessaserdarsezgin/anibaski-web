@@ -3,6 +3,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import OrderFilters from "./OrderFilters";
 import OrdersManager, { type AdminOrder } from "./OrdersManager";
+import { orderDesi, toDimensions, type ProductDimensionFields } from "@/lib/shipping/desi";
 
 export const metadata = { title: "Siparişler | Admin" };
 
@@ -17,7 +18,7 @@ export default async function AdminSiparislerPage({ searchParams }: Props) {
   const supabase = createAdminClient();
   const { data: allOrders } = await supabase
     .from("orders")
-    .select(`id, type, status, total, createdAt, "trackingCode", carrier, "adminNote", "photosPurgedAt", "paymentMethod", "paymentStatus", items:order_items(id, quantity, variantSelections, product:products(name)), address:addresses!orders_addressId_fkey(fullName, city), buyer:profiles!orders_userId_fkey(fullName, email)`)
+    .select(`id, type, status, total, createdAt, "trackingCode", carrier, "adminNote", "photosPurgedAt", "paymentMethod", "paymentStatus", items:order_items(id, quantity, variantSelections, product:products(name, length_cm, width_cm, height_cm, weight_kg)), address:addresses!orders_addressId_fkey(fullName, city), buyer:profiles!orders_userId_fkey(fullName, email)`)
     .order("createdAt", { ascending: false });
 
   // Tamamlanmamış kredi kartı siparişleri admin listesinde de gizlensin
@@ -73,6 +74,11 @@ export default async function AdminSiparislerPage({ searchParams }: Props) {
       quantity: it.quantity,
       variantSelections: it.variantSelections as Record<string, { label: string }> | null,
       product: it.product as unknown as { name: string } | null,
+    })),
+    // Kargo desisi sunucuda hesaplanır — OrdersManager sunum katmanı olarak kalsın
+    desi: orderDesi((o.items ?? []).map(it => {
+      const p = it.product as unknown as ProductDimensionFields | null;
+      return { dimensions: p ? toDimensions(p) : null, quantity: it.quantity };
     })),
     address: o.address as unknown as { fullName: string; city: string } | null,
     buyer: o.buyer as unknown as { fullName: string | null; email: string } | null,

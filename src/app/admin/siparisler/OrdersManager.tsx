@@ -7,6 +7,8 @@ import { useToast } from "@/components/ui/ToastProvider";
 import CustomSelect from "@/components/ui/CustomSelect";
 import OrderStatusSelect from "./OrderStatusSelect";
 import OrderTrackingInput from "./OrderTrackingInput";
+import OrderDesiBadge from "./OrderDesiBadge";
+import type { OrderDesiResult } from "@/lib/shipping/desi";
 import OrderNoteInput from "./OrderNoteInput";
 import DeletePhotosButton from "./DeletePhotosButton";
 
@@ -21,6 +23,7 @@ export type AdminOrder = {
   adminNote: string | null;
   photosPurgedAt: string | null;
   items: { id: string; quantity: number; variantSelections: Record<string, { label: string }> | null; product: { name: string } | null }[];
+  desi: OrderDesiResult;
   address: { fullName: string; city: string } | null;
   buyer: { fullName: string | null; email: string } | null;
 };
@@ -155,6 +158,7 @@ export default function OrdersManager({ orders }: { orders: AdminOrder[] }) {
               <div className="border-t border-border pt-2 flex flex-col gap-2">
                 <OrderStatusSelect orderId={order.id} currentStatus={order.status} currentCode={order.trackingCode} />
                 <OrderTrackingInput orderId={order.id} currentCode={order.trackingCode} currentCarrier={order.carrier} />
+                <OrderDesiBadge desi={order.desi} />
               </div>
 
               <div className="border-t border-border pt-2">
@@ -222,6 +226,7 @@ export default function OrdersManager({ orders }: { orders: AdminOrder[] }) {
                       </td>
                       <td className="px-4 py-4">
                         <OrderTrackingInput orderId={order.id} currentCode={order.trackingCode} currentCarrier={order.carrier} />
+                        <OrderDesiBadge desi={order.desi} />
                       </td>
                       <td className="px-6 py-4 text-right font-semibold text-primary">{Number(order.total).toLocaleString("tr-TR")} ₺</td>
                       <td className="px-4 py-4 whitespace-nowrap">

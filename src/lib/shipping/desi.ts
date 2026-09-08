@@ -105,6 +105,13 @@ export type OrderDesiItem = {
 export type OrderDesiResult = {
   /** Toplam faturalanabilir desi (ambalaj payı dahil). Ölçüsü eksik kalem varsa yine de hesaplanır. */
   desi: number;
+  /**
+   * Taşıyıcının gerçekte ÜCRETLENDİRECEĞİ desi: yukarı yuvarlanır, en az 1 desi.
+   * Ürünlerimizin çoğu 1 desiyi geçmediğinden kargo maliyeti pratikte SABİTTİR;
+   * bu alanın amacı fiyatlandırma değil, "sipariş sabit maliyet bandını aştı mı" sinyali.
+   * Hiç ölçülü kalem yoksa 0 — bilmediğimiz bir şey için 1 desi uydurmuyoruz.
+   */
+  tariffDesi: number;
   /** Ölçüsü girilmemiş kalem sayısı — >0 ise sonuç EKSİKTİR, kargo akışı uyarmalı. */
   missingCount: number;
 };
@@ -131,5 +138,6 @@ export function orderDesi(
   }
 
   // Hiç ölçülü kalem yoksa ambalaj payı eklemek anlamsız (0 döner).
-  return { desi: sum > 0 ? round2(sum + packagingMargin) : 0, missingCount };
+  const desi = sum > 0 ? round2(sum + packagingMargin) : 0;
+  return { desi, tariffDesi: desi > 0 ? Math.max(1, Math.ceil(desi)) : 0, missingCount };
 }

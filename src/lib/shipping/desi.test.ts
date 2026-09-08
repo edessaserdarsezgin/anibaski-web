@@ -72,6 +72,36 @@ describe("orderDesi", () => {
   });
 
   it("hiç ölçülü kalem yoksa ambalaj payı eklemez", () => {
-    expect(orderDesi([{ dimensions: null, quantity: 1 }])).toEqual({ desi: 0, missingCount: 1 });
+    expect(orderDesi([{ dimensions: null, quantity: 1 }])).toEqual({ desi: 0, tariffDesi: 0, missingCount: 1 });
+  });
+});
+
+describe("orderDesi — faturalanacak tarife desisi", () => {
+  // Taşıyıcı tam desi bandından ücretlendirir ve 1 desinin ALTI da 1 desi sayılır.
+  // Ürünlerimizin çoğu 1 desiyi geçmediği için maliyet pratikte sabittir; bu alanın
+  // amacı fiyatlandırma değil, "bu sipariş sabit maliyet bandını AŞTI mı" sinyali.
+  it("1 desi altındaki siparişi 1 desi sayar", () => {
+    expect(orderDesi([{ dimensions: foto12, quantity: 1 }]).tariffDesi).toBe(1); // 0.8 → 1
+  });
+
+  it("küsuratı yukarı yuvarlar", () => {
+    const r = orderDesi([{ dimensions: foto12, quantity: 4 }]); // 1.2 + 0.5 = 1.7
+    expect(r.desi).toBe(1.7);
+    expect(r.tariffDesi).toBe(2);
+  });
+
+  it("tam desiyi yukarı yuvarlamaz", () => {
+    const tamDesi = { length: 10, width: 10, height: 10, weight: 0.5 }; // hacimsel 0.33
+    const r = orderDesi([{ dimensions: tamDesi, quantity: 3 }], 0.5);   // 1.5 + 0.5 = 2.0
+    expect(r.desi).toBe(2);
+    expect(r.tariffDesi).toBe(2);
+  });
+
+  it("hiç ölçü yoksa 1 desi UYDURMAZ — 0 döner (bilmiyoruz demek)", () => {
+    expect(orderDesi([{ dimensions: null, quantity: 2 }]).tariffDesi).toBe(0);
+  });
+
+  it("büyük format tek kalemde bandı aşar", () => {
+    expect(orderDesi([{ dimensions: kanvas, quantity: 1 }]).tariffDesi).toBe(7); // 5.83 + 0.5 = 6.33
   });
 });
